@@ -13,6 +13,16 @@
       />
     </el-card>
 
+    <div class="grid-container single">
+      <AgentLogPanel
+        :logs="logs"
+        :steps="thinkingSteps"
+        :loading="loading"
+        :expanded="thinkingExpanded"
+        @toggle="thinkingExpanded = !thinkingExpanded"
+      />
+    </div>
+
     <div class="grid-container">
       <SqlPreview :sql="sql" />
       <SummaryPanel :summary="summary" />
@@ -20,10 +30,6 @@
 
     <div class="grid-container single">
       <ResultPanel :columns="columns" :rows="rows" />
-    </div>
-
-    <div class="grid-container single">
-      <AgentLogPanel :logs="logs" />
     </div>
 
     <el-alert
@@ -43,7 +49,8 @@ import SqlPreview from './components/SqlPreview.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import SummaryPanel from './components/SummaryPanel.vue'
 import AgentLogPanel from './components/AgentLogPanel.vue'
-import { postQuery } from './api/query'
+import { streamQuery } from './api/query'
+import type { ThinkingStep } from './types/query'
 
 const question = ref('')
 const sql = ref('')
@@ -51,8 +58,33 @@ const summary = ref('')
 const columns = ref<string[]>([])
 const rows = ref<Record<string, string>[]>([])
 const logs = ref('')
+const thinkingSteps = ref<ThinkingStep[]>([])
+const thinkingExpanded = ref(false)
 const error = ref('')
 const loading = ref(false)
+
+const appendThinking = (
+  title: string,
+  detail?: string,
+  status: ThinkingStep['status'] = 'running'
+) => {
+  const time = new Date().toLocaleTimeString()
+  if (thinkingSteps.value.length) {
+    thinkingSteps.value[thinkingSteps.value.length - 1].status = 'done'
+  }
+  thinkingSteps.value.push({
+    id: thinkingSteps.value.length + 1,
+    time,
+    title,
+    detail,
+    status,
+  })
+  logs.value += `[${time}] ${title}\n`
+  if (detail) {
+    logs.value += `${detail}\n`
+  }
+  logs.value += '\n'
+}
 
 const handleSubmit = async () => {
   if (!question.value.trim()) {
@@ -66,20 +98,61 @@ const handleSubmit = async () => {
   columns.value = []
   rows.value = []
   logs.value = ''
+  thinkingSteps.value = []
+  thinkingExpanded.value = true
   error.value = ''
 
   try {
-    const res = await postQuery(question.value)
+    appendThinking('开始理解问题并准备查询')
 
-    sql.value = res.sql || ''
-    summary.value = res.summary || res.result || ''
-    columns.value = res.columns || []
-    rows.value = res.rows || []
-    logs.value = res.logs || ''
-    error.value = res.error || ''
+    await streamQuery(question.value, (event) => {
+      if (event.type === 'progress') {
+        appendThinking(event.message, event.detail)
+        return
+      }
+
+      if (event.type === 'sql') {
+        sql.value = event.sql || ''
+        appendThinking('已生成 SQL', event.sql)
+        return
+      }
+
+      if (event.type === 'summary') {
+        summary.value = event.summary || ''
+        appendThinking(event.message || '已生成查询总结', event.summary)
+        return
+      }
+
+      if (event.type === 'final') {
+        const res = event.data
+        sql.value = res.sql || sql.value
+        summary.value = res.summary || res.result || summary.value
+        columns.value = res.columns || []
+        rows.value = res.rows || []
+        logs.value += res.logs ? `完整 Agent 日志：\n${res.logs}\n` : ''
+        error.value = res.error || ''
+        if (thinkingSteps.value.length) {
+          thinkingSteps.value[thinkingSteps.value.length - 1].status = 'done'
+        }
+        thinkingExpanded.value = false
+        return
+      }
+
+      if (event.type === 'error') {
+        error.value = event.message
+        appendThinking('查询失败', event.message, 'error')
+      }
+    })
   } catch (err: any) {
     error.value = err?.message || '请求失败'
+    appendThinking('请求失败', error.value, 'error')
   } finally {
+    if (
+      thinkingSteps.value.length &&
+      thinkingSteps.value[thinkingSteps.value.length - 1].status === 'running'
+    ) {
+      thinkingSteps.value[thinkingSteps.value.length - 1].status = error.value ? 'error' : 'done'
+    }
     loading.value = false
   }
 }
