@@ -37,10 +37,12 @@ STREAM_DONE = object()
 
 
 def extract_sql_from_logs(log_text: str) -> str:
+    log_text = ANSI_RE.sub("", log_text)
     patterns = [
         r'Action Input:\s*"((?:SELECT|WITH).*?)"',
         r'Action Input:\s*```sql\s*(.*?)\s*```',
         r'```sql\s*(.*?)\s*```',
+        r'Action Input:\s*((?:SELECT|WITH)\b.*?)(?=\n(?:Action:|Observation:|Final Answer:|> Finished|\Z))',
     ]
 
     matches = []
@@ -52,8 +54,15 @@ def extract_sql_from_logs(log_text: str) -> str:
     if not matches:
         return ""
 
-    sql = matches[-1].strip()
+    return normalize_sql(matches[-1])
+
+
+def normalize_sql(sql: str) -> str:
+    sql = sql.strip()
+    sql = sql.strip("`")
     sql = sql.replace('\\"', '"').replace("\\n", "\n")
+    sql = re.sub(r"^sql\s+", "", sql.strip(), flags=re.IGNORECASE)
+    sql = re.sub(r";\s*$", "", sql.strip())
     return sql
 
 
@@ -72,6 +81,7 @@ def _serialize_cell(value) -> str:
 
 
 def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
+    sql = normalize_sql(sql)
     if not sql or FORBIDDEN_SQL_RE.search(sql):
         return [], []
 
@@ -109,8 +119,9 @@ def _extract_sql_from_value(value) -> str:
 
 
 class AgentProgressHandler(BaseCallbackHandler):
-    def __init__(self, emit):
+    def __init__(self, emit, state: dict):
         self.emit = emit
+        self.state = state
 
     def on_agent_action(self, action, **kwargs):
         tool = getattr(action, "tool", "")
@@ -133,9 +144,17 @@ class AgentProgressHandler(BaseCallbackHandler):
 
         sql = _extract_sql_from_value(tool_input)
         if sql:
+            self.state["last_sql"] = sql
+            if tool == "sql_db_query":
+                self.state["pending_query_sql"] = sql
+                self.state["last_query_sql"] = sql
             self.emit({"type": "sql", "sql": sql})
 
     def on_tool_end(self, output, **kwargs):
+        pending_query_sql = self.state.pop("pending_query_sql", "")
+        if pending_query_sql and not str(output).lstrip().startswith("Error:"):
+            self.state["last_success_query_sql"] = pending_query_sql
+
         self.emit({
             "type": "progress",
             "message": "工具返回结果",
@@ -180,7 +199,8 @@ def run_agent(question: str, progress=None) -> dict:
         llm_kwargs["base_url"] = OPENAI_BASE_URL
 
     llm = ChatOpenAI(**llm_kwargs)
-    callbacks = [AgentProgressHandler(emit)] if progress else []
+    state: dict[str, str] = {}
+    callbacks = [AgentProgressHandler(emit, state)]
 
     agent = create_sql_agent(
         llm=llm,
@@ -207,7 +227,12 @@ def run_agent(question: str, progress=None) -> dict:
             result = agent.invoke({"input": question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
-        sql = extract_sql_from_logs(logs)
+        sql = (
+            state.get("last_success_query_sql")
+            or state.get("last_query_sql")
+            or state.get("last_sql")
+            or extract_sql_from_logs(logs)
+        )
         summary = result.get("output", "")
         columns = []
         rows = []
@@ -217,8 +242,16 @@ def run_agent(question: str, progress=None) -> dict:
             summary = ""
             error = "已拦截非只读 SQL，高切坡智能查询仅允许 SELECT/WITH 查询。"
         else:
-            emit({"type": "progress", "message": "整理数据库查询表格"})
+            emit({
+                "type": "progress",
+                "message": "整理数据库查询表格",
+                "detail": sql,
+            })
             columns, rows = query_table_for_display(db, sql)
+            emit({
+                "type": "progress",
+                "message": f"查询结果已同步到表格：{len(rows)} 条",
+            })
 
         return {
             "question": question,
@@ -233,7 +266,12 @@ def run_agent(question: str, progress=None) -> dict:
     except Exception as e:
         logs = log_buffer.getvalue()
         error = str(e)
-        sql = extract_sql_from_logs(logs)
+        sql = (
+            state.get("last_success_query_sql")
+            or state.get("last_query_sql")
+            or state.get("last_sql")
+            or extract_sql_from_logs(logs)
+        )
         recovered_answer = extract_answer_from_parsing_error(error)
         columns, rows = query_table_for_display(db, sql)
         return {
