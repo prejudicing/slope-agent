@@ -4,6 +4,7 @@ import viteLogo from '../assets/vite.svg'
 import heroImg from '../assets/hero.png'
 import vueLogo from '../assets/vue.svg'
 
+// Vite 初始化模板组件，目前未被 App.vue 使用，保留仅作脚手架参考。
 const count = ref(0)
 </script>
 

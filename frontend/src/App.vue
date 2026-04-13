@@ -52,6 +52,7 @@ import AgentLogPanel from './components/AgentLogPanel.vue'
 import { streamQuery } from './api/query'
 import type { ThinkingStep } from './types/query'
 
+// 页面主状态：SQL、表格、总结和日志分别展示，避免把 Final Answer 当作表格数据。
 const question = ref('')
 const sql = ref('')
 const summary = ref('')
@@ -63,6 +64,7 @@ const thinkingExpanded = ref(false)
 const error = ref('')
 const loading = ref(false)
 
+// 把后端 SSE progress 事件追加到“思考过程”面板，同时维护完整文本日志。
 const appendThinking = (
   title: string,
   detail?: string,
@@ -105,6 +107,7 @@ const handleSubmit = async () => {
   try {
     appendThinking('开始理解问题并准备查询')
 
+    // 后端按 SSE 持续推送 progress/sql/summary/final，前端收到后分区更新页面。
     await streamQuery(question.value, (event) => {
       if (event.type === 'progress') {
         appendThinking(event.message, event.detail)
@@ -125,6 +128,7 @@ const handleSubmit = async () => {
 
       if (event.type === 'final') {
         const res = event.data
+        // final 中的 columns/rows 来自最后一次成功 SQL 查询，是结果表格的数据源。
         sql.value = res.sql || sql.value
         summary.value = res.summary || res.result || summary.value
         columns.value = res.columns || []

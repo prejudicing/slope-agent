@@ -1,3 +1,5 @@
+"""导出真实数据库 schema，并与 Word 设计文档中的表结构做对比。"""
+
 import argparse
 import json
 import re
@@ -21,16 +23,19 @@ TABLE_NAME_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]+)\s*$")
 
 
 def normalize_name(value: str) -> str:
+    """统一表名/字段名格式，便于跨来源比较。"""
     return value.strip().strip('"').lower()
 
 
 def clean_text(value: str | None) -> str:
+    """清理 Word 单元格或数据库注释中的换行和多余空白。"""
     if value is None:
         return ""
     return " ".join(str(value).replace("\n", " ").split())
 
 
 def load_dm_config() -> dict[str, str]:
+    """从 backend/.env 加载达梦数据库连接配置。"""
     load_dotenv(ROOT_DIR / "backend" / ".env")
     import os
 
@@ -47,17 +52,20 @@ def load_dm_config() -> dict[str, str]:
 
 
 def build_dm_uri(config: dict[str, str]) -> str:
+    """构造 SQLAlchemy 可识别的达梦连接串。"""
     password = quote_plus(config["password"])
     return f"dm+dmPython://{config['user']}:{password}@{config['host']}:{config['port']}/"
 
 
 def serialize_default(value: Any) -> str:
+    """数据库默认值可能不是 JSON 原生类型，统一转成字符串输出。"""
     if value is None:
         return ""
     return str(value)
 
 
 def export_database_schema() -> dict[str, Any]:
+    """从真实数据库 inspector 中导出所有可见表和字段。"""
     config = load_dm_config()
     engine = create_engine(build_dm_uri(config))
     try:
@@ -98,6 +106,7 @@ def export_database_schema() -> dict[str, Any]:
 
 
 def iter_doc_blocks(doc: Document):
+    """按 Word 原始顺序遍历段落和表格，保留表格前的标题上下文。"""
     for child in doc.element.body.iterchildren():
         if child.tag == qn("w:p"):
             yield Paragraph(child, doc)
@@ -106,6 +115,7 @@ def iter_doc_blocks(doc: Document):
 
 
 def parse_doc_table(table: Table) -> list[dict[str, str]]:
+    """把 Word 中的一张字段表解析成字段列表。"""
     if not table.rows:
         return []
 
@@ -129,6 +139,7 @@ def parse_doc_table(table: Table) -> list[dict[str, str]]:
 
 
 def extract_doc_schema(docx_path: Path) -> dict[str, Any]:
+    """从数据库设计文档中提取表名、章节和字段结构。"""
     doc = Document(docx_path)
     recent_paragraphs: list[str] = []
     tables = []
@@ -179,6 +190,7 @@ def extract_doc_schema(docx_path: Path) -> dict[str, Any]:
 
 
 def comparable_type(value: str) -> str:
+    """粗略归一化类型名称，降低 varchar/varchar2、int/integer 这类差异干扰。"""
     value = value.lower()
     value = value.replace("varchar2", "varchar")
     value = value.replace("integer", "int")
@@ -189,6 +201,7 @@ def comparable_type(value: str) -> str:
 
 
 def compare_schemas(db_schema: dict[str, Any], doc_schema: dict[str, Any]) -> dict[str, Any]:
+    """比较真实库和设计文档的表、字段、类型差异。"""
     db_tables = {table["normalized_table_name"]: table for table in db_schema["tables"]}
     doc_tables = {
         table["normalized_table_name"]: table
@@ -269,11 +282,13 @@ def compare_schemas(db_schema: dict[str, Any], doc_schema: dict[str, Any]) -> di
 
 
 def write_json(path: Path, data: Any) -> None:
+    """以 UTF-8 JSON 格式写出，保留中文可读性。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main() -> None:
+    """命令行入口：导出真实 schema、文档 schema 和差异报告。"""
     parser = argparse.ArgumentParser(description="Export and compare DM database schema with Word schema.")
     parser.add_argument("--docx", type=Path, default=DEFAULT_DOCX)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)

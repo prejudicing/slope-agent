@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
+// 使用本地副本承接 v-model，避免父组件重置问题时 textarea 状态不同步。
 const props = defineProps<{
   question: string
   loading: boolean
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 
 const localQuestion = ref(props.question)
 
+// 父组件清空或恢复问题时，同步到输入框。
 watch(
   () => props.question,
   (val) => {
@@ -36,11 +38,13 @@ watch(
   }
 )
 
+// 输入框变化时，向父组件同步 question。
 watch(localQuestion, (val) => {
   emit('update:question', val)
 })
 
 const handleSubmit = () => {
+  // 具体校验和请求逻辑在 App.vue 中集中处理。
   emit('submit')
 }
 </script>

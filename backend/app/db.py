@@ -1,3 +1,5 @@
+"""达梦数据库连接与 LangChain SQLDatabase 初始化。"""
+
 from urllib.parse import quote_plus
 from sqlalchemy import create_engine, inspect
 from langchain_community.utilities import SQLDatabase
@@ -7,6 +9,7 @@ from app.schema_knowledge import get_default_core_tables
 
 
 def _require_dm_config():
+    """启动查询前校验必要的达梦连接配置。"""
     missing = [
         name
         for name, value in {
@@ -22,6 +25,7 @@ def _require_dm_config():
 
 
 def _resolve_existing_tables(uri: str, requested_tables: list[str]) -> tuple[list[str], list[str]]:
+    """把候选表名解析为真实库中存在的表，过滤文档里有但库里没有的旧表。"""
     engine = create_engine(uri)
     try:
         inspector = inspect(engine)
@@ -51,8 +55,10 @@ def _resolve_existing_tables(uri: str, requested_tables: list[str]) -> tuple[lis
 
 
 def get_db(include_tables: list[str] | None = None):
+    """创建限定业务表范围的 SQLDatabase，降低 Agent 误查无关表的概率。"""
     _require_dm_config()
     password = quote_plus(DM_PASSWORD)
+    # 优先使用问题召回的候选表；没有召回结果时再回退到环境变量或默认核心表。
     requested_tables = include_tables or (
         [table.strip() for table in HCS_INCLUDE_TABLES.split(",") if table.strip()]
         if HCS_INCLUDE_TABLES

@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+// 展示 Agent 当前生成或最终使用的 SQL，方便验证语义识别和查询口径。
 defineProps<{
   sql: string
 }>()

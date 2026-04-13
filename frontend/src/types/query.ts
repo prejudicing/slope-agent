@@ -1,3 +1,4 @@
+// 后端最终返回结构。columns/rows 专供查询结果表格使用，summary 是 Agent 总结。
 export interface QueryResponse {
   question: string
   sql: string
@@ -9,6 +10,7 @@ export interface QueryResponse {
   error: string | null
 }
 
+// 思考过程面板中的单个步骤，由 SSE progress/sql/summary 事件转换而来。
 export interface ThinkingStep {
   id: number
   time: string
@@ -17,6 +19,7 @@ export interface ThinkingStep {
   status: 'running' | 'done' | 'error'
 }
 
+// 后端流式事件协议。新增事件类型时需要同步更新 App.vue 的处理逻辑。
 export type QueryStreamEvent =
   | {
       type: 'progress'

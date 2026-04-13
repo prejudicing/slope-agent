@@ -1,5 +1,6 @@
-"""High-cut-slope domain constraints for the SQL agent."""
+"""高切坡 SQL Agent 的业务边界和 Prompt 模板。"""
 
+# 早期手工维护的高切坡候选表。当前会优先使用真实 schema 召回结果，这里作为兜底。
 GQP_INCLUDE_TABLES = [
     "geo_gqp_jbxx",
     "geo_gqp_zyjc",
@@ -18,7 +19,7 @@ GQP_INCLUDE_TABLES = [
     "geo_dzbjjbxx",
 ]
 
-
+# 早期静态表说明，保留用于阅读和兜底；运行时更推荐使用 schema_knowledge 动态生成的 table_guide。
 GQP_TABLE_GUIDE = """
 高切坡业务表：
 - geo_gqp_jbxx：高切坡基本信息主表。核心字段：GQPBH/高切坡编号、GQPMC/名称、SSSS/所属省市、SSQX/所属区县、AQDJ/安全等级、GQPZT/高切坡状态、SFZYJC/是否专业监测、SFSSJC/是否实时监测、SFZYJCYC/是否专业监测异常、SFSSSJYC/是否实时数据异常、ZBYYRK/周边影响人口、ZBYXFW/周边影响房屋、ZRDW/责任单位、JCY/监测员。
@@ -37,7 +38,7 @@ GQP_TABLE_GUIDE = """
 - t_tilt_model、t_panoramic_data、t_drone_dom：空间数据关联表，分别存倾斜摄影模型、全景数据、高精度无人机 DOM，常用字段包括 name、code、url、gqpbh、x、y、height、create_time、zip_url。
 """
 
-
+# Agent 系统提示词：限定业务范围、安全 SQL 规则、回答格式，并注入动态 schema guide。
 GQP_AGENT_PREFIX = """
 你是“高切坡系统智能查询 Agent”，专门帮助用户用自然语言查询高切坡业务数据库。
 

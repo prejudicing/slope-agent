@@ -49,6 +49,7 @@
 import { computed } from 'vue'
 import type { ThinkingStep } from '../types/query'
 
+// 展示折叠后的思考摘要和展开后的完整步骤，查询完成后由父组件控制默认收起。
 const props = defineProps<{
   logs: string
   steps: ThinkingStep[]
@@ -60,6 +61,7 @@ const emit = defineEmits<{
   (e: 'toggle'): void
 }>()
 
+// 卡片右上角的状态说明，避免用户在长查询期间误以为页面卡住。
 const statusText = computed(() => {
   if (props.loading) {
     return '正在分析'
@@ -70,6 +72,7 @@ const statusText = computed(() => {
   return '等待查询'
 })
 
+// 折叠时优先展示最新一步，类似“正在做什么”的轻量反馈。
 const collapsedText = computed(() => {
   if (props.loading) {
     const latest = props.steps[props.steps.length - 1]

@@ -1,3 +1,8 @@
+"""应用配置。
+
+配置来自 backend/.env 或运行环境变量，包括达梦数据库和大模型接口信息。
+"""
+
 import os
 from dotenv import load_dotenv
 
@@ -12,5 +17,5 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 
-# Optional comma-separated override for high-cut-slope business tables.
+# 可选：用逗号分隔覆盖默认高切坡业务表，主要用于临时调试。
 HCS_INCLUDE_TABLES = os.getenv("HCS_INCLUDE_TABLES")

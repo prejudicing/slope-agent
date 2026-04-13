@@ -1,3 +1,5 @@
+"""对真实业务表做数据画像，并生成 Agent 初始业务知识包。"""
+
 import argparse
 import json
 from datetime import datetime
@@ -65,14 +67,17 @@ TIME_EXACT_NAMES = {
 
 
 def normalize(value: str) -> str:
+    """统一字段名/表名格式，便于规则判断。"""
     return value.strip().strip('"').lower()
 
 
 def quote_identifier(name: str) -> str:
+    """达梦字段和表名保留原大小写，用双引号避免大小写或关键字问题。"""
     return '"' + name.replace('"', '""') + '"'
 
 
 def load_dm_config() -> dict[str, str]:
+    """从 backend/.env 加载达梦数据库连接配置。"""
     load_dotenv(ROOT_DIR / "backend" / ".env")
     import os
 
@@ -89,10 +94,12 @@ def load_dm_config() -> dict[str, str]:
 
 
 def build_dm_uri(config: dict[str, str]) -> str:
+    """构造 SQLAlchemy 达梦连接串。"""
     return f"dm+dmPython://{config['user']}:{quote_plus(config['password'])}@{config['host']}:{config['port']}/"
 
 
 def is_numeric_or_text(column_type: str) -> bool:
+    """枚举画像只对数值和短文本字段有意义。"""
     type_value = column_type.lower()
     return any(
         item in type_value
@@ -101,12 +108,14 @@ def is_numeric_or_text(column_type: str) -> bool:
 
 
 def is_time_column(name: str, column_type: str) -> bool:
+    """识别可用于最近、趋势、时间排序的问题字段。"""
     normalized = normalize(name)
     type_value = column_type.lower()
     return "time" in type_value or "date" in type_value or normalized in TIME_EXACT_NAMES
 
 
 def is_enum_candidate(column: dict[str, Any]) -> bool:
+    """识别状态、标志、类型、等级等可能需要枚举解释的字段。"""
     name = normalize(column["name"])
     column_type = column.get("type", "").lower()
     if not is_numeric_or_text(column_type):
@@ -127,12 +136,14 @@ def is_enum_candidate(column: dict[str, Any]) -> bool:
 
 
 def safe_scalar(value: Any) -> str:
+    """把数据库返回值转为 JSON 友好的字符串。"""
     if value is None:
         return ""
     return str(value)
 
 
 def profile_table(conn, table: dict[str, Any], sample_limit: int) -> dict[str, Any]:
+    """统计单表行数、字段非空率、枚举样例和时间范围。"""
     table_name = table["table_name"]
     quoted_table = quote_identifier(table_name)
     columns = table.get("fields", [])
@@ -236,6 +247,7 @@ def profile_table(conn, table: dict[str, Any], sample_limit: int) -> dict[str, A
 
 
 def score_core_table(table: dict[str, Any]) -> tuple[int, list[str]]:
+    """根据表名、业务域和关键字段给表打分，筛选核心业务表。"""
     table_name = normalize(table["table_name"])
     field_names = {normalize(field["name"]) for field in table.get("fields", [])}
     domain = table.get("business_domain", "")
@@ -270,6 +282,7 @@ def score_core_table(table: dict[str, Any]) -> tuple[int, list[str]]:
 
 
 def generate_core_candidates(explained_schema: dict[str, Any], profile: dict[str, Any]) -> dict[str, Any]:
+    """结合 schema 解释和真实行数，生成核心表/候选表/排除表分组。"""
     profiles = {table["table_name"]: table for table in profile["tables"]}
     candidates = []
     for table in explained_schema["tables"]:
@@ -306,6 +319,7 @@ def generate_core_candidates(explained_schema: dict[str, Any], profile: dict[str
 
 
 def generate_business_starter_pack(core_candidates: dict[str, Any]) -> dict[str, Any]:
+    """生成 Agent 初始业务词典、候选关系、示例 SQL 和安全约束。"""
     core_table_names = [item["table_name"] for item in core_candidates["core_tables"]]
     return {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
@@ -416,11 +430,13 @@ def generate_business_starter_pack(core_candidates: dict[str, Any]) -> dict[str,
 
 
 def write_json(path: Path, data: Any) -> None:
+    """写出格式化 JSON，便于人工校对。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main() -> None:
+    """命令行入口：画像真实表，并输出核心表候选和 starter pack。"""
     parser = argparse.ArgumentParser(description="Profile real DB tables and generate starter business knowledge.")
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)

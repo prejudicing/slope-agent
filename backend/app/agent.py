@@ -1,3 +1,9 @@
+"""高切坡智能查询 Agent 主流程。
+
+本模块负责把用户自然语言问题交给 LangChain SQL Agent，实时推送思考过程，
+并把最后一次成功执行的 SQL 结果重新整理成前端可展示的表格。
+"""
+
 import io
 import json
 import queue
@@ -20,6 +26,7 @@ from app.domain import GQP_AGENT_PREFIX
 from app.schema_knowledge import build_schema_guide, select_include_tables
 
 
+# 只允许只读查询。这里用黑名单拦截常见写操作，真正执行前还会再次检查。
 FORBIDDEN_SQL_RE = re.compile(
     r"\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|CREATE|MERGE|CALL|EXEC)\b",
     re.IGNORECASE,
@@ -37,6 +44,10 @@ STREAM_DONE = object()
 
 
 def extract_sql_from_logs(log_text: str) -> str:
+    """从 Agent verbose 日志里兜底提取 SQL。
+
+    正常情况下优先使用 callback 记录的 sql_db_query；该函数主要用于异常场景兜底。
+    """
     log_text = ANSI_RE.sub("", log_text)
     patterns = [
         r'Action Input:\s*"((?:SELECT|WITH).*?)"',
@@ -58,6 +69,7 @@ def extract_sql_from_logs(log_text: str) -> str:
 
 
 def normalize_sql(sql: str) -> str:
+    """清理模型或日志中常见的 SQL 包裹字符，避免回查表格时执行失败。"""
     sql = sql.strip()
     sql = sql.strip("`")
     sql = sql.replace('\\"', '"').replace("\\n", "\n")
@@ -67,6 +79,7 @@ def normalize_sql(sql: str) -> str:
 
 
 def extract_answer_from_parsing_error(error_text: str) -> str:
+    """LangChain 输出解析失败时，从异常文本中恢复模型已经生成的中文答案。"""
     match = PARSING_ERROR_OUTPUT_RE.search(error_text)
     if not match:
         return ""
@@ -81,6 +94,7 @@ def _serialize_cell(value) -> str:
 
 
 def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
+    """用最终 SQL 重新查询一次数据库，生成前端 ResultPanel 需要的 columns/rows。"""
     sql = normalize_sql(sql)
     if not sql or FORBIDDEN_SQL_RE.search(sql):
         return [], []
@@ -103,6 +117,7 @@ def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
 
 
 def clean_logs(logs: str) -> str:
+    """清洗 Agent 日志，隐藏表结构 DDL，避免用户误认为系统执行了 CREATE TABLE。"""
     logs = ANSI_RE.sub("", logs)
     return SCHEMA_DDL_RE.sub("[表结构详情已隐藏，仅用于 Agent 理解字段，不是执行建表语句]", logs)
 
@@ -113,17 +128,21 @@ def _compact_text(value, max_len: int = 1200) -> str:
 
 
 def _extract_sql_from_value(value) -> str:
+    """从 LangChain tool_input 的不同结构中提取 SQL 字符串。"""
     if isinstance(value, dict):
         value = value.get("query") or value.get("sql") or value.get("input") or value
     return extract_sql_from_logs(f"Action Input: {json.dumps(str(value), ensure_ascii=False)}")
 
 
 class AgentProgressHandler(BaseCallbackHandler):
+    """把 Agent 工具调用转换成前端可展示的流式事件。"""
+
     def __init__(self, emit, state: dict):
         self.emit = emit
         self.state = state
 
     def on_agent_action(self, action, **kwargs):
+        """Agent 准备调用工具时触发，用于推送进度和记录即将执行的 SQL。"""
         tool = getattr(action, "tool", "")
         tool_input = getattr(action, "tool_input", "")
         message = f"调用工具：{tool}"
@@ -146,11 +165,13 @@ class AgentProgressHandler(BaseCallbackHandler):
         if sql:
             self.state["last_sql"] = sql
             if tool == "sql_db_query":
+                # 表格结果必须来自真实查询工具，不使用 Final Answer 文本解析。
                 self.state["pending_query_sql"] = sql
                 self.state["last_query_sql"] = sql
             self.emit({"type": "sql", "sql": sql})
 
     def on_tool_end(self, output, **kwargs):
+        """工具返回后触发；成功的 sql_db_query 会成为表格回查的首选 SQL。"""
         pending_query_sql = self.state.pop("pending_query_sql", "")
         if pending_query_sql and not str(output).lstrip().startswith("Error:"):
             self.state["last_success_query_sql"] = pending_query_sql
@@ -172,6 +193,7 @@ class AgentProgressHandler(BaseCallbackHandler):
 
 
 def run_agent(question: str, progress=None) -> dict:
+    """执行一次完整查询，并返回 SQL、表格数据、总结和日志。"""
     def emit(payload: dict):
         if progress:
             progress(payload)
@@ -227,6 +249,7 @@ def run_agent(question: str, progress=None) -> dict:
             result = agent.invoke({"input": question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
+        # 优先使用最后一次成功执行的 sql_db_query，避免 checker 或日志摘要污染结果表格。
         sql = (
             state.get("last_success_query_sql")
             or state.get("last_query_sql")
@@ -287,6 +310,7 @@ def run_agent(question: str, progress=None) -> dict:
 
 
 def stream_agent_events(question: str):
+    """把同步 Agent 调用包装成 SSE 事件流，供前端实时展示思考过程。"""
     event_queue = queue.Queue()
 
     def emit(payload: dict):

@@ -1,3 +1,5 @@
+"""基于真实数据库 schema 生成初版中文业务解释和向量化 chunk。"""
+
 import argparse
 import json
 import re
@@ -144,10 +146,12 @@ JOIN_KEYS = {
 
 
 def normalize_name(value: str) -> str:
+    """统一表名/字段名格式，便于规则匹配。"""
     return value.strip().strip('"').lower()
 
 
 def table_info(table_name: str) -> tuple[str, str]:
+    """根据表名推断业务域和表说明；未命中时使用保守兜底描述。"""
     key = normalize_name(table_name)
     if key in TABLE_DESCRIPTIONS:
         return TABLE_DESCRIPTIONS[key]
@@ -165,6 +169,7 @@ def table_info(table_name: str) -> tuple[str, str]:
 
 
 def infer_field(column: dict[str, Any]) -> dict[str, Any]:
+    """根据字段名、注释和规则生成字段业务含义、别名和枚举提示。"""
     name = column["name"]
     normalized = normalize_name(name)
     existing_comment = column.get("comment") or ""
@@ -199,6 +204,7 @@ def infer_field(column: dict[str, Any]) -> dict[str, Any]:
 
 
 def infer_table_hints(table_name: str, fields: list[dict[str, Any]]) -> list[str]:
+    """根据字段组合生成表级查询提示，帮助 Agent 形成正确 SQL 条件。"""
     field_names = {normalize_name(field["name"]) for field in fields}
     hints = []
 
@@ -224,6 +230,7 @@ def infer_table_hints(table_name: str, fields: list[dict[str, Any]]) -> list[str
 
 
 def build_embedding_text(table: dict[str, Any]) -> str:
+    """把一张表的解释压成文本块，后续可直接写入向量数据库。"""
     field_parts = []
     for field in table["fields"]:
         aliases = "、".join(field.get("aliases", []))
@@ -248,6 +255,7 @@ def build_embedding_text(table: dict[str, Any]) -> str:
 
 
 def generate_explained_schema(database_schema: dict[str, Any]) -> dict[str, Any]:
+    """为真实库中的每张表生成业务解释结构。"""
     tables = []
     for source_table in database_schema["tables"]:
         table_name = source_table["table_name"]
@@ -280,11 +288,13 @@ def generate_explained_schema(database_schema: dict[str, Any]) -> dict[str, Any]
 
 
 def write_json(path: Path, data: Any) -> None:
+    """写出格式化 JSON，方便人工检查和 git diff。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def write_jsonl(path: Path, tables: list[dict[str, Any]]) -> None:
+    """写出 JSONL chunk；默认一个表一个 chunk。"""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:
         for table in tables:
@@ -309,6 +319,7 @@ def write_jsonl(path: Path, tables: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
+    """命令行入口：读取 database_schema.json，生成 explained schema 和 chunks。"""
     parser = argparse.ArgumentParser(description="Generate first-pass business explanations for exported DB schema.")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)

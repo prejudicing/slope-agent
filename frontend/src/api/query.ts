@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { QueryResponse, QueryStreamEvent } from '../types/query'
 
+// 非流式接口保留给调试；当前页面主要使用 streamQuery。
 export async function postQuery(question: string): Promise<QueryResponse> {
   const res = await axios.post('/api/query', {
     question,
@@ -12,6 +13,7 @@ export async function streamQuery(
   question: string,
   onEvent: (event: QueryStreamEvent) => void
 ) {
+  // 使用 fetch 读取 text/event-stream，便于边查询边展示 Agent 进度。
   const res = await fetch('/api/query/stream', {
     method: 'POST',
     headers: {
@@ -35,10 +37,12 @@ export async function streamQuery(
     }
 
     buffer += decoder.decode(value, { stream: true })
+    // SSE 事件用空行分隔；最后一个不完整片段留到下一次 read 再解析。
     const chunks = buffer.split('\n\n')
     buffer = chunks.pop() || ''
 
     for (const chunk of chunks) {
+      // 当前后端只发送 data 行，解析后交给页面按事件类型更新不同组件。
       const line = chunk
         .split('\n')
         .find((item) => item.startsWith('data: '))

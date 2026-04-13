@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+// 展示 Agent Final Answer；它是业务总结，不作为结果表格的数据源。
 defineProps<{
   summary: string
 }>()

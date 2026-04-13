@@ -1,3 +1,9 @@
+"""真实数据库 schema 知识召回。
+
+这里暂时不接入向量数据库，而是使用导出的 schema JSON、业务词典和启发式打分，
+为每次自然语言查询选择候选表，并生成注入 SQL Agent Prompt 的表字段说明。
+"""
+
 import json
 import re
 from functools import lru_cache
@@ -12,7 +18,10 @@ SCHEMA_CHUNKS_PATH = SCHEMA_DIR / "schema_chunks.jsonl"
 STARTER_PACK_PATH = SCHEMA_DIR / "business_starter_pack.json"
 CORE_CANDIDATES_PATH = SCHEMA_DIR / "core_table_candidates.json"
 
+# 系统管理表默认降权，避免普通业务查询误触账号、权限等无关数据。
 SYSTEM_TABLES = {"t_user", "t_user_role", "t_role", "t_role_menu", "t_menus"}
+
+# 业务关键词到核心表的人工加权，弥补纯字符串匹配对领域词的理解不足。
 QUESTION_TABLE_BOOSTS = [
     (("统计", "数量", "多少", "总数", "各区县", "按区县"), ("geo_gqp_jbxx",), 45),
     (("裂缝", "落石", "群测群防", "日常监测", "巡查监测"), ("tb_hcs_monitoring",), 55),
@@ -26,6 +35,7 @@ QUESTION_TABLE_BOOSTS = [
 
 
 def _load_json(path: Path, default: Any):
+    """读取 JSON 文件；文件不存在时返回默认结构，方便本地冷启动。"""
     if not path.exists():
         return default
     return json.loads(path.read_text(encoding="utf-8"))
@@ -33,11 +43,13 @@ def _load_json(path: Path, default: Any):
 
 @lru_cache(maxsize=1)
 def load_explained_schema() -> dict[str, Any]:
+    """加载带中文业务解释的真实数据库 schema。"""
     return _load_json(EXPLAINED_SCHEMA_PATH, {"tables": []})
 
 
 @lru_cache(maxsize=1)
 def load_starter_pack() -> dict[str, Any]:
+    """加载 Agent 初始业务知识包，包括核心表、业务词、关系和样例 SQL。"""
     return _load_json(
         STARTER_PACK_PATH,
         {
@@ -52,11 +64,13 @@ def load_starter_pack() -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def load_core_candidates() -> dict[str, Any]:
+    """加载核心表候选结果，作为缺省 include_tables 的来源。"""
     return _load_json(CORE_CANDIDATES_PATH, {"core_tables": [], "candidate_tables": []})
 
 
 @lru_cache(maxsize=1)
 def load_schema_chunks() -> list[dict[str, Any]]:
+    """加载一个表一个 chunk 的 schema 文本，后续可替换为真正的向量召回。"""
     if not SCHEMA_CHUNKS_PATH.exists():
         return []
     chunks = []
@@ -67,6 +81,7 @@ def load_schema_chunks() -> list[dict[str, Any]]:
 
 
 def get_table_map() -> dict[str, dict[str, Any]]:
+    """按小写表名建立索引，方便召回结果回填完整表解释。"""
     return {
         table["table_name"].lower(): table
         for table in load_explained_schema().get("tables", [])
@@ -74,6 +89,7 @@ def get_table_map() -> dict[str, dict[str, Any]]:
 
 
 def get_default_core_tables() -> list[str]:
+    """获取默认核心业务表，优先使用 starter pack 中的筛选结果。"""
     starter = load_starter_pack()
     if starter.get("core_tables"):
         return starter["core_tables"]
@@ -83,6 +99,7 @@ def get_default_core_tables() -> list[str]:
 
 
 def _question_terms(question: str) -> list[str]:
+    """把用户问题拆成英文 token 和中文短片段，用于轻量关键词召回。"""
     terms = set()
     lowered = question.lower()
     for token in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", lowered):
@@ -99,6 +116,7 @@ def _question_terms(question: str) -> list[str]:
 
 
 def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str, Any]]:
+    """根据用户问题召回最相关的表解释。"""
     chunks = load_schema_chunks()
     if not chunks:
         table_map = get_table_map()
@@ -106,6 +124,8 @@ def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str
 
     starter = load_starter_pack()
     boosted_tables: dict[str, int] = {}
+
+    # 先按人工维护的业务关键词加权，再用 schema chunk 文本命中做细粒度补分。
     for keywords, table_names, boost in QUESTION_TABLE_BOOSTS:
         if any(keyword in question for keyword in keywords):
             for table_name in table_names:
@@ -156,14 +176,17 @@ def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str
 
 
 def select_include_tables(question: str) -> list[str]:
+    """为 LangChain SQLDatabase 选择本次查询允许暴露的表。"""
     selected = retrieve_schema_for_question(question)
     table_names = [table["table_name"] for table in selected]
+    # 基础档案表常作为 JOIN 和兜底信息来源，默认补上。
     if "geo_gqp_jbxx" not in {name.lower() for name in table_names}:
         table_names.append("geo_gqp_jbxx")
     return table_names
 
 
 def _format_field(field: dict[str, Any]) -> str:
+    """把字段解释压缩成适合放入 Prompt 的一行文本。"""
     parts = [
         field.get("name", ""),
         field.get("type", ""),
@@ -182,6 +205,7 @@ def _format_field(field: dict[str, Any]) -> str:
 
 
 def build_schema_guide(question: str, field_limit: int = 28) -> str:
+    """构造注入 SQL Agent 的 schema 业务说明。"""
     tables = retrieve_schema_for_question(question)
     starter = load_starter_pack()
     sections = [
@@ -191,6 +215,7 @@ def build_schema_guide(question: str, field_limit: int = 28) -> str:
     for table in tables:
         fields = table.get("fields", [])
         important_fields = []
+        # 优先展示有别名、枚举、主键、查询提示的字段，避免 Prompt 被低价值字段撑满。
         for field in fields:
             if (
                 field.get("value_hints")

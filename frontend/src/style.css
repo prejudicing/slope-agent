@@ -1,4 +1,5 @@
 * {
+  /* 统一盒模型，避免卡片、表格在移动端出现横向撑开。 */
   box-sizing: border-box;
 }
 
@@ -21,6 +22,7 @@ body {
 }
 
 .boot-fallback {
+  /* Vue 还没挂载成功时 index.html 中的兜底提示样式。 */
   padding: 24px;
   color: #5f6f86;
   font-size: 16px;

@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+// columns/rows 来自后端对最后一次成功 SQL 的真实回查结果。
 defineProps<{
   columns: string[]
   rows: Record<string, string>[]
