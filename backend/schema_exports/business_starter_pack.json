@@ -1,0 +1,170 @@
+{
+  "generated_at": "2026-04-13T15:23:26",
+  "positioning": "高切坡数据库查询助手。优先回答真实数据库记录和统计，不替代工程专业判断。",
+  "core_tables": [
+    "geo_gqp_jbxx",
+    "tb_hcs_monitoring",
+    "t_warning_report_content",
+    "t_review_record",
+    "t_warning_report",
+    "geo_gqp_zyjc",
+    "geo_dzbjjbxx",
+    "t_monthly"
+  ],
+  "business_terms": [
+    {
+      "term": "裂缝",
+      "tables": [
+        "tb_hcs_monitoring"
+      ],
+      "fields": [
+        "isCrack",
+        "isRead",
+        "width",
+        "crackImageUri"
+      ],
+      "sql_hint": "isCrack = 1"
+    },
+    {
+      "term": "落石",
+      "tables": [
+        "tb_hcs_monitoring"
+      ],
+      "fields": [
+        "sfyls"
+      ],
+      "sql_hint": "sfyls = 1"
+    },
+    {
+      "term": "异常",
+      "tables": [
+        "tb_hcs_monitoring",
+        "geo_gqp_jbxx"
+      ],
+      "fields": [
+        "overallSituation",
+        "hcSlopeStatus",
+        "sfzyjcyc",
+        "sfsssjyc",
+        "gqpzt"
+      ]
+    },
+    {
+      "term": "预警",
+      "tables": [
+        "t_warning_report",
+        "t_warning_report_content",
+        "geo_gqp_jbxx"
+      ],
+      "fields": [
+        "warning_level",
+        "warned",
+        "last_warning_date",
+        "sfjcyj"
+      ]
+    },
+    {
+      "term": "区县",
+      "tables": [
+        "geo_gqp_jbxx",
+        "tb_hcs_monitoring",
+        "geo_dzbjjbxx"
+      ],
+      "fields": [
+        "ssqx",
+        "ssss"
+      ]
+    },
+    {
+      "term": "最近",
+      "tables": [
+        "tb_hcs_monitoring",
+        "t_warning_report",
+        "t_review_record"
+      ],
+      "fields": [
+        "createdOn",
+        "create_time",
+        "review_time",
+        "last_warning_date"
+      ]
+    }
+  ],
+  "candidate_relations": [
+    {
+      "from_table": "tb_hcs_monitoring",
+      "from_field": "gqpbh",
+      "to_table": "geo_gqp_jbxx",
+      "to_field": "gqpbh",
+      "confidence": "high",
+      "reason": "均为高切坡编号字段。"
+    },
+    {
+      "from_table": "geo_dzbjjbxx",
+      "from_field": "gqpbh",
+      "to_table": "geo_gqp_jbxx",
+      "to_field": "gqpbh",
+      "confidence": "high",
+      "reason": "地质背景资料通过高切坡编号关联基本信息。"
+    },
+    {
+      "from_table": "t_warning_report_content",
+      "from_field": "xmbh",
+      "to_table": "geo_gqp_jbxx",
+      "to_field": "gqpbh",
+      "confidence": "medium",
+      "reason": "xmbh 注释为项目编号（高切坡编号）。"
+    },
+    {
+      "from_table": "geo_gqp_zyjc",
+      "from_field": "gqp_no",
+      "to_table": "geo_gqp_jbxx",
+      "to_field": "gqpbh",
+      "confidence": "medium",
+      "reason": "gqp_no 表示高切坡编号。"
+    }
+  ],
+  "query_examples": [
+    {
+      "question": "按区县统计高切坡数量",
+      "sql": "SELECT ssqx, COUNT(*) AS count FROM geo_gqp_jbxx WHERE delete_flag = 1 GROUP BY ssqx ORDER BY count DESC",
+      "tables": [
+        "geo_gqp_jbxx"
+      ]
+    },
+    {
+      "question": "查询最近存在裂缝或落石的高切坡",
+      "sql": "SELECT gqpbh, isCrack, sfyls, createdOn FROM tb_hcs_monitoring WHERE isCrack = 1 OR sfyls = 1 ORDER BY createdOn DESC LIMIT 20",
+      "tables": [
+        "tb_hcs_monitoring"
+      ]
+    },
+    {
+      "question": "查询某个区县存在异常状态的高切坡",
+      "sql": "SELECT gqpbh, gqpmc, ssqx, gqpzt, sfzyjcyc, sfsssjyc FROM geo_gqp_jbxx WHERE ssqx LIKE '%区县名称%' AND (gqpzt IN ('不良', '较差') OR sfzyjcyc IS NOT NULL OR sfsssjyc IS NOT NULL) LIMIT 20",
+      "tables": [
+        "geo_gqp_jbxx"
+      ]
+    },
+    {
+      "question": "查询最近的预警专报内容",
+      "sql": "SELECT title, ssqx, xmmc, xmbh, jclx, scyjsj, sfjcyj, create_time FROM t_warning_report_content ORDER BY create_time DESC LIMIT 20",
+      "tables": [
+        "t_warning_report_content"
+      ]
+    },
+    {
+      "question": "查询某个高切坡的地质背景资料",
+      "sql": "SELECT gqpbh, gqpmc, qplx, aqdj, yxmc, fhzt, dzmc, dzms FROM geo_dzbjjbxx WHERE gqpbh = '高切坡编号' LIMIT 20",
+      "tables": [
+        "geo_dzbjjbxx"
+      ]
+    }
+  ],
+  "guardrails": [
+    "只生成 SELECT/WITH 查询，不执行 INSERT、UPDATE、DELETE、DROP、ALTER、TRUNCATE。",
+    "系统管理表默认不用于普通业务查询。",
+    "涉及风险、灾害、处置建议时，只返回数据库记录，不替代专业工程判断。",
+    "枚举/标志字段优先使用真实数字或真实取值，不用中文字符串臆造比较。"
+  ]
+}

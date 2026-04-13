@@ -1,0 +1,3674 @@
+{
+  "source": "/home/lzb/projects/lm-dm8/高切坡数据库设计文档.docx",
+  "exported_at": "2026-04-13T14:34:36",
+  "table_count": 23,
+  "tables": [
+    {
+      "table_name": "t_tilt_model",
+      "normalized_table_name": "t_tilt_model",
+      "table_title": "倾斜摄影模型管理 t_tilt_model",
+      "section": "空间数据关联",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": "主键"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "名称"
+        },
+        {
+          "name": "code",
+          "normalized_name": "code",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据编号"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据路径"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "x",
+          "normalized_name": "x",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "经度"
+        },
+        {
+          "name": "y",
+          "normalized_name": "y",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "纬度"
+        },
+        {
+          "name": "height",
+          "normalized_name": "height",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高度"
+        },
+        {
+          "name": "rotate",
+          "normalized_name": "rotate",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "角度"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护人"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护时间"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "删除标志"
+        },
+        {
+          "name": "zip_url",
+          "normalized_name": "zip_url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "压缩文件路径"
+        }
+      ]
+    },
+    {
+      "table_name": "t_panoramic_data",
+      "normalized_table_name": "t_panoramic_data",
+      "table_title": "全景数据管理 t_panoramic_data",
+      "section": "倾斜摄影模型管理 t_tilt_model",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": "主键"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "名称"
+        },
+        {
+          "name": "code",
+          "normalized_name": "code",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据编号"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据路径"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护人"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护时间"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "删除标志"
+        },
+        {
+          "name": "zip_url",
+          "normalized_name": "zip_url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "压缩文件路径"
+        }
+      ]
+    },
+    {
+      "table_name": "t_drone_dom",
+      "normalized_table_name": "t_drone_dom",
+      "table_title": "高精度无人机DOM t_drone_dom",
+      "section": "全景数据管理 t_panoramic_data",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": "主键"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "名称"
+        },
+        {
+          "name": "code",
+          "normalized_name": "code",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据编号"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据路径"
+        },
+        {
+          "name": "x",
+          "normalized_name": "x",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "经度"
+        },
+        {
+          "name": "y",
+          "normalized_name": "y",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "纬度"
+        },
+        {
+          "name": "height",
+          "normalized_name": "height",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高度"
+        },
+        {
+          "name": "rotate",
+          "normalized_name": "rotate",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "角度"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护人"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维护时间"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "删除标志"
+        },
+        {
+          "name": "image_time",
+          "normalized_name": "image_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "影像生成时间"
+        },
+        {
+          "name": "zip_url",
+          "normalized_name": "zip_url",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "压缩文件路径"
+        }
+      ]
+    },
+    {
+      "table_name": "tb_hcs_monitoring",
+      "normalized_table_name": "tb_hcs_monitoring",
+      "table_title": "群测群防高切坡监测表 tb_hcs_monitoring",
+      "section": "群测群防",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": "主键"
+        },
+        {
+          "name": "hcs_id",
+          "normalized_name": "hcs_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "原群测群防高切坡id"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "varchar(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "locX",
+          "normalized_name": "locx",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "经度"
+        },
+        {
+          "name": "locY",
+          "normalized_name": "locy",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "维度"
+        },
+        {
+          "name": "isRead",
+          "normalized_name": "isread",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有裂缝"
+        },
+        {
+          "name": "isCrack",
+          "normalized_name": "iscrack",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂缝情况"
+        },
+        {
+          "name": "width",
+          "normalized_name": "width",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂缝宽度"
+        },
+        {
+          "name": "width1",
+          "normalized_name": "width1",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂缝宽度1"
+        },
+        {
+          "name": "width2",
+          "normalized_name": "width2",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂缝宽度2"
+        },
+        {
+          "name": "width3",
+          "normalized_name": "width3",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂缝宽度3"
+        },
+        {
+          "name": "facilities",
+          "normalized_name": "facilities",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测设施异常"
+        },
+        {
+          "name": "slopeFailure",
+          "normalized_name": "slopefailure",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "场面异常破坏"
+        },
+        {
+          "name": "disorderlyPush",
+          "normalized_name": "disorderlypush",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡周乱搭乱堆"
+        },
+        {
+          "name": "wallCracking",
+          "normalized_name": "wallcracking",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "道路墙体开裂"
+        },
+        {
+          "name": "sfypmph",
+          "normalized_name": "sfypmph",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有坡面破坏"
+        },
+        {
+          "name": "sfydtqkl",
+          "normalized_name": "sfydtqkl",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有挡土墙开裂"
+        },
+        {
+          "name": "sfypdzzgg",
+          "normalized_name": "sfypdzzgg",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有坡顶种植灌溉"
+        },
+        {
+          "name": "sfypsgds",
+          "normalized_name": "sfypsgds",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有排水沟堵塞"
+        },
+        {
+          "name": "sfypskds",
+          "normalized_name": "sfypskds",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有排水口堵塞"
+        },
+        {
+          "name": "sfyls",
+          "normalized_name": "sfyls",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有落石"
+        },
+        {
+          "name": "pmsfygzfq",
+          "normalized_name": "pmsfygzfq",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡面是否有鼓涨，反翘"
+        },
+        {
+          "name": "distance",
+          "normalized_name": "distance",
+          "type": "NUMERIC(30,20)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "经纬度俩点之间距离"
+        },
+        {
+          "name": "wallCrackingImageUri",
+          "normalized_name": "wallcrackingimageuri",
+          "type": "varchar(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "wallCrackingImageUri"
+        },
+        {
+          "name": "crackImageUri",
+          "normalized_name": "crackimageuri",
+          "type": "varchar(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "裂纹图片路径"
+        },
+        {
+          "name": "overallSituation",
+          "normalized_name": "overallsituation",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "总体情况"
+        },
+        {
+          "name": "photoOn",
+          "normalized_name": "photoon",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "照片拍照时间"
+        },
+        {
+          "name": "isPhototOn",
+          "normalized_name": "isphototon",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有拍照时间"
+        },
+        {
+          "name": "photoNo1",
+          "normalized_name": "photono1",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "照片一"
+        },
+        {
+          "name": "photoNo2",
+          "normalized_name": "photono2",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "照片二"
+        },
+        {
+          "name": "photoNo3",
+          "normalized_name": "photono3",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "照片三"
+        },
+        {
+          "name": "video",
+          "normalized_name": "video",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "视频地址"
+        },
+        {
+          "name": "remark",
+          "normalized_name": "remark",
+          "type": "varchar(1000)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "备注"
+        },
+        {
+          "name": "create_user_id",
+          "normalized_name": "create_user_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人编码"
+        },
+        {
+          "name": "createdOn",
+          "normalized_name": "createdon",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "update_user_id",
+          "normalized_name": "update_user_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "修改人"
+        },
+        {
+          "name": "updatedOn",
+          "normalized_name": "updatedon",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "修改时间"
+        },
+        {
+          "name": "status",
+          "normalized_name": "status",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核状态"
+        },
+        {
+          "name": "audit_user_id",
+          "normalized_name": "audit_user_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核人"
+        },
+        {
+          "name": "autidedOn",
+          "normalized_name": "autidedon",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核时间"
+        },
+        {
+          "name": "review_字段含义s",
+          "normalized_name": "review_字段含义s",
+          "type": "varchar(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核意见"
+        },
+        {
+          "name": "hcSlopeStatus",
+          "normalized_name": "hcslopestatus",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核高切坡异常状态"
+        },
+        {
+          "name": "statusReason",
+          "normalized_name": "statusreason",
+          "type": "varchar(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核异常原因"
+        },
+        {
+          "name": "instructions",
+          "normalized_name": "instructions",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "审核下达指示"
+        },
+        {
+          "name": "jc_id",
+          "normalized_name": "jc_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡监测ID"
+        },
+        {
+          "name": "monitor_id",
+          "normalized_name": "monitor_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测人"
+        },
+        {
+          "name": "sjly",
+          "normalized_name": "sjly",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据来源 1源库 2同步"
+        },
+        {
+          "name": "tb_time",
+          "normalized_name": "tb_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "同步时间"
+        }
+      ]
+    },
+    {
+      "table_name": "tb_hcs_personnel",
+      "normalized_table_name": "tb_hcs_personnel",
+      "table_title": "监测人员表 tb_hcs_personnel",
+      "section": "群测群防高切坡监测表 tb_hcs_monitoring",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": "主键"
+        },
+        {
+          "name": "user_id",
+          "normalized_name": "user_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "群测用户表id"
+        },
+        {
+          "name": "ext_id",
+          "normalized_name": "ext_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "群测用户扩展表id"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "真实姓名"
+        },
+        {
+          "name": "gender",
+          "normalized_name": "gender",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "性别"
+        },
+        {
+          "name": "duty",
+          "normalized_name": "duty",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "职务"
+        },
+        {
+          "name": "department",
+          "normalized_name": "department",
+          "type": "varchar(300)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所在部门"
+        },
+        {
+          "name": "telephone",
+          "normalized_name": "telephone",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "固定电话"
+        },
+        {
+          "name": "fax",
+          "normalized_name": "fax",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "传真号码"
+        },
+        {
+          "name": "weixinNumber",
+          "normalized_name": "weixinnumber",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "微信号码"
+        },
+        {
+          "name": "qqNumber",
+          "normalized_name": "qqnumber",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "QQ号码"
+        },
+        {
+          "name": "email",
+          "normalized_name": "email",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "电子邮箱"
+        },
+        {
+          "name": "mobile",
+          "normalized_name": "mobile",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "手机号码"
+        },
+        {
+          "name": "company_id",
+          "normalized_name": "company_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "关联部门或企业"
+        },
+        {
+          "name": "idNumber",
+          "normalized_name": "idnumber",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "身份证号码"
+        },
+        {
+          "name": "province_id",
+          "normalized_name": "province_id",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属省"
+        },
+        {
+          "name": "city_id",
+          "normalized_name": "city_id",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属市"
+        },
+        {
+          "name": "county_id",
+          "normalized_name": "county_id",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "street_id",
+          "normalized_name": "street_id",
+          "type": "varchar(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属街道"
+        },
+        {
+          "name": "personnel_level",
+          "normalized_name": "personnel_level",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "人员级别 三级用户"
+        },
+        {
+          "name": "sjly",
+          "normalized_name": "sjly",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据来源 1源库 2同步"
+        },
+        {
+          "name": "tb_time",
+          "normalized_name": "tb_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "同步时间"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_gqp_zyjc",
+      "normalized_table_name": "geo_gqp_zyjc",
+      "table_title": "专业监测点表 geo_gqp_zyjc",
+      "section": "专业监测",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "gqp_no",
+          "normalized_name": "gqp_no",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "jcdbh",
+          "normalized_name": "jcdbh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测点编号"
+        },
+        {
+          "name": "latitude",
+          "normalized_name": "latitude",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "纬度"
+        },
+        {
+          "name": "longitude",
+          "normalized_name": "longitude",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "经度"
+        },
+        {
+          "name": "level_type",
+          "normalized_name": "level_type",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属等级"
+        },
+        {
+          "name": "isupdate",
+          "normalized_name": "isupdate",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否修改"
+        },
+        {
+          "name": "geometry",
+          "normalized_name": "geometry",
+          "type": "?",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "table_name": "qcqfhgxcjl",
+      "normalized_table_name": "qcqfhgxcjl",
+      "table_title": "群测群防宏观巡查记录表 qcqfhgxcjl",
+      "section": "专业监测点表 geo_gqp_zyjc",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "gqpmc",
+          "normalized_name": "gqpmc",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡名称"
+        },
+        {
+          "name": "ssss",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "xcrq",
+          "normalized_name": "xcrq",
+          "type": "DATE",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "巡查日期"
+        },
+        {
+          "name": "jcy",
+          "normalized_name": "jcy",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测员"
+        },
+        {
+          "name": "pmsfcxpz",
+          "normalized_name": "pmsfcxpz",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡面是否出现鼓胀"
+        },
+        {
+          "name": "pmsfcxfq",
+          "normalized_name": "pmsfcxfq",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡面是否出现反翘"
+        },
+        {
+          "name": "ssfsfck",
+          "normalized_name": "ssfsfck",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "伸缩缝是否错开"
+        },
+        {
+          "name": "sfydkxx",
+          "normalized_name": "sfydkxx",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有掉块现象"
+        },
+        {
+          "name": "sfczpmspjclf",
+          "normalized_name": "sfczpmspjclf",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否存在坡面水平交错裂缝"
+        },
+        {
+          "name": "xskdpssftc",
+          "normalized_name": "xskdpssftc",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "泄水孔的排水是否通畅"
+        },
+        {
+          "name": "sfczgqpztbxll",
+          "normalized_name": "sfczgqpztbxll",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否存在高切坡整体变形拉裂"
+        },
+        {
+          "name": "qtpmhgxcjg",
+          "normalized_name": "qtpmhgxcjg",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "其它坡面宏观巡查结果"
+        },
+        {
+          "name": "pdfhjgsfph",
+          "normalized_name": "pdfhjgsfph",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶防护结构是否破坏"
+        },
+        {
+          "name": "psgsfylfst",
+          "normalized_name": "psgsfylfst",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "排水沟是否有裂缝渗漏"
+        },
+        {
+          "name": "sfydlllcxxx",
+          "normalized_name": "sfydlllcxxx",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否有道路拉裂沉陷现象"
+        },
+        {
+          "name": "pdsmjdgsfqxqd",
+          "normalized_name": "pdsmjdgsfqxqd",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶树木及电杆是否倾斜倾倒"
+        },
+        {
+          "name": "pdhbsfygtxhxll",
+          "normalized_name": "pdhbsfygtxhxll",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶后部是否有贯通性弧形拉裂"
+        },
+        {
+          "name": "pdhbsfyxzlltj",
+          "normalized_name": "pdhbsfyxzlltj",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶后部是否有下座拉裂台阶"
+        },
+        {
+          "name": "pdfwqtsfkl",
+          "normalized_name": "pdfwqtsfkl",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶房屋墙体是否开裂"
+        },
+        {
+          "name": "qtpdhgxcjg",
+          "normalized_name": "qtpdhgxcjg",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "其它坡顶宏观巡查结果"
+        },
+        {
+          "name": "pdsfldlg",
+          "normalized_name": "pdsfldlg",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶是否乱搭乱盖"
+        },
+        {
+          "name": "pdsfczqzdz",
+          "normalized_name": "pdsfczqzdz",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶是否存在弃渣堆载"
+        },
+        {
+          "name": "pjsfczkwqtxx",
+          "normalized_name": "pjsfczkwqtxx",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡角是否存在开挖取土现象"
+        },
+        {
+          "name": "pdjsgsfds",
+          "normalized_name": "pdjsgsfds",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶截水沟是否堵塞"
+        },
+        {
+          "name": "pjpsgsfds",
+          "normalized_name": "pjpsgsfds",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡角排水沟是否堵塞"
+        },
+        {
+          "name": "pmpsksfsx",
+          "normalized_name": "pmpsksfsx",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡面排水孔是否失效"
+        },
+        {
+          "name": "pdsfczgzgg",
+          "normalized_name": "pdsfczgzgg",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡顶是否存在耕种灌溉"
+        },
+        {
+          "name": "pmfhcssfczjbph",
+          "normalized_name": "pmfhcssfczjbph",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡面防护措施是否存在局部破坏"
+        },
+        {
+          "name": "zyjcsssfzdsh",
+          "normalized_name": "zyjcsssfzdsh",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "专业监测设施是否遭到损毁"
+        },
+        {
+          "name": "qtgqpwhglxcjg",
+          "normalized_name": "qtgqpwhglxcjg",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "其它高切坡维护管理巡查结果"
+        },
+        {
+          "name": "bz",
+          "normalized_name": "bz",
+          "type": "TEXT",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "备注"
+        },
+        {
+          "name": "type",
+          "normalized_name": "type",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "处理类型"
+        },
+        {
+          "name": "yc",
+          "normalized_name": "yc",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "异常"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_wyjcsjjlb",
+      "normalized_table_name": "geo_wyjcsjjlb",
+      "table_title": "专业监测数据记录点表 geo_wyjcsjjlb",
+      "section": "群测群防宏观巡查记录表 qcqfhgxcjl",
+      "columns": [
+        {
+          "name": "GQPBH",
+          "normalized_name": "gqpbh",
+          "type": "",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "JCDBH",
+          "normalized_name": "jcdbh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "监测点编号"
+        },
+        {
+          "name": "JCSJ",
+          "normalized_name": "jcsj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "监测时间"
+        },
+        {
+          "name": "GCZX_M",
+          "normalized_name": "gczx_m",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "观测值X（米）"
+        },
+        {
+          "name": "GCZY_M",
+          "normalized_name": "gczy_m",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "观测值Y（米）"
+        },
+        {
+          "name": "GCZH_M",
+          "normalized_name": "gczh_m",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "观测值H（米）"
+        },
+        {
+          "name": "BQXWY_MM",
+          "normalized_name": "bqxwy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期X位移（毫米）"
+        },
+        {
+          "name": "BQYWY_MM",
+          "normalized_name": "bqywy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期Y位移（毫米）"
+        },
+        {
+          "name": "BQHWY_MM",
+          "normalized_name": "bqhwy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期H位移（毫米）"
+        },
+        {
+          "name": "BQXFXWY_MM",
+          "normalized_name": "bqxfxwy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期X法向位移（毫米）"
+        },
+        {
+          "name": "BQYFXWY_MM",
+          "normalized_name": "bqyfxwy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期Y法向位移（毫米）"
+        },
+        {
+          "name": "BQHFXWY_MM",
+          "normalized_name": "bqhfxwy_mm",
+          "type": "NUMERIC(13)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "本期H法向位移（毫米）"
+        },
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "编号"
+        },
+        {
+          "name": "TBR",
+          "normalized_name": "tbr",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "填表人"
+        },
+        {
+          "name": "type",
+          "normalized_name": "type",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "处理类型"
+        },
+        {
+          "name": "BZ",
+          "normalized_name": "bz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "备注"
+        },
+        {
+          "name": "YC",
+          "normalized_name": "yc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "异常"
+        },
+        {
+          "name": "LevelType",
+          "normalized_name": "leveltype",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "所属等级"
+        },
+        {
+          "name": "LevelOneId",
+          "normalized_name": "leveloneid",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "区县ID"
+        },
+        {
+          "name": "LevelTwoId",
+          "normalized_name": "leveltwoid",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "省市ID"
+        }
+      ]
+    },
+    {
+      "table_name": "t_danger_report",
+      "normalized_table_name": "t_danger_report",
+      "table_title": "巡检报告表 t_danger_report",
+      "section": "报告管理",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件名称"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件存储地址"
+        },
+        {
+          "name": "pid",
+          "normalized_name": "pid",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "父级id（外键）"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        },
+        {
+          "name": "type",
+          "normalized_name": "type",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "1巡检 2险情"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        }
+      ]
+    },
+    {
+      "table_name": "t_monthly",
+      "normalized_table_name": "t_monthly",
+      "table_title": "月报/年报 t_monthly",
+      "section": "巡检报告表 t_danger_report",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "ssss",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(50)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(50)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "year",
+          "normalized_name": "year",
+          "type": "VARCHAR(10)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "年"
+        },
+        {
+          "name": "month",
+          "normalized_name": "month",
+          "type": "VARCHAR(10)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "月"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "上传时间"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(300)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "上传路径"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "删除标志1未删除 0已删除"
+        }
+      ]
+    },
+    {
+      "table_name": "t_warning_report",
+      "normalized_table_name": "t_warning_report",
+      "table_title": "预警专报表 t_warning_report",
+      "section": "月报/年报 t_monthly",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件名称"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件存储地址"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        }
+      ]
+    },
+    {
+      "table_name": "t_warning_report_content",
+      "normalized_table_name": "t_warning_report_content",
+      "table_title": "预警专报内容提取表 t_warning_report_content",
+      "section": "预警专报表 t_warning_report",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "yjzb_id",
+          "normalized_name": "yjzb_id",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "预警专报id"
+        },
+        {
+          "name": "title",
+          "normalized_name": "title",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "专报标题"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "xmmc",
+          "normalized_name": "xmmc",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "项目名称"
+        },
+        {
+          "name": "xmbh",
+          "normalized_name": "xmbh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "项目编号（高切坡编号）"
+        },
+        {
+          "name": "xmlx",
+          "normalized_name": "xmlx",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测类型"
+        },
+        {
+          "name": "bybxjcqk",
+          "normalized_name": "bybxjcqk",
+          "type": "text",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "本月变形监测情况及稳定性分析"
+        },
+        {
+          "name": "byczqk",
+          "normalized_name": "byczqk",
+          "type": "text",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "本月处置情况"
+        },
+        {
+          "name": "sfjctb",
+          "normalized_name": "sfjctb",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否解除预警"
+        },
+        {
+          "name": "tbr",
+          "normalized_name": "tbr",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "填报人"
+        },
+        {
+          "name": "tbsj",
+          "normalized_name": "tbsj",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "填报时间"
+        },
+        {
+          "name": "lxdh",
+          "normalized_name": "lxdh",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "联系电话"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_gqp_jbxx",
+      "normalized_table_name": "geo_gqp_jbxx",
+      "table_title": "高切坡基本信息表结构说明 geo_gqp_jbxx",
+      "section": "基本信息",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "int",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "编号"
+        },
+        {
+          "name": "GQPBH",
+          "normalized_name": "gqpbh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "GQPMC",
+          "normalized_name": "gqpmc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "高切坡名称"
+        },
+        {
+          "name": "XMXH",
+          "normalized_name": "xmxh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "项目序号"
+        },
+        {
+          "name": "XMFRDW",
+          "normalized_name": "xmfrdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "项目法人单位"
+        },
+        {
+          "name": "PFWH",
+          "normalized_name": "pfwh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "批复文号"
+        },
+        {
+          "name": "JSDD",
+          "normalized_name": "jsdd",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "建设地点"
+        },
+        {
+          "name": "JHPC_M",
+          "normalized_name": "jhpc_m",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "计划坡长（米）"
+        },
+        {
+          "name": "JHPG_M",
+          "normalized_name": "jhpg_m",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "计划坡高（米）"
+        },
+        {
+          "name": "JHPMMJ_PM",
+          "normalized_name": "jhpmmj_pm",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "计划坡面面积（平米）"
+        },
+        {
+          "name": "JHPJ",
+          "normalized_name": "jhpj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "计划坡角（度）"
+        },
+        {
+          "name": "SSPC_M",
+          "normalized_name": "sspc_m",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "实施坡长（米）"
+        },
+        {
+          "name": "SSPG_M",
+          "normalized_name": "sspg_m",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "实施坡高（米）"
+        },
+        {
+          "name": "SSPJ",
+          "normalized_name": "sspj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "实施坡角（度）"
+        },
+        {
+          "name": "SSPMMJ_PM",
+          "normalized_name": "sspmmj_pm",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "实施坡面面积（平米）"
+        },
+        {
+          "name": "JZLX",
+          "normalized_name": "jzlx",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "介质类型"
+        },
+        {
+          "name": "AQDJ",
+          "normalized_name": "aqdj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "安全等级"
+        },
+        {
+          "name": "ZYFHCS",
+          "normalized_name": "zyfhcs",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "主要防护措施"
+        },
+        {
+          "name": "SGZTBXS",
+          "normalized_name": "sgztbxs",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "施工招投标形式"
+        },
+        {
+          "name": "HTGQ",
+          "normalized_name": "htgq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "合同工期"
+        },
+        {
+          "name": "KGRQ",
+          "normalized_name": "kgrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "开工日期"
+        },
+        {
+          "name": "WGRQ",
+          "normalized_name": "wgrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "完工日期"
+        },
+        {
+          "name": "KCDW",
+          "normalized_name": "kcdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "勘察单位"
+        },
+        {
+          "name": "SJDW",
+          "normalized_name": "sjdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "设计单位"
+        },
+        {
+          "name": "JLDW",
+          "normalized_name": "jldw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "监理单位"
+        },
+        {
+          "name": "SGDW",
+          "normalized_name": "sgdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "施工单位"
+        },
+        {
+          "name": "ZJDW",
+          "normalized_name": "zjdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "质监单位"
+        },
+        {
+          "name": "SJBGYY",
+          "normalized_name": "sjbgyy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "设计变更原由"
+        },
+        {
+          "name": "SJGS_WY",
+          "normalized_name": "sjgs_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "设计概算（万元）"
+        },
+        {
+          "name": "SGTYS_WY",
+          "normalized_name": "sgtys_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "施工图预算（万元）"
+        },
+        {
+          "name": "PFTZ_WY",
+          "normalized_name": "pftz_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "批复投资（万元）"
+        },
+        {
+          "name": "GSTZ_WY",
+          "normalized_name": "gstz_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "概算调整（万元）"
+        },
+        {
+          "name": "HTJ_WY",
+          "normalized_name": "htj_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "合同价（万元）"
+        },
+        {
+          "name": "BCHTJ_WY",
+          "normalized_name": "bchtj_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "补充合同价（万元）"
+        },
+        {
+          "name": "GCJS_WY",
+          "normalized_name": "gcjs_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "工程结算（万元）"
+        },
+        {
+          "name": "CWJS_WY",
+          "normalized_name": "cwjs_wy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "财务决算（万元）"
+        },
+        {
+          "name": "JGYSRQ",
+          "normalized_name": "jgysrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "竣工验收日期"
+        },
+        {
+          "name": "JGYSJL",
+          "normalized_name": "jgysjl",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "竣工验收结论"
+        },
+        {
+          "name": "GJYSRQ",
+          "normalized_name": "gjysrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "国家验收日期"
+        },
+        {
+          "name": "GJYSJL",
+          "normalized_name": "gjysjl",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "国家验收结论"
+        },
+        {
+          "name": "JCDWJZZ",
+          "normalized_name": "jcdwjzz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "监测单位及资质"
+        },
+        {
+          "name": "JCJL",
+          "normalized_name": "jcjl",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "监测结论"
+        },
+        {
+          "name": "TBDW",
+          "normalized_name": "tbdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "填表单位"
+        },
+        {
+          "name": "TBR",
+          "normalized_name": "tbr",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "填表人"
+        },
+        {
+          "name": "TBRQ",
+          "normalized_name": "tbrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "填表日期"
+        },
+        {
+          "name": "SSSS",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "SSQX",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "GPS",
+          "normalized_name": "gps",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "GPS"
+        },
+        {
+          "name": "QZY",
+          "normalized_name": "qzy",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "全站仪"
+        },
+        {
+          "name": "QTJCFS",
+          "normalized_name": "qtjcfs",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "其它监测方式"
+        },
+        {
+          "name": "ZDJC",
+          "normalized_name": "zdjc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "重点监测"
+        },
+        {
+          "name": "ZYJC",
+          "normalized_name": "zyjc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "专业监测"
+        },
+        {
+          "name": "CDS",
+          "normalized_name": "cds",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "测点数"
+        },
+        {
+          "name": "ZYJCZTSJ",
+          "normalized_name": "zyjcztsj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "专业监测暂停时间"
+        },
+        {
+          "name": "WDXPJJL",
+          "normalized_name": "wdxpjjl",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "稳定性评价结论"
+        },
+        {
+          "name": "GQPQB",
+          "normalized_name": "gqpqb",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "高切坡期别"
+        },
+        {
+          "name": "X",
+          "normalized_name": "x",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "X坐标"
+        },
+        {
+          "name": "Y",
+          "normalized_name": "y",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "Y坐标"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "删除标志1未删除 0已删"
+        },
+        {
+          "name": "is_stop",
+          "normalized_name": "is_stop",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否停止监测"
+        },
+        {
+          "name": "stop_time",
+          "normalized_name": "stop_time",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "停止时间"
+        },
+        {
+          "name": "review_state",
+          "normalized_name": "review_state",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "复合状态"
+        },
+        {
+          "name": "qcqf_ztqk",
+          "normalized_name": "qcqf_ztqk",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "群测群防总体情况"
+        },
+        {
+          "name": "review_time",
+          "normalized_name": "review_time",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "复合时间"
+        },
+        {
+          "name": "tb_time",
+          "normalized_name": "tb_time",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "同步时间"
+        },
+        {
+          "name": "is_complete",
+          "normalized_name": "is_complete",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否完整 1完整 2部分完整 3不完整"
+        },
+        {
+          "name": "sfzyjc",
+          "normalized_name": "sfzyjc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否专业监测"
+        },
+        {
+          "name": "sfssjc",
+          "normalized_name": "sfssjc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否实时监测"
+        },
+        {
+          "name": "gqpzt",
+          "normalized_name": "gqpzt",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡状态：良/不良/较差"
+        },
+        {
+          "name": "zbyyrk",
+          "normalized_name": "zbyyrk",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "周边影响人口（人）"
+        },
+        {
+          "name": "zbyxfw",
+          "normalized_name": "zbyxfw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "周边影响房屋（m²）"
+        },
+        {
+          "name": "zrdw",
+          "normalized_name": "zrdw",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "责任单位"
+        },
+        {
+          "name": "zrdwfzr",
+          "normalized_name": "zrdwfzr",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "责任单位负责人"
+        },
+        {
+          "name": "zrdwfzrdh",
+          "normalized_name": "zrdwfzrdh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "责任单位负责人电话"
+        },
+        {
+          "name": "sfzyjcyc",
+          "normalized_name": "sfzyjcyc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否专业监测异常"
+        },
+        {
+          "name": "sfsssjyc",
+          "normalized_name": "sfsssjyc",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否实时数据异常"
+        },
+        {
+          "name": "sjly",
+          "normalized_name": "sjly",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据来源 1源库 2同步"
+        },
+        {
+          "name": "gqpid",
+          "normalized_name": "gqpid",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "同步过来的高切坡主键id（预留）"
+        },
+        {
+          "name": "ssjd",
+          "normalized_name": "ssjd",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属街道"
+        },
+        {
+          "name": "jcy",
+          "normalized_name": "jcy",
+          "type": "INT",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测员"
+        }
+      ]
+    },
+    {
+      "table_name": "unnamed_doc_table_1",
+      "normalized_table_name": "unnamed_doc_table_1",
+      "table_title": "高切坡附件",
+      "section": "高切坡基本信息表结构说明 geo_gqp_jbxx",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件名称"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件存储地址"
+        },
+        {
+          "name": "pid",
+          "normalized_name": "pid",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "父级id（外键）"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        }
+      ]
+    },
+    {
+      "table_name": "t_review_record",
+      "normalized_table_name": "t_review_record",
+      "table_title": "高切坡预警处理流程记录表（复核记录） t_review_record",
+      "section": "高切坡附件",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件路径"
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "ssss",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "state",
+          "normalized_name": "state",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "复核状态"
+        },
+        {
+          "name": "review_time",
+          "normalized_name": "review_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "复核时间"
+        },
+        {
+          "name": "is_review",
+          "normalized_name": "is_review",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否是24小时复核"
+        },
+        {
+          "name": "remarks",
+          "normalized_name": "remarks",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "备注"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "复核人"
+        },
+        {
+          "name": "tb_time",
+          "normalized_name": "tb_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "同步时间"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_dzbjjbxx",
+      "normalized_table_name": "geo_dzbjjbxx",
+      "table_title": "地质背景资料表 geo_dzbjjbxx",
+      "section": "高切坡预警处理流程记录表（复核记录） t_review_record",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "gqpbh",
+          "normalized_name": "gqpbh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡编号"
+        },
+        {
+          "name": "gqpmc",
+          "normalized_name": "gqpmc",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "高切坡名称"
+        },
+        {
+          "name": "ssss",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "所属区县"
+        },
+        {
+          "name": "pg_m",
+          "normalized_name": "pg_m",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡高（米）"
+        },
+        {
+          "name": "pc_m",
+          "normalized_name": "pc_m",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡长（米）"
+        },
+        {
+          "name": "mj_pm",
+          "normalized_name": "mj_pm",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "面积（平米）"
+        },
+        {
+          "name": "qplx",
+          "normalized_name": "qplx",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "切坡类型"
+        },
+        {
+          "name": "aqdj",
+          "normalized_name": "aqdj",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "安全等级"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "删除标志1未删除 0已删除"
+        }
+      ]
+    },
+    {
+      "table_name": "t_user",
+      "normalized_table_name": "t_user",
+      "table_title": "用户表结构说明 t_user",
+      "section": "系统管理",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "BIGINT",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "login_account",
+          "normalized_name": "login_account",
+          "type": "VARCHAR(50)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "登陆名"
+        },
+        {
+          "name": "login_pwd",
+          "normalized_name": "login_pwd",
+          "type": "VARCHAR(50)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "登录密码"
+        },
+        {
+          "name": "user_type",
+          "normalized_name": "user_type",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户类型 1机构管理员 2数据管理员 3普通用户"
+        },
+        {
+          "name": "user_name",
+          "normalized_name": "user_name",
+          "type": "VARCHAR(50)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户名称"
+        },
+        {
+          "name": "dept_id",
+          "normalized_name": "dept_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "部门id"
+        },
+        {
+          "name": "org_id",
+          "normalized_name": "org_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "机构id"
+        },
+        {
+          "name": "status",
+          "normalized_name": "status",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "状态 0停用 1启用"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "删除标志 0 删除 1 未删除"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "modfiy_time",
+          "normalized_name": "modfiy_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "修改时间"
+        },
+        {
+          "name": "user_phone",
+          "normalized_name": "user_phone",
+          "type": "VARCHAR（50）",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户电话"
+        },
+        {
+          "name": "user_address",
+          "normalized_name": "user_address",
+          "type": "VARCHAR（255）",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户地址"
+        },
+        {
+          "name": "user_hobby",
+          "normalized_name": "user_hobby",
+          "type": "VARCHAR（255）",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户爱好"
+        },
+        {
+          "name": "user_code",
+          "normalized_name": "user_code",
+          "type": "VARCHAR（255）",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "用户工号"
+        }
+      ]
+    },
+    {
+      "table_name": "t_user_role",
+      "normalized_table_name": "t_user_role",
+      "table_title": "用户角色表 t_user_role",
+      "section": "用户表结构说明 t_user",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "BIGINT",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "role_id",
+          "normalized_name": "role_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "角色id"
+        },
+        {
+          "name": "role_name",
+          "normalized_name": "role_name",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "角色名称"
+        },
+        {
+          "name": "user_id",
+          "normalized_name": "user_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "用户id"
+        },
+        {
+          "name": "user_name",
+          "normalized_name": "user_name",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "用户名称"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "创建时间"
+        }
+      ]
+    },
+    {
+      "table_name": "t_role_menu",
+      "normalized_table_name": "t_role_menu",
+      "table_title": "角色权限表 t_role_menu",
+      "section": "用户角色表 t_user_role",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "BIGINT",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "role_id",
+          "normalized_name": "role_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "角色id"
+        },
+        {
+          "name": "role_name",
+          "normalized_name": "role_name",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "角色名称"
+        },
+        {
+          "name": "menu_id",
+          "normalized_name": "menu_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "权限id"
+        },
+        {
+          "name": "menu_name",
+          "normalized_name": "menu_name",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "权限名称"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "创建时间"
+        }
+      ]
+    },
+    {
+      "table_name": "t_role",
+      "normalized_table_name": "t_role",
+      "table_title": "角色表 t_role",
+      "section": "角色权限表 t_role_menu",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "BIGINT",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "role_name",
+          "normalized_name": "role_name",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "角色名称"
+        },
+        {
+          "name": "role_icon",
+          "normalized_name": "role_icon",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "角色图标"
+        },
+        {
+          "name": "status",
+          "normalized_name": "status",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "状态 0停用 1启用"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "modfiy_time",
+          "normalized_name": "modfiy_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "修改时间"
+        }
+      ]
+    },
+    {
+      "table_name": "t_dept",
+      "normalized_table_name": "t_dept",
+      "table_title": "部门表 t_dept",
+      "section": "角色表 t_role",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "BIGINT",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "dept_name",
+          "normalized_name": "dept_name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "部门名称"
+        },
+        {
+          "name": "phone",
+          "normalized_name": "phone",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "部门电话"
+        },
+        {
+          "name": "address",
+          "normalized_name": "address",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "部门地址"
+        },
+        {
+          "name": "description",
+          "normalized_name": "description",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "部门描述"
+        },
+        {
+          "name": "org_id",
+          "normalized_name": "org_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "机构id"
+        },
+        {
+          "name": "parent_id",
+          "normalized_name": "parent_id",
+          "type": "BIGINT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "父id"
+        },
+        {
+          "name": "sub_count",
+          "normalized_name": "sub_count",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "节点数"
+        },
+        {
+          "name": "order_num",
+          "normalized_name": "order_num",
+          "type": "VARCHAR(2)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "排序值"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "DATETIME",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "删除标志 0 删除 1 未删除"
+        }
+      ]
+    },
+    {
+      "table_name": "t_menus",
+      "normalized_table_name": "t_menus",
+      "table_title": "功能管理表 t_menus",
+      "section": "部门表 t_dept",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "名称"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "地址"
+        },
+        {
+          "name": "pid",
+          "normalized_name": "pid",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "父级id"
+        },
+        {
+          "name": "type",
+          "normalized_name": "type",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "类型"
+        },
+        {
+          "name": "order_num",
+          "normalized_name": "order_num",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "排序值"
+        },
+        {
+          "name": "sub_count",
+          "normalized_name": "sub_count",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "节点数"
+        },
+        {
+          "name": "status",
+          "normalized_name": "status",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "状态 0停用 1启用"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "创建人"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "div_id",
+          "normalized_name": "div_id",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "DIV"
+        },
+        {
+          "name": "icon",
+          "normalized_name": "icon",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "图标"
+        },
+        {
+          "name": "css",
+          "normalized_name": "css",
+          "type": "VARCHAR(100)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "样式"
+        }
+      ]
+    },
+    {
+      "table_name": "t_tree",
+      "normalized_table_name": "t_tree",
+      "table_title": "图层树表 t_tree",
+      "section": "功能管理表 t_menus",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "INT4",
+          "primary_key_mark": "Y",
+          "nullable_mark": "N",
+          "default": "",
+          "comment": "标识符"
+        },
+        {
+          "name": "pid",
+          "normalized_name": "pid",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "父级id"
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "名称"
+        },
+        {
+          "name": "typeinfo",
+          "normalized_name": "typeinfo",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "类型"
+        },
+        {
+          "name": "checked",
+          "normalized_name": "checked",
+          "type": "VARCHAR(10)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "选择框（true和false）"
+        },
+        {
+          "name": "urlinfo",
+          "normalized_name": "urlinfo",
+          "type": "VARCHAR(1000)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "服务地址"
+        },
+        {
+          "name": "classification",
+          "normalized_name": "classification",
+          "type": "VARCHAR(1000)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "单体化地址"
+        },
+        {
+          "name": "x",
+          "normalized_name": "x",
+          "type": "NUMERIC",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "1",
+          "comment": "x坐标"
+        },
+        {
+          "name": "y",
+          "normalized_name": "y",
+          "type": "NUMERIC",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "y坐标"
+        },
+        {
+          "name": "height",
+          "normalized_name": "height",
+          "type": "NUMERIC",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "高度"
+        },
+        {
+          "name": "rotate",
+          "normalized_name": "rotate",
+          "type": "NUMERIC",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "角度"
+        },
+        {
+          "name": "delete_flag",
+          "normalized_name": "delete_flag",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "删除标志 1正常 0删除"
+        },
+        {
+          "name": "order_num",
+          "normalized_name": "order_num",
+          "type": "INT4",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "排序值"
+        },
+        {
+          "name": "ssss",
+          "normalized_name": "ssss",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "所属省市"
+        },
+        {
+          "name": "ssqx",
+          "normalized_name": "ssqx",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "N",
+          "nullable_mark": "Y",
+          "default": "",
+          "comment": "所属区县"
+        }
+      ]
+    }
+  ]
+}

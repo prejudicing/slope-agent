@@ -1,0 +1,989 @@
+{
+  "generated_at": "2026-04-13T15:23:26",
+  "core_tables": [
+    {
+      "table_name": "geo_gqp_jbxx",
+      "business_domain": "基本信息",
+      "description": "高切坡基本信息主表，记录项目基础属性、地区、建设信息、监测状态、责任单位、风险状态、预警状态等。",
+      "row_count": 2850,
+      "score": 117,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "包含异常、预警或风险相关字段",
+        "包含时间字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2850 行"
+      ],
+      "join_keys": [
+        "gqpbh"
+      ],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询复核记录时可按 review_time 排序或筛选。"
+      ]
+    },
+    {
+      "table_name": "tb_hcs_monitoring",
+      "business_domain": "群测群防",
+      "description": "群测群防高切坡监测记录表，记录裂缝、落石、坡面破坏、排水堵塞、照片视频、审核状态等日常监测信息。",
+      "row_count": 618831,
+      "score": 109,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含异常、预警或风险相关字段",
+        "包含时间字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：618831 行"
+      ],
+      "join_keys": [
+        "gqpbh",
+        "monitor_id"
+      ],
+      "query_hints": [
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询裂缝时使用 isCrack = 1。",
+        "查询落石时使用 sfyls = 1。",
+        "查询最近监测记录时按 createdOn DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_warning_report_content",
+      "business_domain": "预警专报",
+      "description": "预警专报内容提取表，记录项目名称、预警时间、监测类型、本月变形监测、处置情况和是否解除预警。",
+      "row_count": 85,
+      "score": 95,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "包含时间字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：85 行"
+      ],
+      "join_keys": [
+        "xmbh",
+        "yjzb_id"
+      ],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_review_record",
+      "business_domain": "复核处理",
+      "description": "高切坡预警处理和复核记录表，记录复核状态、复核时间、是否24小时复核、备注和附件。",
+      "row_count": 69,
+      "score": 87,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "包含时间字段",
+        "真实库有数据：69 行"
+      ],
+      "join_keys": [
+        "gqpbh"
+      ],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询复核记录时可按 review_time 排序或筛选。"
+      ]
+    },
+    {
+      "table_name": "t_warning_report",
+      "business_domain": "预警专报",
+      "description": "预警专报附件表，记录高切坡预警专报文件、时间、年份月份和关联高切坡编号。",
+      "row_count": 62,
+      "score": 85,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：62 行"
+      ],
+      "join_keys": [
+        "gqpbh"
+      ],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "geo_gqp_zyjc",
+      "business_domain": "专业监测",
+      "description": "专业监测点表，记录高切坡专业监测点编号、坐标、高程、监测等级、技术单位等。",
+      "row_count": 2493,
+      "score": 79,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2493 行"
+      ],
+      "join_keys": [
+        "gqp_no",
+        "jcdbh"
+      ],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_dzbjjbxx",
+      "business_domain": "地质背景",
+      "description": "高切坡地质背景与工程地质资料表，记录坡高坡长、切坡类型、安全等级、岩性、风化、地质组成、降雨、影响人口房屋等。",
+      "row_count": 7,
+      "score": 78,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：7 行"
+      ],
+      "join_keys": [
+        "gqpbh"
+      ],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "t_monthly",
+      "business_domain": "报告附件",
+      "description": "月报/年报附件表，记录所属地区、年月、上传路径、PDF转换状态和删除标志。",
+      "row_count": 134,
+      "score": 63,
+      "recommended_level": "core",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含地区字段",
+        "包含时间字段",
+        "真实库有数据：134 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    }
+  ],
+  "candidate_tables": [
+    {
+      "table_name": "tb_hcs_personnel",
+      "business_domain": "群测群防",
+      "description": "群测群防监测人员表，记录监测人员姓名、联系方式、所属区县街道、职务和人员级别。",
+      "row_count": 1133,
+      "score": 54,
+      "recommended_level": "candidate",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "表名命中高切坡业务模式",
+        "真实库有数据：1133 行"
+      ],
+      "join_keys": [
+        "id",
+        "user_id"
+      ],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_danger_report",
+      "business_domain": "报告附件",
+      "description": "巡检或险情报告附件表，记录附件名称、存储地址、报告类型、PDF转换状态等。",
+      "row_count": 4,
+      "score": 51,
+      "recommended_level": "candidate",
+      "reasons": [
+        "已知高切坡核心业务表",
+        "包含时间字段",
+        "真实库有数据：4 行"
+      ],
+      "join_keys": [
+        "gqpbh"
+      ],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "geo_gqp_jbxx2",
+      "business_domain": "高切坡业务",
+      "description": "高切坡空间或业务数据表，需结合字段含义判断具体用途。",
+      "row_count": 3032,
+      "score": 49,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：3032 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_gqpdcsj",
+      "business_domain": "高切坡业务",
+      "description": "高切坡空间或业务数据表，需结合字段含义判断具体用途。",
+      "row_count": 2,
+      "score": 46,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_gqpdzdh",
+      "business_domain": "高切坡业务",
+      "description": "高切坡空间或业务数据表，需结合字段含义判断具体用途。",
+      "row_count": 2,
+      "score": 46,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_gqpfhgccs",
+      "business_domain": "高切坡业务",
+      "description": "高切坡空间或业务数据表，需结合字段含义判断具体用途。",
+      "row_count": 2,
+      "score": 46,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_gqpyxsj",
+      "business_domain": "高切坡业务",
+      "description": "高切坡空间或业务数据表，需结合字段含义判断具体用途。",
+      "row_count": 2,
+      "score": 46,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "表名命中高切坡业务模式",
+        "真实库有数据：2 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_qcqfjcjl",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 146680,
+      "score": 43,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：146680 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "t_qcqfhgxcjl",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 451691,
+      "score": 43,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：451691 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "t_risk_model_param",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 2425,
+      "score": 41,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：2425 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "t_risk_level",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 12128,
+      "score": 40,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：12128 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_insar_data",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 1763,
+      "score": 39,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：1763 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_tree",
+      "business_domain": "图层管理",
+      "description": "图层树表，记录地图图层、服务地址、排序、状态和图层关联信息。",
+      "row_count": 15,
+      "score": 39,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：15 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_qydzzhbj",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 2,
+      "score": 38,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含地区字段",
+        "真实库有数据：2 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "t_panoramic_data",
+      "business_domain": "空间数据",
+      "description": "全景数据管理表，记录全景数据名称、编号、路径、压缩包和关联高切坡编号。",
+      "row_count": 19,
+      "score": 37,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：19 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_gqp_zdhjcsb",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 8,
+      "score": 36,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：8 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_message",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 6,
+      "score": 36,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：6 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_tilt_model",
+      "business_domain": "空间数据",
+      "description": "倾斜摄影模型管理表，记录模型名称、编号、路径、坐标、高度、角度和关联高切坡编号。",
+      "row_count": 3,
+      "score": 36,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "包含时间字段",
+        "真实库有数据：3 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "geo_wyjcsjjl",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 146424,
+      "score": 33,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "真实库有数据：146424 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    },
+    {
+      "table_name": "geo_wyjcsjjl_ljyc",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 1575,
+      "score": 31,
+      "recommended_level": "candidate",
+      "reasons": [
+        "包含高切坡编号关联字段",
+        "真实库有数据：1575 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "高切坡编号常用于与 geo_gqp_jbxx.gqpbh 关联。"
+      ]
+    }
+  ],
+  "excluded_tables": [
+    {
+      "table_name": "geo_extent",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 25,
+      "score": 22,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含地区字段",
+        "包含时间字段",
+        "真实库有数据：25 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "geo_house",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 31830,
+      "score": 17,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含地区字段",
+        "真实库有数据：31830 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。"
+      ]
+    },
+    {
+      "table_name": "geo_house2",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 31830,
+      "score": 17,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含地区字段",
+        "真实库有数据：31830 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。"
+      ]
+    },
+    {
+      "table_name": "t_gqp_zdjcsj",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 27263,
+      "score": 15,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：27263 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_drone_dom",
+      "business_domain": "空间数据",
+      "description": "高精度无人机DOM数据表，记录DOM影像名称、编号、路径、坐标、高度、角度和影像时间。",
+      "row_count": 25,
+      "score": 12,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：25 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_gqp_accessory",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 87,
+      "score": 12,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：87 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_menu",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 40,
+      "score": 12,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：40 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_insar",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 5,
+      "score": 11,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：5 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_system_notice",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 7,
+      "score": 11,
+      "recommended_level": "exclude",
+      "reasons": [
+        "包含时间字段",
+        "真实库有数据：7 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_rainfall_station_data",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 1119801,
+      "score": 9,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：1119801 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_gqp_zdhjcsb_sjxby",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 18623,
+      "score": 7,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：18623 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "tb_system_log",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 12675,
+      "score": 7,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：12675 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_area",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 3288,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：3288 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_gqp_zdhjcsb_dgnytj",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 5302,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：5302 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_gqp_zdhjcsb_kzdgnsb",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 1934,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：1934 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_gqp_zdhjcsb_ylytj",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 1404,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：1404 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_log",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 9343,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：9343 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_region",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 1405,
+      "score": 6,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：1405 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "geo_zyjc",
+      "business_domain": "空间/地质数据",
+      "description": "空间、地质或高切坡扩展数据表。",
+      "row_count": 129,
+      "score": 5,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：129 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_rainfall_station",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 169,
+      "score": 5,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：169 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_attachment",
+      "business_domain": "未分类",
+      "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
+      "row_count": 13,
+      "score": 4,
+      "recommended_level": "exclude",
+      "reasons": [
+        "真实库有数据：13 行"
+      ],
+      "join_keys": [],
+      "query_hints": []
+    },
+    {
+      "table_name": "t_dept",
+      "business_domain": "系统管理",
+      "description": "部门表。可用于机构、部门名称等管理信息查询。",
+      "row_count": 14,
+      "score": -18,
+      "recommended_level": "exclude",
+      "reasons": [
+        "业务域为系统管理",
+        "包含时间字段",
+        "真实库有数据：14 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。"
+      ]
+    },
+    {
+      "table_name": "t_user",
+      "business_domain": "系统管理",
+      "description": "系统用户表。智能查询默认不应检索账号、密码等敏感字段。",
+      "row_count": 240,
+      "score": -67,
+      "recommended_level": "exclude",
+      "reasons": [
+        "系统管理表，默认排除",
+        "业务域为系统管理",
+        "包含地区字段",
+        "包含时间字段",
+        "真实库有数据：240 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "默认查询有效数据时可加 delete_flag = 1；如需历史或删除数据，用户应明确说明。",
+        "按地区统计时优先使用 ssss（所属省市）和 ssqx（所属区县）。",
+        "查询最近创建或上传记录时按 create_time DESC 排序。",
+        "该表包含系统管理信息，普通高切坡业务查询默认不应使用。"
+      ]
+    },
+    {
+      "table_name": "t_role_menu",
+      "business_domain": "系统管理",
+      "description": "角色权限关系表。智能查询默认不应面向业务用户暴露。",
+      "row_count": 189,
+      "score": -77,
+      "recommended_level": "exclude",
+      "reasons": [
+        "系统管理表，默认排除",
+        "业务域为系统管理",
+        "包含时间字段",
+        "真实库有数据：189 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。",
+        "该表包含系统管理信息，普通高切坡业务查询默认不应使用。"
+      ]
+    },
+    {
+      "table_name": "t_user_role",
+      "business_domain": "系统管理",
+      "description": "用户角色关系表。智能查询默认不应面向业务用户暴露。",
+      "row_count": 230,
+      "score": -77,
+      "recommended_level": "exclude",
+      "reasons": [
+        "系统管理表，默认排除",
+        "业务域为系统管理",
+        "包含时间字段",
+        "真实库有数据：230 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。",
+        "该表包含系统管理信息，普通高切坡业务查询默认不应使用。"
+      ]
+    },
+    {
+      "table_name": "t_menus",
+      "business_domain": "系统管理",
+      "description": "菜单权限表。智能查询默认不应面向业务用户暴露。",
+      "row_count": 86,
+      "score": -78,
+      "recommended_level": "exclude",
+      "reasons": [
+        "系统管理表，默认排除",
+        "业务域为系统管理",
+        "包含时间字段",
+        "真实库有数据：86 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。",
+        "该表包含系统管理信息，普通高切坡业务查询默认不应使用。"
+      ]
+    },
+    {
+      "table_name": "t_role",
+      "business_domain": "系统管理",
+      "description": "角色表。智能查询默认不应面向业务用户暴露。",
+      "row_count": 6,
+      "score": -79,
+      "recommended_level": "exclude",
+      "reasons": [
+        "系统管理表，默认排除",
+        "业务域为系统管理",
+        "包含时间字段",
+        "真实库有数据：6 行"
+      ],
+      "join_keys": [],
+      "query_hints": [
+        "查询最近创建或上传记录时按 create_time DESC 排序。",
+        "该表包含系统管理信息，普通高切坡业务查询默认不应使用。"
+      ]
+    }
+  ]
+}

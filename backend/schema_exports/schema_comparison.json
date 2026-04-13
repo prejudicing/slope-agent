@@ -1,0 +1,674 @@
+{
+  "generated_at": "2026-04-13T14:34:36",
+  "summary": {
+    "database_table_count": 55,
+    "document_table_count": 23,
+    "matched_table_count": 20,
+    "document_only_table_count": 2,
+    "database_only_table_count": 35,
+    "tables_with_column_differences": 16
+  },
+  "document_only_tables": [
+    "geo_wyjcsjjlb",
+    "qcqfhgxcjl"
+  ],
+  "database_only_tables": [
+    "geo_extent",
+    "geo_gqp_jbxx2",
+    "geo_gqpdcsj",
+    "geo_gqpdzdh",
+    "geo_gqpfhgccs",
+    "geo_gqpyxsj",
+    "geo_house",
+    "geo_house2",
+    "geo_qcqfjcjl",
+    "geo_qydzzhbj",
+    "geo_wyjcsjjl",
+    "geo_wyjcsjjl_ljyc",
+    "geo_zyjc",
+    "t_area",
+    "t_attachment",
+    "t_gqp_accessory",
+    "t_gqp_zdhjcsb",
+    "t_gqp_zdhjcsb_dgnytj",
+    "t_gqp_zdhjcsb_kzdgnsb",
+    "t_gqp_zdhjcsb_sjxby",
+    "t_gqp_zdhjcsb_ylytj",
+    "t_gqp_zdjcsj",
+    "t_insar",
+    "t_insar_data",
+    "t_log",
+    "t_menu",
+    "t_message",
+    "t_qcqfhgxcjl",
+    "t_rainfall_station",
+    "t_rainfall_station_data",
+    "t_region",
+    "t_risk_level",
+    "t_risk_model_param",
+    "t_system_notice",
+    "tb_system_log"
+  ],
+  "matched_tables": [
+    {
+      "table_name": "geo_dzbjjbxx",
+      "document_title": "地质背景资料表 geo_dzbjjbxx",
+      "database_column_count": 36,
+      "document_column_count": 11,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "bxml",
+        "cslx",
+        "csxx",
+        "czlbz",
+        "dcms",
+        "dw",
+        "dxslx",
+        "dzdh",
+        "dzmc",
+        "dzms",
+        "dzzc",
+        "fhzt",
+        "kjqdcs",
+        "kjqdcsc",
+        "kyqd",
+        "npjjyl",
+        "nzdjyl",
+        "phms",
+        "remark",
+        "rzdjyl",
+        "sl",
+        "trrl",
+        "yxfw",
+        "yxmc",
+        "yxrk"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_gqp_jbxx",
+      "document_title": "高切坡基本信息表结构说明 geo_gqp_jbxx",
+      "database_column_count": 114,
+      "document_column_count": 80,
+      "missing_in_database_columns": [
+        "jcy"
+      ],
+      "extra_in_database_columns": [
+        "assessment",
+        "district_management_staff",
+        "district_management_unit",
+        "dl",
+        "emergency_response_status",
+        "engineering_status",
+        "fhjgxs_ggzh",
+        "fhjgxs_mpzh",
+        "fhjgxs_ykhzzh",
+        "fhjgxs_zlsdq",
+        "jcjb",
+        "jcr",
+        "jcss",
+        "jgrq",
+        "jsnrhgmms",
+        "last_warning_date",
+        "occurrence_time",
+        "patrol_enable",
+        "pgzxz",
+        "pjzxz",
+        "point_hcs_id",
+        "professional_technical_unit",
+        "ptu_contact",
+        "ptu_phone",
+        "sfqcqf",
+        "sjtbsj",
+        "slope_angle_max",
+        "slope_height_max",
+        "statistics_status",
+        "stcd",
+        "warned",
+        "warning_level",
+        "wxcd",
+        "ytxz",
+        "zlgdszwz"
+      ],
+      "type_mismatches": [
+        {
+          "column": "gqpid",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "gqpzt",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "is_complete",
+          "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "is_stop",
+          "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "qcqf_ztqk",
+          "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "review_state",
+          "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "review_time",
+          "database_type": "DATETIME",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "sfssjc",
+          "database_type": "VARCHAR(100)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "sfsssjyc",
+          "database_type": "VARCHAR(100)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "sfzyjc",
+          "database_type": "VARCHAR(100)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "sfzyjcyc",
+          "database_type": "VARCHAR(100)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "sjly",
+          "database_type": "VARCHAR(100)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "ssjd",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "tb_time",
+          "database_type": "DATETIME",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zbyxfw",
+          "database_type": "NUMBER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zbyyrk",
+          "database_type": "NUMBER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zrdw",
+          "database_type": "VARCHAR(300)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zrdwfzr",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zrdwfzrdh",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_gqp_zyjc",
+      "document_title": "专业监测点表 geo_gqp_zyjc",
+      "database_column_count": 29,
+      "document_column_count": 8,
+      "missing_in_database_columns": [
+        "geometry",
+        "isupdate",
+        "latitude",
+        "level_type",
+        "longitude"
+      ],
+      "extra_in_database_columns": [
+        "construction_date",
+        "data_typ",
+        "delete_flag",
+        "description",
+        "former_name",
+        "hcs_id",
+        "hcs_ids",
+        "hyz",
+        "initx",
+        "inity",
+        "jcd_id",
+        "location_description",
+        "region_id",
+        "responsible_unit",
+        "sfcx",
+        "status",
+        "tb_time",
+        "technical_unit",
+        "technical_unit_contact",
+        "technical_unit_phone",
+        "typ",
+        "watch_level",
+        "x",
+        "xyyz",
+        "y",
+        "z"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_danger_report",
+      "document_title": "巡检报告表 t_danger_report",
+      "database_column_count": 9,
+      "document_column_count": 8,
+      "missing_in_database_columns": [
+        "gqpbh"
+      ],
+      "extra_in_database_columns": [
+        "ifzh",
+        "pdf"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_dept",
+      "document_title": "部门表 t_dept",
+      "database_column_count": 12,
+      "document_column_count": 11,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "pid"
+      ],
+      "type_mismatches": [
+        {
+          "column": "create_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        }
+      ]
+    },
+    {
+      "table_name": "t_drone_dom",
+      "document_title": "高精度无人机DOM t_drone_dom",
+      "database_column_count": 13,
+      "document_column_count": 13,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table_name": "t_menus",
+      "document_title": "功能管理表 t_menus",
+      "database_column_count": 13,
+      "document_column_count": 13,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_monthly",
+      "document_title": "月报/年报 t_monthly",
+      "database_column_count": 11,
+      "document_column_count": 9,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "ifzh",
+        "pdf"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_panoramic_data",
+      "document_title": "全景数据管理 t_panoramic_data",
+      "database_column_count": 9,
+      "document_column_count": 9,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table_name": "t_review_record",
+      "document_title": "高切坡预警处理流程记录表（复核记录） t_review_record",
+      "database_column_count": 14,
+      "document_column_count": 11,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "ifzh",
+        "pdf",
+        "type"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_role",
+      "document_title": "角色表 t_role",
+      "database_column_count": 6,
+      "document_column_count": 6,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": [
+        {
+          "column": "create_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        },
+        {
+          "column": "modfiy_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        }
+      ]
+    },
+    {
+      "table_name": "t_role_menu",
+      "document_title": "角色权限表 t_role_menu",
+      "database_column_count": 6,
+      "document_column_count": 6,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": [
+        {
+          "column": "create_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        }
+      ]
+    },
+    {
+      "table_name": "t_tilt_model",
+      "document_title": "倾斜摄影模型管理 t_tilt_model",
+      "database_column_count": 13,
+      "document_column_count": 13,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": []
+    },
+    {
+      "table_name": "t_tree",
+      "document_title": "图层树表 t_tree",
+      "database_column_count": 18,
+      "document_column_count": 15,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "condition",
+        "gqpbh",
+        "layer"
+      ],
+      "type_mismatches": []
+    },
+    {
+      "table_name": "t_user",
+      "document_title": "用户表结构说明 t_user",
+      "database_column_count": 18,
+      "document_column_count": 15,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "ssqx",
+        "ssss",
+        "user_sex"
+      ],
+      "type_mismatches": [
+        {
+          "column": "create_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        },
+        {
+          "column": "modfiy_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        },
+        {
+          "column": "user_address",
+          "database_type": "VARCHAR(255)",
+          "document_type": "VARCHAR（255）"
+        },
+        {
+          "column": "user_code",
+          "database_type": "VARCHAR(255)",
+          "document_type": "VARCHAR（255）"
+        },
+        {
+          "column": "user_hobby",
+          "database_type": "VARCHAR(255)",
+          "document_type": "VARCHAR（255）"
+        },
+        {
+          "column": "user_phone",
+          "database_type": "VARCHAR(50)",
+          "document_type": "VARCHAR（50）"
+        }
+      ]
+    },
+    {
+      "table_name": "t_user_role",
+      "document_title": "用户角色表 t_user_role",
+      "database_column_count": 6,
+      "document_column_count": 6,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": [
+        {
+          "column": "create_time",
+          "database_type": "TIMESTAMP",
+          "document_type": "DATETIME"
+        },
+        {
+          "column": "user_name",
+          "database_type": "VARCHAR(50)",
+          "document_type": "VARCHAR(100)"
+        }
+      ]
+    },
+    {
+      "table_name": "t_warning_report",
+      "document_title": "预警专报表 t_warning_report",
+      "database_column_count": 11,
+      "document_column_count": 6,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "delete_flag",
+        "ifzh",
+        "month",
+        "pdf",
+        "year"
+      ],
+      "type_mismatches": [
+        {
+          "column": "gqpbh",
+          "database_type": "VARCHAR(200)",
+          "document_type": "INT4"
+        },
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "t_warning_report_content",
+      "document_title": "预警专报内容提取表 t_warning_report_content",
+      "database_column_count": 16,
+      "document_column_count": 15,
+      "missing_in_database_columns": [
+        "sfjctb",
+        "xmlx"
+      ],
+      "extra_in_database_columns": [
+        "jclx",
+        "scyjsj",
+        "sfjcyj"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        },
+        {
+          "column": "tbsj",
+          "database_type": "VARCHAR(200)",
+          "document_type": "TIMESTAMP"
+        }
+      ]
+    },
+    {
+      "table_name": "tb_hcs_monitoring",
+      "document_title": "群测群防高切坡监测表 tb_hcs_monitoring",
+      "database_column_count": 48,
+      "document_column_count": 48,
+      "missing_in_database_columns": [
+        "review_字段含义s"
+      ],
+      "extra_in_database_columns": [
+        "review_comments"
+      ],
+      "type_mismatches": [
+        {
+          "column": "create_user_id",
+          "database_type": "VARCHAR(200)",
+          "document_type": "INT4"
+        },
+        {
+          "column": "hcs_id",
+          "database_type": "VARCHAR(200)",
+          "document_type": "INT4"
+        },
+        {
+          "column": "jc_id",
+          "database_type": "VARCHAR(200)",
+          "document_type": "INT4"
+        },
+        {
+          "column": "monitor_id",
+          "database_type": "VARCHAR(200)",
+          "document_type": "INT4"
+        }
+      ]
+    },
+    {
+      "table_name": "tb_hcs_personnel",
+      "document_title": "监测人员表 tb_hcs_personnel",
+      "database_column_count": 22,
+      "document_column_count": 22,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [],
+      "type_mismatches": []
+    }
+  ],
+  "unnamed_document_tables": [
+    {
+      "table_name": "unnamed_doc_table_1",
+      "normalized_table_name": "unnamed_doc_table_1",
+      "table_title": "高切坡附件",
+      "section": "高切坡基本信息表结构说明 geo_gqp_jbxx",
+      "columns": [
+        {
+          "name": "id",
+          "normalized_name": "id",
+          "type": "SERIAL",
+          "primary_key_mark": "X",
+          "nullable_mark": "X",
+          "default": "",
+          "comment": ""
+        },
+        {
+          "name": "name",
+          "normalized_name": "name",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件名称"
+        },
+        {
+          "name": "url",
+          "normalized_name": "url",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "附件存储地址"
+        },
+        {
+          "name": "pid",
+          "normalized_name": "pid",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "父级id（外键）"
+        },
+        {
+          "name": "create_time",
+          "normalized_name": "create_time",
+          "type": "TIMESTAMP",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建时间"
+        },
+        {
+          "name": "create_user",
+          "normalized_name": "create_user",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "创建人"
+        }
+      ]
+    }
+  ]
+}
