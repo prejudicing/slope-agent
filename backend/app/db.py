@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, inspect
 from langchain_community.utilities import SQLDatabase
 from app.config import DM_USER, DM_PASSWORD, DM_HOST, DM_PORT, HCS_INCLUDE_TABLES
 from app.domain import GQP_INCLUDE_TABLES
+from app.schema_knowledge import get_default_core_tables
 
 
 def _require_dm_config():
@@ -49,13 +50,13 @@ def _resolve_existing_tables(uri: str, requested_tables: list[str]) -> tuple[lis
     return resolved_tables, missing_tables
 
 
-def get_db():
+def get_db(include_tables: list[str] | None = None):
     _require_dm_config()
     password = quote_plus(DM_PASSWORD)
-    requested_tables = (
+    requested_tables = include_tables or (
         [table.strip() for table in HCS_INCLUDE_TABLES.split(",") if table.strip()]
         if HCS_INCLUDE_TABLES
-        else GQP_INCLUDE_TABLES
+        else get_default_core_tables() or GQP_INCLUDE_TABLES
     )
 
     uri = f"dm+dmPython://{DM_USER}:{password}@{DM_HOST}:{DM_PORT}/"

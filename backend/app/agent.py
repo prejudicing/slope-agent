@@ -16,7 +16,8 @@ except Exception:
 
 from app.db import get_db
 from app.config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
-from app.domain import GQP_AGENT_PREFIX, GQP_TABLE_GUIDE
+from app.domain import GQP_AGENT_PREFIX
+from app.schema_knowledge import build_schema_guide, select_include_tables
 
 
 FORBIDDEN_SQL_RE = re.compile(
@@ -159,7 +160,15 @@ def run_agent(question: str, progress=None) -> dict:
     print(">>> high-cut-slope SQL agent loaded")
     emit({"type": "progress", "message": "连接达梦数据库"})
 
-    db = get_db()
+    include_tables = select_include_tables(question)
+    table_guide = build_schema_guide(question)
+    emit({
+        "type": "progress",
+        "message": "检索真实数据库 schema 知识",
+        "detail": "候选表：" + ", ".join(include_tables),
+    })
+
+    db = get_db(include_tables=include_tables)
     emit({"type": "progress", "message": "初始化高切坡业务 Agent"})
 
     llm_kwargs = {
@@ -179,7 +188,7 @@ def run_agent(question: str, progress=None) -> dict:
         prefix=GQP_AGENT_PREFIX.format(
             dialect="{dialect}",
             top_k="{top_k}",
-            table_guide=GQP_TABLE_GUIDE,
+            table_guide=table_guide,
         ),
         top_k=20,
         max_iterations=8,
