@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:https": "node scripts/create-dev-cert.mjs && vite",
+    "cert": "node scripts/create-dev-cert.mjs",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },
