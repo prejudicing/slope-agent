@@ -21,8 +21,10 @@ except Exception:
     BaseCallbackHandler = object
 
 from app.db import get_db
+from app.business_queries import enrich_rows, get_deterministic_query
 from app.config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 from app.domain import GQP_AGENT_PREFIX
+from app.query_cache import get_cached_sql, save_cached_sql
 from app.schema_knowledge import build_schema_guide, select_include_tables
 
 
@@ -116,6 +118,13 @@ def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
         return [], []
 
 
+def build_cached_summary(rows: list[dict]) -> str:
+    """复用缓存 SQL 时生成稳定摘要，不再让 LLM 重新改写答案。"""
+    if rows:
+        return f"本次复用已验证查询口径，查询到 {len(rows)} 条记录。详细结果见查询结果表格。"
+    return "本次复用已验证查询口径，数据库未返回匹配记录。"
+
+
 def clean_logs(logs: str) -> str:
     """清洗 Agent 日志，隐藏表结构 DDL，避免用户误认为系统执行了 CREATE TABLE。"""
     logs = ANSI_RE.sub("", logs)
@@ -201,6 +210,38 @@ def run_agent(question: str, progress=None) -> dict:
     print(">>> high-cut-slope SQL agent loaded")
     emit({"type": "progress", "message": "连接达梦数据库"})
 
+    deterministic_query = get_deterministic_query(question)
+    if deterministic_query:
+        emit({
+            "type": "progress",
+            "message": "命中稳定业务查询模板",
+            "detail": deterministic_query["summary"],
+        })
+        db = get_db(include_tables=deterministic_query["tables"])
+        sql = deterministic_query["sql"]
+        emit({"type": "sql", "sql": sql})
+        columns, rows = query_table_for_display(db, sql)
+        columns, rows = enrich_rows(deterministic_query["name"], columns, rows)
+        summary = (
+            f"{deterministic_query['summary']} 本次查询到 {len(rows)} 条异常记录，"
+            "异常类型已在结果表格的 abnormal_type 字段中列出。"
+        )
+        emit({
+            "type": "summary",
+            "summary": summary,
+            "message": "生成查询总结",
+        })
+        return {
+            "question": question,
+            "sql": sql,
+            "result": summary,
+            "summary": summary,
+            "columns": columns,
+            "rows": rows,
+            "logs": "命中稳定业务查询模板，未重新调用 Agent 生成 SQL。",
+            "error": None,
+        }
+
     include_tables = select_include_tables(question)
     table_guide = build_schema_guide(question)
     emit({
@@ -211,6 +252,32 @@ def run_agent(question: str, progress=None) -> dict:
 
     db = get_db(include_tables=include_tables)
     emit({"type": "progress", "message": "初始化高切坡业务 Agent"})
+
+    cached_sql = get_cached_sql(question)
+    if cached_sql:
+        emit({
+            "type": "progress",
+            "message": "命中已验证 SQL，复用稳定查询口径",
+            "detail": cached_sql,
+        })
+        emit({"type": "sql", "sql": cached_sql})
+        columns, rows = query_table_for_display(db, cached_sql)
+        summary = build_cached_summary(rows)
+        emit({
+            "type": "summary",
+            "summary": summary,
+            "message": "生成查询总结",
+        })
+        return {
+            "question": question,
+            "sql": cached_sql,
+            "result": summary,
+            "summary": summary,
+            "columns": columns,
+            "rows": rows,
+            "logs": "命中已验证 SQL 缓存，未重新调用 Agent 生成 SQL。",
+            "error": None,
+        }
 
     llm_kwargs = {
         "model": OPENAI_MODEL,
@@ -275,6 +342,8 @@ def run_agent(question: str, progress=None) -> dict:
                 "type": "progress",
                 "message": f"查询结果已同步到表格：{len(rows)} 条",
             })
+            if sql:
+                save_cached_sql(question, sql)
 
         return {
             "question": question,

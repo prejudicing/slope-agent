@@ -112,7 +112,7 @@ def _question_terms(question: str) -> list[str]:
             if piece and not piece.isspace():
                 terms.add(piece)
 
-    return sorted(terms, key=len, reverse=True)
+    return sorted(terms, key=lambda item: (-len(item), item))
 
 
 def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str, Any]]:
@@ -160,7 +160,7 @@ def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str
             if name.lower() in get_table_map()
         ][:limit]
 
-    scored.sort(reverse=True)
+    scored.sort(key=lambda item: (-item[0], item[1].lower()))
     table_map = get_table_map()
     selected = []
     seen = set()
