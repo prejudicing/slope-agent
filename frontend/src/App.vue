@@ -29,6 +29,10 @@
     </div>
 
     <div class="grid-container single">
+      <SpeechPlayer :summary="summary" :columns="columns" :rows="rows" />
+    </div>
+
+    <div class="grid-container single">
       <ResultPanel :columns="columns" :rows="rows" />
     </div>
 
@@ -49,6 +53,7 @@ import SqlPreview from './components/SqlPreview.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import SummaryPanel from './components/SummaryPanel.vue'
 import AgentLogPanel from './components/AgentLogPanel.vue'
+import SpeechPlayer from './components/SpeechPlayer.vue'
 import { streamQuery } from './api/query'
 import type { ThinkingStep } from './types/query'
 

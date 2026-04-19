@@ -125,6 +125,63 @@ def build_cached_summary(rows: list[dict]) -> str:
     return "本次复用已验证查询口径，数据库未返回匹配记录。"
 
 
+def build_llm() -> ChatOpenAI:
+    """统一创建 LLM，供 SQL Agent 和结果分析复用。"""
+    llm_kwargs = {
+        "model": OPENAI_MODEL,
+        "temperature": 0,
+        "api_key": OPENAI_API_KEY,
+    }
+    if OPENAI_BASE_URL:
+        llm_kwargs["base_url"] = OPENAI_BASE_URL
+    return ChatOpenAI(**llm_kwargs)
+
+
+def analyze_query_result(
+    llm: ChatOpenAI,
+    question: str,
+    sql: str,
+    columns: list[str],
+    rows: list[dict],
+    fallback: str = "",
+) -> str:
+    """把真实查询结果表交给 LLM 生成业务总结。
+
+    这里的 LLM 只做“读表分析”，不再决定查询哪些表或字段。
+    """
+    if not columns:
+        return fallback or "本次查询未返回可展示的表格字段，请检查 SQL 是否成功执行。"
+    if not rows:
+        return "本次查询已执行，但数据库没有返回匹配记录。"
+
+    sample_rows = rows[:20]
+    payload = {
+        "question": question,
+        "sql": sql,
+        "columns": columns,
+        "row_count": len(rows),
+        "rows": sample_rows,
+    }
+    prompt = (
+        "你是高切坡系统智能查询 Agent 的结果分析器。"
+        "你只能依据下面给出的真实 SQL 查询结果表进行分析，不能补充、猜测或编造表格中没有的数据。\n"
+        "请用中文输出查询总结，要求：\n"
+        "1. 先直接回答用户问题；\n"
+        "2. 说明本次共返回多少条记录；\n"
+        "3. 如果表格包含异常类型、状态、时间、地区等字段，请提炼关键发现；\n"
+        "4. 如果结果较多，只概括前若干条的代表性信息，并提示完整明细见表格；\n"
+        "5. 不要输出 SQL，不要说“我查询了数据库”，不要编造处置建议。\n\n"
+        f"真实查询结果 JSON：\n{json.dumps(payload, ensure_ascii=False, default=str)}"
+    )
+
+    try:
+        response = llm.invoke(prompt)
+        content = getattr(response, "content", response)
+        return str(content).strip() or fallback
+    except Exception:
+        return fallback or build_cached_summary(rows)
+
+
 def clean_logs(logs: str) -> str:
     """清洗 Agent 日志，隐藏表结构 DDL，避免用户误认为系统执行了 CREATE TABLE。"""
     logs = ANSI_RE.sub("", logs)
@@ -195,9 +252,9 @@ class AgentProgressHandler(BaseCallbackHandler):
         output = getattr(finish, "return_values", {}).get("output", "")
         if output:
             self.emit({
-                "type": "summary",
-                "summary": output,
-                "message": "生成查询总结",
+                "type": "progress",
+                "message": "SQL Agent 已完成查询阶段",
+                "detail": _compact_text(output, 700),
             })
 
 
@@ -222,9 +279,20 @@ def run_agent(question: str, progress=None) -> dict:
         emit({"type": "sql", "sql": sql})
         columns, rows = query_table_for_display(db, sql)
         columns, rows = enrich_rows(deterministic_query["name"], columns, rows)
-        summary = (
-            f"{deterministic_query['summary']} 本次查询到 {len(rows)} 条异常记录，"
-            "异常类型已在结果表格的 abnormal_type 字段中列出。"
+        emit({
+            "type": "progress",
+            "message": "基于查询结果生成业务分析",
+        })
+        summary = analyze_query_result(
+            build_llm(),
+            question,
+            sql,
+            columns,
+            rows,
+            (
+                f"{deterministic_query['summary']} 本次查询到 {len(rows)} 条异常记录，"
+                "异常类型已在结果表格的 abnormal_type 字段中列出。"
+            ),
         )
         emit({
             "type": "summary",
@@ -262,7 +330,18 @@ def run_agent(question: str, progress=None) -> dict:
         })
         emit({"type": "sql", "sql": cached_sql})
         columns, rows = query_table_for_display(db, cached_sql)
-        summary = build_cached_summary(rows)
+        emit({
+            "type": "progress",
+            "message": "基于缓存 SQL 的查询结果生成业务分析",
+        })
+        summary = analyze_query_result(
+            build_llm(),
+            question,
+            cached_sql,
+            columns,
+            rows,
+            build_cached_summary(rows),
+        )
         emit({
             "type": "summary",
             "summary": summary,
@@ -279,15 +358,7 @@ def run_agent(question: str, progress=None) -> dict:
             "error": None,
         }
 
-    llm_kwargs = {
-        "model": OPENAI_MODEL,
-        "temperature": 0,
-        "api_key": OPENAI_API_KEY,
-    }
-    if OPENAI_BASE_URL:
-        llm_kwargs["base_url"] = OPENAI_BASE_URL
-
-    llm = ChatOpenAI(**llm_kwargs)
+    llm = build_llm()
     state: dict[str, str] = {}
     callbacks = [AgentProgressHandler(emit, state)]
 
@@ -323,7 +394,8 @@ def run_agent(question: str, progress=None) -> dict:
             or state.get("last_sql")
             or extract_sql_from_logs(logs)
         )
-        summary = result.get("output", "")
+        agent_output = result.get("output", "")
+        summary = ""
         columns = []
         rows = []
         error = None
@@ -344,6 +416,23 @@ def run_agent(question: str, progress=None) -> dict:
             })
             if sql:
                 save_cached_sql(question, sql)
+            emit({
+                "type": "progress",
+                "message": "基于查询结果生成业务分析",
+            })
+            summary = analyze_query_result(
+                llm,
+                question,
+                sql,
+                columns,
+                rows,
+                agent_output,
+            )
+            emit({
+                "type": "summary",
+                "summary": summary,
+                "message": "生成查询总结",
+            })
 
         return {
             "question": question,
@@ -366,15 +455,23 @@ def run_agent(question: str, progress=None) -> dict:
         )
         recovered_answer = extract_answer_from_parsing_error(error)
         columns, rows = query_table_for_display(db, sql)
+        summary = analyze_query_result(
+            build_llm(),
+            question,
+            sql,
+            columns,
+            rows,
+            recovered_answer,
+        )
         return {
             "question": question,
             "sql": sql,
-            "result": recovered_answer,
-            "summary": recovered_answer,
+            "result": summary,
+            "summary": summary,
             "columns": columns,
             "rows": rows,
             "logs": clean_logs(logs),
-            "error": None if recovered_answer else error,
+            "error": None if summary else error,
         }
 
 
