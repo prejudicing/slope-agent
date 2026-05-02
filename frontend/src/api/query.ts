@@ -1,9 +1,19 @@
+import { Capacitor } from '@capacitor/core'
 import axios from 'axios'
 import type { QueryResponse, QueryStreamEvent } from '../types/query'
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
+function buildApiUrl(path: string): string {
+  if (Capacitor.isNativePlatform() && !API_BASE_URL) {
+    throw new Error('安卓 App 需要配置 VITE_API_BASE_URL，例如 http://10.61.48.10:8000')
+  }
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path
+}
+
 // 非流式接口保留给调试；当前页面主要使用 streamQuery。
 export async function postQuery(question: string): Promise<QueryResponse> {
-  const res = await axios.post('/api/query', {
+  const res = await axios.post(buildApiUrl('/api/query'), {
     question,
   })
   return res.data
@@ -14,7 +24,7 @@ export async function streamQuery(
   onEvent: (event: QueryStreamEvent) => void
 ) {
   // 使用 fetch 读取 text/event-stream，便于边查询边展示 Agent 进度。
-  const res = await fetch('/api/query/stream', {
+  const res = await fetch(buildApiUrl('/api/query/stream'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -8,9 +8,15 @@
     "dev:https": "node scripts/create-dev-cert.mjs && vite",
     "cert": "node scripts/create-dev-cert.mjs",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:add": "npx cap add android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^7.6.2",
+    "@capacitor/core": "^8.3.1",
     "axios": "^1.15.0",
     "element-plus": "^2.13.7",
     "vue": "^3.5.32"

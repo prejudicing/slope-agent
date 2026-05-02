@@ -15,6 +15,7 @@
 - 支持流式展示 Agent 查询过程
 - 支持中文语音输入
 - 支持查询结果中文播报，带开始 / 暂停 / 继续 / 停止按钮
+- 支持基于现有 Vue 前端封装 Android App
 - 支持基于真实数据库导出的 schema 知识增强
 - 对部分高频关键问题提供稳定业务查询模板
 - 对同一句自然语言问题支持 SQL 口径缓存，减少重复提问结果漂移
@@ -40,6 +41,7 @@ lm-dm8/
 │  ├─ scripts/                    # schema 导出、解释、画像脚本
 │  └─ requirements.txt
 ├─ frontend/
+│  ├─ android/                    # Capacitor 生成的 Android 原生工程
 │  ├─ src/
 │  │  ├─ components/              # Vue 组件
 │  │  ├─ api/                     # 前端请求
@@ -69,6 +71,7 @@ lm-dm8/
 - Vue 3
 - TypeScript
 - Vite
+- Capacitor
 - Element Plus
 - Web Speech API（中文语音输入）
 - SpeechSynthesis（结果播报）
@@ -168,6 +171,43 @@ http://localhost:5173/
 
 注意：中文语音输入通常要求 `HTTPS` 或 `localhost` 安全上下文。
 
+### 方式三：Android App
+
+先准备 Android App 请求的后端地址：
+
+```bash
+cd /home/lzb/projects/lm-dm8/frontend
+cp .env.example .env.local
+```
+
+然后把 `.env.local` 里的地址改成你的后端地址，例如：
+
+```env
+VITE_API_BASE_URL=http://10.61.48.10:8000
+```
+
+构建并同步到 Android 工程：
+
+```bash
+cd /home/lzb/projects/lm-dm8/frontend
+npm run android:sync
+```
+
+用 Android Studio 打开：
+
+```bash
+cd /home/lzb/projects/lm-dm8/frontend
+npm run android:open
+```
+
+之后在 Android Studio 里选择手机或模拟器，直接运行即可。
+
+说明：
+
+- 当前安卓工程默认允许访问 HTTP 后端，便于局域网联调
+- 如果后端未来升级到 HTTPS，建议再收紧 Android 明文网络访问配置
+- 如果你换了后端地址，需要重新执行 `npm run android:sync`
+
 ## 前端命令
 
 ```bash
@@ -196,6 +236,18 @@ npm run build
 
 ```bash
 npm run preview
+```
+
+同步 Android 工程：
+
+```bash
+npm run android:sync
+```
+
+打开 Android Studio：
+
+```bash
+npm run android:open
 ```
 
 ## 后端命令
@@ -329,6 +381,7 @@ rm /home/lzb/projects/lm-dm8/backend/runtime/query_sql_cache.json
 - 浏览器要求：通常需要 `HTTPS` 或 `localhost`
 - 推荐浏览器：Chrome / Edge
 - 手机访问时需要连接同一局域网
+- 安卓 App 场景下，前端请求地址必须通过 `VITE_API_BASE_URL` 指向真实后端，不能再依赖相对路径 `/api`
 
 ### 查询结果播报
 

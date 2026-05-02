@@ -2,6 +2,8 @@
 
 Vue 3 + TypeScript + Vite 前端页面，用于自然语言查询高切坡业务数据。
 
+当前已接入 Capacitor，可封装为 Android App。
+
 ## 开发启动
 
 普通 HTTP 开发服务：
@@ -43,3 +45,39 @@ https://10.61.48.10:5173/
 ```bash
 npm run build
 ```
+
+## Android App
+
+### 1. 配置后端地址
+
+先复制一份环境变量模板：
+
+```bash
+cp .env.example .env.local
+```
+
+把后端地址改成手机能访问到的地址，例如：
+
+```env
+VITE_API_BASE_URL=http://10.61.48.10:8000
+```
+
+### 2. 构建并同步到 Android 工程
+
+```bash
+npm run android:sync
+```
+
+### 3. 打开 Android Studio
+
+```bash
+npm run android:open
+```
+
+然后在 Android Studio 中选择真机或模拟器运行。
+
+## 说明
+
+- Android 工程目录位于 `frontend/android/`
+- 当前安卓工程已允许开发期访问 HTTP 后端，方便局域网联调
+- 如果修改了前端代码或 `VITE_API_BASE_URL`，需要重新执行 `npm run android:sync`
