@@ -8,3 +8,5 @@ frontend/certs/
 frontend/.DS_Store
 backend/runtime/
 .DS_Store
+.vscode
+./codex
