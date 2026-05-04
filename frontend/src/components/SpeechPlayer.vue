@@ -28,10 +28,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { PluginListenerHandle } from '@capacitor/core'
 import { Capacitor } from '@capacitor/core'
-import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { ElMessage } from 'element-plus'
+import { NativeTtsPlayer } from '../plugins/nativeTtsPlayer'
 
 const props = defineProps<{
   summary: string
@@ -41,19 +42,21 @@ const props = defineProps<{
 
 const isSpeaking = ref(false)
 const isPaused = ref(false)
+const nativeTtsAvailable = ref(false)
+const nativeListener = ref<PluginListenerHandle | null>(null)
 const isNativePlatform = Capacitor.isNativePlatform()
-const nativeSessionId = ref(0)
-const nativeChunks = ref<string[]>([])
-const nativeChunkIndex = ref(0)
 
 const canSpeak = computed(() => {
   if (!buildSpeechText().trim()) {
     return false
   }
-  return isNativePlatform || 'speechSynthesis' in window
+  return isNativePlatform ? nativeTtsAvailable.value : 'speechSynthesis' in window
 })
 
 const statusText = computed(() => {
+  if (isNativePlatform && !nativeTtsAvailable.value) {
+    return '原生播报不可用'
+  }
   if (!isNativePlatform && !('speechSynthesis' in window)) {
     return '当前浏览器不支持'
   }
@@ -113,89 +116,48 @@ const pickChineseVoice = () => {
   )
 }
 
-const splitNativeSpeechText = (text: string) => {
-  const normalized = text.replace(/\s+/g, ' ').trim()
-  if (!normalized) {
-    return []
-  }
-
-  const coarseChunks = normalized
-    .split(/(?<=[。！？；.!?;，,、])/)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean)
-
-  const fineChunks: string[] = []
-  coarseChunks.forEach((chunk) => {
-    if (chunk.length <= 24) {
-      fineChunks.push(chunk)
-      return
-    }
-
-    let start = 0
-    while (start < chunk.length) {
-      fineChunks.push(chunk.slice(start, start + 24))
-      start += 24
-    }
-  })
-
-  return fineChunks
-}
-
-const speakNativeChunks = async (startIndex = 0) => {
-  const chunks = nativeChunks.value
-  if (!chunks.length || startIndex >= chunks.length) {
-    isSpeaking.value = false
-    isPaused.value = false
-    nativeChunkIndex.value = 0
+const attachNativeListener = async () => {
+  if (!isNativePlatform || nativeListener.value) {
     return
   }
 
-  nativeChunkIndex.value = startIndex
-  nativeSessionId.value += 1
-  const sessionId = nativeSessionId.value
-  isSpeaking.value = true
-  isPaused.value = false
-
-  for (let index = startIndex; index < chunks.length; index += 1) {
-    if (sessionId !== nativeSessionId.value) {
+  nativeListener.value = await NativeTtsPlayer.addListener('playbackState', (data) => {
+    if (data.state === 'playing') {
+      isSpeaking.value = true
+      isPaused.value = false
       return
     }
-
-    nativeChunkIndex.value = index
-
-    try {
-      await TextToSpeech.speak({
-        text: chunks[index],
-        lang: 'zh-CN',
-        rate: 0.95,
-        pitch: 1.0,
-        volume: 1.0,
-      })
-    } catch {
-      if (sessionId !== nativeSessionId.value) {
-        return
-      }
-
+    if (data.state === 'paused') {
+      isSpeaking.value = false
+      isPaused.value = true
+      return
+    }
+    if (data.state === 'completed' || data.state === 'stopped') {
       isSpeaking.value = false
       isPaused.value = false
-      try {
-        await TextToSpeech.openInstall()
-        ElMessage.warning('设备缺少语音播报组件，请按提示安装后重试')
-      } catch {
-        ElMessage.warning('原生语音播报失败，请检查系统语音播报服务')
-      }
       return
     }
-  }
+    if (data.state === 'error') {
+      isSpeaking.value = false
+      isPaused.value = false
+      ElMessage.warning(data.message || '原生语音播报失败')
+    }
+  })
+}
 
-  if (sessionId === nativeSessionId.value) {
-    isSpeaking.value = false
-    isPaused.value = false
-    nativeChunkIndex.value = 0
+const checkNativeAvailability = async () => {
+  if (!isNativePlatform) {
+    return
+  }
+  try {
+    const result = await NativeTtsPlayer.available()
+    nativeTtsAvailable.value = result.available
+  } catch {
+    nativeTtsAvailable.value = false
   }
 }
 
-const startSpeaking = () => {
+const startSpeaking = async () => {
   if (!isNativePlatform && !('speechSynthesis' in window)) {
     ElMessage.warning('当前浏览器不支持语音播报')
     return
@@ -208,9 +170,20 @@ const startSpeaking = () => {
   }
 
   if (isNativePlatform) {
-    nativeChunks.value = splitNativeSpeechText(text)
-    nativeChunkIndex.value = 0
-    void speakNativeChunks(0)
+    try {
+      await attachNativeListener()
+      await NativeTtsPlayer.speak({
+        text,
+        lang: 'zh-CN',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+      })
+      isSpeaking.value = true
+      isPaused.value = false
+    } catch (error: any) {
+      ElMessage.warning(error?.message || '原生语音播报启动失败')
+    }
     return
   }
 
@@ -245,18 +218,18 @@ const startSpeaking = () => {
   window.speechSynthesis.speak(utterance)
 }
 
-const pauseSpeaking = () => {
+const pauseSpeaking = async () => {
   if (isNativePlatform) {
-    if (!isSpeaking.value) {
-      return
+    try {
+      await NativeTtsPlayer.pause()
+      isSpeaking.value = false
+      isPaused.value = true
+    } catch (error: any) {
+      ElMessage.warning(error?.message || '暂停播报失败')
     }
-    nativeSessionId.value += 1
-    TextToSpeech.stop().catch(() => {})
-    isSpeaking.value = false
-    isPaused.value = true
-    nativeChunkIndex.value = Math.min(nativeChunkIndex.value + 1, nativeChunks.value.length)
     return
   }
+
   if (!('speechSynthesis' in window) || !window.speechSynthesis.speaking) {
     return
   }
@@ -264,17 +237,18 @@ const pauseSpeaking = () => {
   isPaused.value = true
 }
 
-const resumeSpeaking = () => {
+const resumeSpeaking = async () => {
   if (isNativePlatform) {
-    if (!nativeChunks.value.length || nativeChunkIndex.value >= nativeChunks.value.length) {
+    try {
+      await NativeTtsPlayer.resume()
       isPaused.value = false
-      isSpeaking.value = false
-      nativeChunkIndex.value = 0
-      return
+      isSpeaking.value = true
+    } catch (error: any) {
+      ElMessage.warning(error?.message || '继续播报失败')
     }
-    void speakNativeChunks(nativeChunkIndex.value)
     return
   }
+
   if (!('speechSynthesis' in window)) {
     return
   }
@@ -283,16 +257,18 @@ const resumeSpeaking = () => {
   isSpeaking.value = true
 }
 
-const stopSpeaking = () => {
+const stopSpeaking = async () => {
   if (isNativePlatform) {
-    nativeSessionId.value += 1
-    TextToSpeech.stop().catch(() => {})
+    try {
+      await NativeTtsPlayer.stop()
+    } catch {
+      // 忽略停止时异常，优先保证 UI 状态回收。
+    }
     isSpeaking.value = false
     isPaused.value = false
-    nativeChunkIndex.value = 0
-    nativeChunks.value = []
     return
   }
+
   if (!('speechSynthesis' in window)) {
     return
   }
@@ -304,12 +280,21 @@ const stopSpeaking = () => {
 watch(
   () => [props.summary, props.rows],
   () => {
-    stopSpeaking()
+    void stopSpeaking()
   }
 )
 
+onMounted(() => {
+  void checkNativeAvailability()
+  void attachNativeListener()
+})
+
 onBeforeUnmount(() => {
-  stopSpeaking()
+  void stopSpeaking()
+  if (nativeListener.value) {
+    void nativeListener.value.remove()
+    nativeListener.value = null
+  }
 })
 </script>
 
