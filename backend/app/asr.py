@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import io
+import re
 from typing import Optional
 
 from openai import OpenAI
@@ -17,6 +18,9 @@ from app.config import OPENAI_API_KEY, OPENAI_ASR_MODEL, OPENAI_BASE_URL
 
 class AsrError(RuntimeError):
     """语音转写业务错误，供 API 层转换成友好的返回。"""
+
+
+DATA_URL_RE = re.compile(r"^data:[^;]+;base64,", re.IGNORECASE)
 
 
 def _build_client() -> OpenAI:
@@ -45,16 +49,35 @@ def _guess_filename(mime_type: str, filename: Optional[str]) -> str:
     return f"query_audio.{suffix}"
 
 
+def _decode_audio_base64(audio_base64: str) -> bytes:
+    """兼容原生插件返回的 base64 变体。
+
+    Android 录音插件使用 Base64.DEFAULT，会带换行；有些端上实现还会返回
+    data URL 前缀，因此这里统一做清洗后再解码。
+    """
+    normalized = audio_base64.strip()
+    normalized = DATA_URL_RE.sub("", normalized)
+    normalized = re.sub(r"\s+", "", normalized)
+
+    if not normalized:
+        raise AsrError("录音内容为空。")
+
+    padding = len(normalized) % 4
+    if padding:
+        normalized += "=" * (4 - padding)
+
+    try:
+        return base64.b64decode(normalized, validate=False)
+    except Exception as exc:
+        raise AsrError("录音数据格式无效，无法解码。") from exc
+
+
 def transcribe_base64_audio(audio_base64: str, mime_type: str, filename: Optional[str] = None) -> str:
     """把前端上传的 base64 音频转成文本。"""
     if not audio_base64:
         raise AsrError("录音内容为空。")
 
-    try:
-        audio_bytes = base64.b64decode(audio_base64, validate=True)
-    except Exception as exc:
-        raise AsrError("录音数据格式无效，无法解码。") from exc
-
+    audio_bytes = _decode_audio_base64(audio_base64)
     if not audio_bytes:
         raise AsrError("录音内容为空。")
 
