@@ -1,5 +1,6 @@
 ext {
-    minSdkVersion = 23
+    // Cordova Android 14 requires API 24+, so keep the app minSdk aligned.
+    minSdkVersion = 24
     compileSdkVersion = 35
     targetSdkVersion = 35
     androidxActivityVersion = '1.9.2'
@@ -12,5 +13,7 @@ ext {
     junitVersion = '4.13.2'
     androidxJunitVersion = '1.2.1'
     androidxEspressoCoreVersion = '3.6.1'
-    cordovaAndroidVersion = '10.1.1'
+    // Keep Cordova Android aligned with the Capacitor 8 toolchain to avoid
+    // pulling old Kotlin stdlib-jdk7/jdk8 artifacts into the app build.
+    cordovaAndroidVersion = '14.0.1'
 }
