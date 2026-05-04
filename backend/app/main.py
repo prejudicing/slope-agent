@@ -16,8 +16,20 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    # Capacitor Android WebView uses http://localhost as the app origin, while
+    # desktop/mobile browsers may access the dev server from LAN IPs. Use an
+    # origin regex instead of "*" + credentials so native-app cross-origin
+    # requests and browser debugging can both pass CORS cleanly.
+    allow_origins=["http://localhost", "https://localhost", "capacitor://localhost"],
+    allow_origin_regex=(
+        r"^https?://("
+        r"localhost|127\.0\.0\.1|"
+        r"10(?:\.\d{1,3}){3}|"
+        r"172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2}|"
+        r"192\.168(?:\.\d{1,3}){2}"
+        r")(?::\d+)?$"
+    ),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

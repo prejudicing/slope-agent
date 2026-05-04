@@ -23,14 +23,22 @@ export async function streamQuery(
   question: string,
   onEvent: (event: QueryStreamEvent) => void
 ) {
+  const requestUrl = buildApiUrl('/api/query/stream')
   // 使用 fetch 读取 text/event-stream，便于边查询边展示 Agent 进度。
-  const res = await fetch(buildApiUrl('/api/query/stream'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ question }),
-  })
+  let res: Response
+  try {
+    res = await fetch(requestUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question }),
+    })
+  } catch (error) {
+    throw new Error(
+      `请求失败，无法访问 ${requestUrl}。请检查 App 后端地址、服务器连通性或跨域配置。`
+    )
+  }
 
   if (!res.ok || !res.body) {
     throw new Error(`请求失败：${res.status}`)
