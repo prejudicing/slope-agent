@@ -29,7 +29,6 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import type { PluginListenerHandle } from '@capacitor/core'
 import { Capacitor } from '@capacitor/core'
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { ElMessage } from 'element-plus'
@@ -43,11 +42,9 @@ const props = defineProps<{
 const isSpeaking = ref(false)
 const isPaused = ref(false)
 const isNativePlatform = Capacitor.isNativePlatform()
-const nativeRangeListener = ref<PluginListenerHandle | null>(null)
-const nativeSpeechText = ref('')
-const nativeSpeechOffset = ref(0)
-const nativeResumeIndex = ref(0)
 const nativeSessionId = ref(0)
+const nativeChunks = ref<string[]>([])
+const nativeChunkIndex = ref(0)
 
 const canSpeak = computed(() => {
   if (!buildSpeechText().trim()) {
@@ -116,72 +113,85 @@ const pickChineseVoice = () => {
   )
 }
 
-const cleanupNativeRangeListener = async () => {
-  if (nativeRangeListener.value) {
-    await nativeRangeListener.value.remove()
-    nativeRangeListener.value = null
+const splitNativeSpeechText = (text: string) => {
+  const normalized = text.replace(/\s+/g, ' ').trim()
+  if (!normalized) {
+    return []
   }
+
+  const coarseChunks = normalized
+    .split(/(?<=[。！？；.!?;])/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+
+  const fineChunks: string[] = []
+  coarseChunks.forEach((chunk) => {
+    if (chunk.length <= 70) {
+      fineChunks.push(chunk)
+      return
+    }
+
+    let start = 0
+    while (start < chunk.length) {
+      fineChunks.push(chunk.slice(start, start + 70))
+      start += 70
+    }
+  })
+
+  return fineChunks
 }
 
-const ensureNativeRangeListener = async () => {
-  if (!isNativePlatform || nativeRangeListener.value) {
+const speakNativeChunks = async (startIndex = 0) => {
+  const chunks = nativeChunks.value
+  if (!chunks.length || startIndex >= chunks.length) {
+    isSpeaking.value = false
+    isPaused.value = false
+    nativeChunkIndex.value = 0
     return
   }
 
-  nativeRangeListener.value = await TextToSpeech.addListener('onRangeStart', (info) => {
-    const nextIndex = nativeSpeechOffset.value + Math.max(info.end, info.start)
-    nativeResumeIndex.value = Math.max(nativeResumeIndex.value, nextIndex)
-  })
-}
-
-const speakNativeText = async (text: string, offset: number) => {
-  nativeSpeechText.value = text
-  nativeSpeechOffset.value = offset
-  nativeResumeIndex.value = Math.max(nativeResumeIndex.value, offset)
+  nativeChunkIndex.value = startIndex
   nativeSessionId.value += 1
   const sessionId = nativeSessionId.value
-
-  await ensureNativeRangeListener()
-
   isSpeaking.value = true
   isPaused.value = false
 
-  try {
-    await TextToSpeech.stop()
-  } catch {
-    // 忽略停止空播报时的异常。
+  for (let index = startIndex; index < chunks.length; index += 1) {
+    if (sessionId !== nativeSessionId.value) {
+      return
+    }
+
+    nativeChunkIndex.value = index
+
+    try {
+      await TextToSpeech.speak({
+        text: chunks[index],
+        lang: 'zh-CN',
+        rate: 0.95,
+        pitch: 1.0,
+        volume: 1.0,
+      })
+    } catch {
+      if (sessionId !== nativeSessionId.value) {
+        return
+      }
+
+      isSpeaking.value = false
+      isPaused.value = false
+      try {
+        await TextToSpeech.openInstall()
+        ElMessage.warning('设备缺少语音播报组件，请按提示安装后重试')
+      } catch {
+        ElMessage.warning('原生语音播报失败，请检查系统语音播报服务')
+      }
+      return
+    }
   }
 
-  try {
-    await TextToSpeech.speak({
-      text,
-      lang: 'zh-CN',
-      rate: 0.95,
-      pitch: 1.0,
-      volume: 1.0,
-    })
-
-    if (sessionId !== nativeSessionId.value) {
-      return
-    }
-
+  if (sessionId === nativeSessionId.value) {
     isSpeaking.value = false
     isPaused.value = false
-    nativeResumeIndex.value = 0
-    nativeSpeechOffset.value = 0
-  } catch {
-    if (sessionId !== nativeSessionId.value) {
-      return
-    }
-
-    isSpeaking.value = false
-    isPaused.value = false
-    try {
-      await TextToSpeech.openInstall()
-      ElMessage.warning('设备缺少语音播报组件，请按提示安装后重试')
-    } catch {
-      ElMessage.warning('原生语音播报失败，请检查系统语音播报服务')
-    }
+    nativeChunkIndex.value = 0
   }
 }
 
@@ -198,8 +208,9 @@ const startSpeaking = () => {
   }
 
   if (isNativePlatform) {
-    nativeResumeIndex.value = 0
-    void speakNativeText(text, 0)
+    nativeChunks.value = splitNativeSpeechText(text)
+    nativeChunkIndex.value = 0
+    void speakNativeChunks(0)
     return
   }
 
@@ -254,15 +265,13 @@ const pauseSpeaking = () => {
 
 const resumeSpeaking = () => {
   if (isNativePlatform) {
-    const fullText = buildSpeechText()
-    const resumeText = fullText.slice(nativeResumeIndex.value)
-    if (!resumeText) {
+    if (!nativeChunks.value.length || nativeChunkIndex.value >= nativeChunks.value.length) {
       isPaused.value = false
       isSpeaking.value = false
-      nativeResumeIndex.value = 0
+      nativeChunkIndex.value = 0
       return
     }
-    void speakNativeText(resumeText, nativeResumeIndex.value)
+    void speakNativeChunks(nativeChunkIndex.value)
     return
   }
   if (!('speechSynthesis' in window)) {
@@ -279,8 +288,8 @@ const stopSpeaking = () => {
     TextToSpeech.stop().catch(() => {})
     isSpeaking.value = false
     isPaused.value = false
-    nativeResumeIndex.value = 0
-    nativeSpeechOffset.value = 0
+    nativeChunkIndex.value = 0
+    nativeChunks.value = []
     return
   }
   if (!('speechSynthesis' in window)) {
@@ -300,9 +309,6 @@ watch(
 
 onBeforeUnmount(() => {
   stopSpeaking()
-  if (isNativePlatform) {
-    void cleanupNativeRangeListener()
-  }
 })
 </script>
 
