@@ -129,13 +129,15 @@ const ensureNativeRangeListener = async () => {
   }
 
   nativeRangeListener.value = await TextToSpeech.addListener('onRangeStart', (info) => {
-    nativeResumeIndex.value = nativeSpeechOffset.value + info.start
+    const nextIndex = nativeSpeechOffset.value + Math.max(info.end, info.start)
+    nativeResumeIndex.value = Math.max(nativeResumeIndex.value, nextIndex)
   })
 }
 
 const speakNativeText = async (text: string, offset: number) => {
   nativeSpeechText.value = text
   nativeSpeechOffset.value = offset
+  nativeResumeIndex.value = Math.max(nativeResumeIndex.value, offset)
   nativeSessionId.value += 1
   const sessionId = nativeSessionId.value
 
@@ -253,7 +255,7 @@ const pauseSpeaking = () => {
 const resumeSpeaking = () => {
   if (isNativePlatform) {
     const fullText = buildSpeechText()
-    const resumeText = fullText.slice(nativeResumeIndex.value).trim()
+    const resumeText = fullText.slice(nativeResumeIndex.value)
     if (!resumeText) {
       isPaused.value = false
       isSpeaking.value = false
