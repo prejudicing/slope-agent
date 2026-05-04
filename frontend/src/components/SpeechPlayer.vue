@@ -120,21 +120,21 @@ const splitNativeSpeechText = (text: string) => {
   }
 
   const coarseChunks = normalized
-    .split(/(?<=[。！？；.!?;])/)
+    .split(/(?<=[。！？；.!?;，,、])/)
     .map((chunk) => chunk.trim())
     .filter(Boolean)
 
   const fineChunks: string[] = []
   coarseChunks.forEach((chunk) => {
-    if (chunk.length <= 70) {
+    if (chunk.length <= 24) {
       fineChunks.push(chunk)
       return
     }
 
     let start = 0
     while (start < chunk.length) {
-      fineChunks.push(chunk.slice(start, start + 70))
-      start += 70
+      fineChunks.push(chunk.slice(start, start + 24))
+      start += 24
     }
   })
 
@@ -254,6 +254,7 @@ const pauseSpeaking = () => {
     TextToSpeech.stop().catch(() => {})
     isSpeaking.value = false
     isPaused.value = true
+    nativeChunkIndex.value = Math.min(nativeChunkIndex.value + 1, nativeChunks.value.length)
     return
   }
   if (!('speechSynthesis' in window) || !window.speechSynthesis.speaking) {
