@@ -24,6 +24,8 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
+import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 import { ElMessage } from 'element-plus'
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
@@ -73,6 +75,8 @@ const localQuestion = ref(props.question)
 const isListening = ref(false)
 const speechHint = ref('')
 const recognition = ref<SpeechRecognitionLike | null>(null)
+const nativePartialListener = ref<PluginListenerHandle | null>(null)
+const nativeStateListener = ref<PluginListenerHandle | null>(null)
 const speechBaseText = ref('')
 const finalSpeechText = ref('')
 
@@ -112,7 +116,102 @@ const composeSpeechText = (interimText = '') => {
   localQuestion.value = parts.join(' ')
 }
 
+const cleanupNativeSpeech = async () => {
+  if (nativePartialListener.value) {
+    await nativePartialListener.value.remove()
+    nativePartialListener.value = null
+  }
+  if (nativeStateListener.value) {
+    await nativeStateListener.value.remove()
+    nativeStateListener.value = null
+  }
+  await SpeechRecognition.removeAllListeners()
+}
+
+const stopNativeSpeechInput = async () => {
+  try {
+    await SpeechRecognition.stop()
+  } catch {
+    // 部分设备在已经停止时会直接抛错，这里只做静默清理。
+  }
+  await cleanupNativeSpeech()
+  isListening.value = false
+  speechHint.value = finalSpeechText.value ? '语音已写入输入框' : ''
+}
+
+const ensureNativeSpeechPermission = async () => {
+  const permission = await SpeechRecognition.checkPermissions()
+  if (permission.speechRecognition === 'granted') {
+    return true
+  }
+
+  const requested = await SpeechRecognition.requestPermissions()
+  return requested.speechRecognition === 'granted'
+}
+
+const startNativeSpeechInput = async () => {
+  const availability = await SpeechRecognition.available()
+  if (!availability.available) {
+    speechHint.value = '当前设备不支持原生语音识别'
+    ElMessage.warning('当前设备不支持原生语音识别')
+    return
+  }
+
+  const hasPermission = await ensureNativeSpeechPermission()
+  if (!hasPermission) {
+    speechHint.value = '未授予麦克风权限'
+    ElMessage.warning('请允许麦克风权限后再使用语音输入')
+    return
+  }
+
+  await cleanupNativeSpeech()
+
+  speechBaseText.value = localQuestion.value.trim()
+  finalSpeechText.value = ''
+  speechHint.value = '正在听，请说出你的查询问题'
+
+  nativePartialListener.value = await SpeechRecognition.addListener('partialResults', (data) => {
+    const latest = data.matches?.[0]?.trim() || ''
+    if (!latest) {
+      return
+    }
+    finalSpeechText.value = latest
+    composeSpeechText()
+  })
+
+  nativeStateListener.value = await SpeechRecognition.addListener('listeningState', async (data) => {
+    if (data.status === 'started') {
+      isListening.value = true
+      return
+    }
+
+    isListening.value = false
+    await cleanupNativeSpeech()
+    speechHint.value = finalSpeechText.value ? '语音已写入输入框' : ''
+  })
+
+  try {
+    await SpeechRecognition.start({
+      language: 'zh-CN',
+      maxResults: 1,
+      partialResults: true,
+      popup: false,
+      prompt: '请说出你的查询问题',
+    })
+    isListening.value = true
+  } catch (error) {
+    await cleanupNativeSpeech()
+    isListening.value = false
+    speechHint.value = '原生语音识别启动失败'
+    ElMessage.warning('原生语音识别启动失败，请稍后重试')
+  }
+}
+
 const stopSpeechInput = () => {
+  if (Capacitor.isNativePlatform()) {
+    void stopNativeSpeechInput()
+    return
+  }
   if (!recognition.value) {
     return
   }
@@ -123,6 +222,11 @@ const stopSpeechInput = () => {
 }
 
 const startSpeechInput = () => {
+  if (Capacitor.isNativePlatform()) {
+    void startNativeSpeechInput()
+    return
+  }
+
   if (!isSpeechSecureOrigin()) {
     speechHint.value = '语音输入需要 HTTPS 或 localhost'
     ElMessage.warning('浏览器通常要求 HTTPS 或 localhost 才能使用麦克风语音识别')
@@ -211,6 +315,9 @@ const handleSubmit = () => {
 onBeforeUnmount(() => {
   if (recognition.value) {
     recognition.value.abort()
+  }
+  if (Capacitor.isNativePlatform()) {
+    void stopNativeSpeechInput()
   }
 })
 </script>
