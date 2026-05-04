@@ -1,19 +1,22 @@
-"""语音转文字能力。
+"""本地语音转文字能力。
 
-当前实现面向移动端 App 的录音上传场景：前端把录音的 base64 和 mimeType
-发送到后端，后端再调用 OpenAI 兼容的音频转写接口返回文本。
+移动端 App 把录音 base64 和 mimeType 发到后端，后端使用本地 faster-whisper
+模型执行中文语音转写，不依赖外部 ASR API。
 """
 
 from __future__ import annotations
 
 import base64
-import io
+import os
 import re
+import tempfile
+import threading
+from pathlib import Path
 from typing import Optional
 
-from openai import OpenAI
+from faster_whisper import WhisperModel
 
-from app.config import OPENAI_API_KEY, OPENAI_ASR_MODEL, OPENAI_BASE_URL
+from app.config import ASR_COMPUTE_TYPE, ASR_DEVICE, ASR_MODEL
 
 
 class AsrError(RuntimeError):
@@ -21,40 +24,29 @@ class AsrError(RuntimeError):
 
 
 DATA_URL_RE = re.compile(r"^data:[^;]+;base64,", re.IGNORECASE)
+_MODEL_LOCK = threading.Lock()
+_MODEL_INSTANCE: WhisperModel | None = None
 
 
-def _build_client() -> OpenAI:
-    if not OPENAI_API_KEY:
-        raise AsrError("未配置 OPENAI_API_KEY，无法执行语音转写。")
-
-    kwargs = {"api_key": OPENAI_API_KEY}
-    if OPENAI_BASE_URL:
-        kwargs["base_url"] = OPENAI_BASE_URL
-    return OpenAI(**kwargs)
-
-
-def _guess_filename(mime_type: str, filename: Optional[str]) -> str:
+def _guess_suffix(mime_type: str, filename: Optional[str]) -> str:
     if filename:
-        return filename
+        suffix = Path(filename).suffix
+        if suffix:
+            return suffix
 
     suffix_map = {
-        "audio/aac": "aac",
-        "audio/mp4": "m4a",
-        "audio/mpeg": "mp3",
-        "audio/wav": "wav",
-        "audio/webm": "webm",
-        "audio/ogg": "ogg",
+        "audio/aac": ".aac",
+        "audio/mp4": ".m4a",
+        "audio/mpeg": ".mp3",
+        "audio/wav": ".wav",
+        "audio/webm": ".webm",
+        "audio/ogg": ".ogg",
     }
-    suffix = suffix_map.get(mime_type.split(";")[0].strip().lower(), "m4a")
-    return f"query_audio.{suffix}"
+    return suffix_map.get(mime_type.split(";")[0].strip().lower(), ".m4a")
 
 
 def _decode_audio_base64(audio_base64: str) -> bytes:
-    """兼容原生插件返回的 base64 变体。
-
-    Android 录音插件使用 Base64.DEFAULT，会带换行；有些端上实现还会返回
-    data URL 前缀，因此这里统一做清洗后再解码。
-    """
+    """兼容原生插件返回的 base64 变体。"""
     normalized = audio_base64.strip()
     normalized = DATA_URL_RE.sub("", normalized)
     normalized = re.sub(r"\s+", "", normalized)
@@ -72,8 +64,31 @@ def _decode_audio_base64(audio_base64: str) -> bytes:
         raise AsrError("录音数据格式无效，无法解码。") from exc
 
 
+def _get_model() -> WhisperModel:
+    """懒加载本地 ASR 模型，避免应用启动即占用较长初始化时间。"""
+    global _MODEL_INSTANCE
+    if _MODEL_INSTANCE is not None:
+        return _MODEL_INSTANCE
+
+    with _MODEL_LOCK:
+        if _MODEL_INSTANCE is None:
+            try:
+                _MODEL_INSTANCE = WhisperModel(
+                    ASR_MODEL,
+                    device=ASR_DEVICE,
+                    compute_type=ASR_COMPUTE_TYPE,
+                )
+            except Exception as exc:
+                raise AsrError(
+                    "本地 ASR 模型加载失败。"
+                    f" 当前配置为 model={ASR_MODEL}, device={ASR_DEVICE}, compute_type={ASR_COMPUTE_TYPE}。"
+                    " 如果是首次启动，请确认服务器可以下载模型，或者把 ASR_MODEL 指向本地模型目录。"
+                ) from exc
+    return _MODEL_INSTANCE
+
+
 def transcribe_base64_audio(audio_base64: str, mime_type: str, filename: Optional[str] = None) -> str:
-    """把前端上传的 base64 音频转成文本。"""
+    """把前端上传的 base64 音频转成本地识别文本。"""
     if not audio_base64:
         raise AsrError("录音内容为空。")
 
@@ -81,20 +96,33 @@ def transcribe_base64_audio(audio_base64: str, mime_type: str, filename: Optiona
     if not audio_bytes:
         raise AsrError("录音内容为空。")
 
-    client = _build_client()
-    file_obj = io.BytesIO(audio_bytes)
-    file_obj.name = _guess_filename(mime_type or "", filename)
+    suffix = _guess_suffix(mime_type or "", filename)
+    temp_path = None
 
     try:
-        transcript = client.audio.transcriptions.create(
-            model=OPENAI_ASR_MODEL,
-            file=file_obj,
-        )
-    except Exception as exc:
-        raise AsrError(f"语音转写失败：{exc}") from exc
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(audio_bytes)
+            temp_path = tmp.name
 
-    text = getattr(transcript, "text", "") or ""
-    text = text.strip()
-    if not text:
-        raise AsrError("语音转写未返回有效文本。")
-    return text
+        model = _get_model()
+        segments, info = model.transcribe(
+            temp_path,
+            language="zh",
+            vad_filter=True,
+            condition_on_previous_text=False,
+        )
+
+        text = "".join(segment.text for segment in segments).strip()
+        if not text:
+            raise AsrError("本地语音转写未返回有效文本。")
+        return text
+    except AsrError:
+        raise
+    except Exception as exc:
+        raise AsrError(f"本地语音转写失败：{exc}") from exc
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
