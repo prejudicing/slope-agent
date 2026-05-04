@@ -1,6 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import axios from 'axios'
-import type { QueryResponse, QueryStreamEvent } from '../types/query'
+import type { AsrResponse, QueryResponse, QueryStreamEvent } from '../types/query'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -16,6 +16,38 @@ export async function postQuery(question: string): Promise<QueryResponse> {
   const res = await axios.post(buildApiUrl('/api/query'), {
     question,
   })
+  return res.data
+}
+
+export async function transcribeAudio(
+  audioBase64: string,
+  mimeType: string,
+  filename = 'query_audio.m4a'
+): Promise<AsrResponse> {
+  const payload = {
+    audio_base64: audioBase64,
+    mime_type: mimeType,
+    filename,
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    const nativeResponse = await CapacitorHttp.post({
+      url: buildApiUrl('/api/asr'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: payload,
+      responseType: 'json',
+    })
+
+    if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
+      throw new Error(`语音转写请求失败：${nativeResponse.status}`)
+    }
+
+    return nativeResponse.data as AsrResponse
+  }
+
+  const res = await axios.post(buildApiUrl('/api/asr'), payload)
   return res.data
 }
 

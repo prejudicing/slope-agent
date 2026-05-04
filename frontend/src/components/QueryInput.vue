@@ -10,10 +10,10 @@
       <span v-if="speechHint" class="speech-hint">{{ speechHint }}</span>
       <el-button
         :type="isListening ? 'danger' : 'default'"
-        :disabled="loading"
+        :disabled="loading || isTranscribing"
         @click="toggleSpeechInput"
       >
-        {{ isListening ? '停止语音' : '中文语音输入' }}
+        {{ isListening ? '停止录音' : '中文语音输入' }}
       </el-button>
       <el-button type="primary" :loading="loading" @click="handleSubmit">
         查询
@@ -24,9 +24,10 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
-import { SpeechRecognition } from '@capacitor-community/speech-recognition'
+import { Capacitor } from '@capacitor/core'
+import { VoiceRecorder } from 'capacitor-voice-recorder'
 import { ElMessage } from 'element-plus'
+import { transcribeAudio } from '../api/query'
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
 
@@ -73,10 +74,9 @@ const emit = defineEmits<{
 
 const localQuestion = ref(props.question)
 const isListening = ref(false)
+const isTranscribing = ref(false)
 const speechHint = ref('')
 const recognition = ref<SpeechRecognitionLike | null>(null)
-const nativePartialListener = ref<PluginListenerHandle | null>(null)
-const nativeStateListener = ref<PluginListenerHandle | null>(null)
 const speechBaseText = ref('')
 const finalSpeechText = ref('')
 
@@ -116,44 +116,80 @@ const composeSpeechText = (interimText = '') => {
   localQuestion.value = parts.join(' ')
 }
 
-const cleanupNativeSpeech = async () => {
-  if (nativePartialListener.value) {
-    await nativePartialListener.value.remove()
-    nativePartialListener.value = null
+const buildAudioFilename = (mimeType: string) => {
+  const suffixMap: Record<string, string> = {
+    'audio/aac': 'aac',
+    'audio/mp4': 'm4a',
+    'audio/mpeg': 'mp3',
+    'audio/wav': 'wav',
+    'audio/webm': 'webm',
+    'audio/ogg': 'ogg',
   }
-  if (nativeStateListener.value) {
-    await nativeStateListener.value.remove()
-    nativeStateListener.value = null
-  }
-  await SpeechRecognition.removeAllListeners()
+  const normalizedMimeType = mimeType.split(';')[0].trim().toLowerCase()
+  const suffix = suffixMap[normalizedMimeType] || 'm4a'
+  return `query_audio.${suffix}`
 }
 
 const stopNativeSpeechInput = async () => {
-  try {
-    await SpeechRecognition.stop()
-  } catch {
-    // 部分设备在已经停止时会直接抛错，这里只做静默清理。
-  }
-  await cleanupNativeSpeech()
   isListening.value = false
-  speechHint.value = finalSpeechText.value ? '语音已写入输入框' : ''
+
+  let recording
+  try {
+    recording = await VoiceRecorder.stopRecording()
+  } catch (error) {
+    speechHint.value = '停止录音失败'
+    ElMessage.warning('停止录音失败，请重新尝试')
+    return
+  }
+
+  const recordDataBase64 = recording.value.recordDataBase64 || ''
+  const mimeType = recording.value.mimeType || 'audio/mp4'
+
+  if (!recordDataBase64) {
+    speechHint.value = '录音内容为空，请重新录制'
+    ElMessage.warning('录音内容为空，请重新录制')
+    return
+  }
+
+  isTranscribing.value = true
+  speechHint.value = '正在将录音转成文字...'
+
+  try {
+    const result = await transcribeAudio(
+      recordDataBase64,
+      mimeType,
+      buildAudioFilename(mimeType)
+    )
+    if (result.error) {
+      throw new Error(result.error)
+    }
+
+    finalSpeechText.value = (result.text || '').trim()
+    composeSpeechText()
+    speechHint.value = finalSpeechText.value ? '语音已写入输入框' : '未识别到有效语音'
+  } catch (error: any) {
+    speechHint.value = '语音转写失败'
+    ElMessage.warning(error?.message || '语音转写失败，请稍后重试')
+  } finally {
+    isTranscribing.value = false
+  }
 }
 
 const ensureNativeSpeechPermission = async () => {
-  const permission = await SpeechRecognition.checkPermissions()
-  if (permission.speechRecognition === 'granted') {
+  const permission = await VoiceRecorder.hasAudioRecordingPermission()
+  if (permission.value) {
     return true
   }
 
-  const requested = await SpeechRecognition.requestPermissions()
-  return requested.speechRecognition === 'granted'
+  const requested = await VoiceRecorder.requestAudioRecordingPermission()
+  return requested.value
 }
 
 const startNativeSpeechInput = async () => {
-  const availability = await SpeechRecognition.available()
-  if (!availability.available) {
-    speechHint.value = '当前设备不支持原生语音识别'
-    ElMessage.warning('当前设备不支持原生语音识别')
+  const availability = await VoiceRecorder.canDeviceVoiceRecord()
+  if (!availability.value) {
+    speechHint.value = '当前设备不支持原生录音'
+    ElMessage.warning('当前设备不支持原生录音')
     return
   }
 
@@ -164,52 +200,23 @@ const startNativeSpeechInput = async () => {
     return
   }
 
-  await cleanupNativeSpeech()
-
   speechBaseText.value = localQuestion.value.trim()
   finalSpeechText.value = ''
-  speechHint.value = '正在听，请说出你的查询问题'
-
-  nativePartialListener.value = await SpeechRecognition.addListener('partialResults', (data) => {
-    const latest = data.matches?.[0]?.trim() || ''
-    if (!latest) {
-      return
-    }
-    finalSpeechText.value = latest
-    composeSpeechText()
-  })
-
-  nativeStateListener.value = await SpeechRecognition.addListener('listeningState', async (data) => {
-    if (data.status === 'started') {
-      isListening.value = true
-      return
-    }
-
-    isListening.value = false
-    await cleanupNativeSpeech()
-    speechHint.value = finalSpeechText.value ? '语音已写入输入框' : ''
-  })
+  speechHint.value = '正在录音，请说出你的查询问题'
 
   try {
-    await SpeechRecognition.start({
-      language: 'zh-CN',
-      maxResults: 1,
-      partialResults: true,
-      popup: false,
-      prompt: '请说出你的查询问题',
-    })
+    await VoiceRecorder.startRecording()
     isListening.value = true
-  } catch (error) {
-    await cleanupNativeSpeech()
+  } catch {
     isListening.value = false
-    speechHint.value = '原生语音识别启动失败'
-    ElMessage.warning('原生语音识别启动失败，请稍后重试')
+    speechHint.value = '原生录音启动失败'
+    ElMessage.warning('原生录音启动失败，请稍后重试')
   }
 }
 
-const stopSpeechInput = () => {
+const stopSpeechInput = async () => {
   if (Capacitor.isNativePlatform()) {
-    void stopNativeSpeechInput()
+    await stopNativeSpeechInput()
     return
   }
   if (!recognition.value) {
@@ -221,9 +228,9 @@ const stopSpeechInput = () => {
   speechHint.value = finalSpeechText.value ? '语音已写入输入框' : ''
 }
 
-const startSpeechInput = () => {
+const startSpeechInput = async () => {
   if (Capacitor.isNativePlatform()) {
-    void startNativeSpeechInput()
+    await startNativeSpeechInput()
     return
   }
 
@@ -296,17 +303,21 @@ const startSpeechInput = () => {
   }
 }
 
-const toggleSpeechInput = () => {
+const toggleSpeechInput = async () => {
   if (isListening.value) {
-    stopSpeechInput()
+    await stopSpeechInput()
     return
   }
-  startSpeechInput()
+  await startSpeechInput()
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (isListening.value) {
-    stopSpeechInput()
+    await stopSpeechInput()
+  }
+  if (isTranscribing.value) {
+    ElMessage.info('语音仍在转写中，请稍候')
+    return
   }
   // 具体校验和请求逻辑在 App.vue 中集中处理。
   emit('submit')
@@ -316,8 +327,8 @@ onBeforeUnmount(() => {
   if (recognition.value) {
     recognition.value.abort()
   }
-  if (Capacitor.isNativePlatform()) {
-    void stopNativeSpeechInput()
+  if (Capacitor.isNativePlatform() && isListening.value) {
+    void VoiceRecorder.stopRecording().catch(() => {})
   }
 })
 </script>

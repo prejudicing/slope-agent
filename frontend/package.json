@@ -19,6 +19,7 @@
     "@capacitor/cli": "^7.6.2",
     "@capacitor/core": "^8.3.1",
     "axios": "^1.15.0",
+    "capacitor-voice-recorder": "^7.0.6",
     "element-plus": "^2.13.7",
     "vue": "^3.5.32"
   },

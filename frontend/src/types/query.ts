@@ -10,6 +10,11 @@ export interface QueryResponse {
   error: string | null
 }
 
+export interface AsrResponse {
+  text: string
+  error: string | null
+}
+
 // 思考过程面板中的单个步骤，由 SSE progress/sql/summary 事件转换而来。
 export interface ThinkingStep {
   id: number
