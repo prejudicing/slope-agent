@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import axios from 'axios'
 import type { QueryResponse, QueryStreamEvent } from '../types/query'
 
@@ -23,6 +23,49 @@ export async function streamQuery(
   question: string,
   onEvent: (event: QueryStreamEvent) => void
 ) {
+  if (Capacitor.isNativePlatform()) {
+    onEvent({
+      type: 'progress',
+      message: '安卓 App 正在通过原生网络通道请求后端',
+      detail: '原生 HTTP 会绕过 WebView 的跨域限制，结果返回后再展示到页面。',
+    })
+
+    const nativeResponse = await CapacitorHttp.post({
+      url: buildApiUrl('/api/query'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: {
+        question,
+      },
+      responseType: 'json',
+    })
+
+    if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
+      throw new Error(`请求失败：${nativeResponse.status}`)
+    }
+
+    const data = nativeResponse.data as QueryResponse
+
+    if (data.sql) {
+      onEvent({ type: 'sql', sql: data.sql })
+    }
+
+    if (data.summary || data.result) {
+      onEvent({
+        type: 'summary',
+        summary: data.summary || data.result,
+        message: '已生成查询总结',
+      })
+    }
+
+    onEvent({
+      type: 'final',
+      data,
+    })
+    return
+  }
+
   const requestUrl = buildApiUrl('/api/query/stream')
   // 使用 fetch 读取 text/event-stream，便于边查询边展示 Agent 进度。
   let res: Response
