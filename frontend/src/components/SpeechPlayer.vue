@@ -29,6 +29,9 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import type { PluginListenerHandle } from '@capacitor/core'
+import { Capacitor } from '@capacitor/core'
+import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
@@ -39,13 +42,22 @@ const props = defineProps<{
 
 const isSpeaking = ref(false)
 const isPaused = ref(false)
+const isNativePlatform = Capacitor.isNativePlatform()
+const nativeRangeListener = ref<PluginListenerHandle | null>(null)
+const nativeSpeechText = ref('')
+const nativeSpeechOffset = ref(0)
+const nativeResumeIndex = ref(0)
+const nativeSessionId = ref(0)
 
 const canSpeak = computed(() => {
-  return Boolean(buildSpeechText().trim()) && 'speechSynthesis' in window
+  if (!buildSpeechText().trim()) {
+    return false
+  }
+  return isNativePlatform || 'speechSynthesis' in window
 })
 
 const statusText = computed(() => {
-  if (!('speechSynthesis' in window)) {
+  if (!isNativePlatform && !('speechSynthesis' in window)) {
     return '当前浏览器不支持'
   }
   if (isPaused.value) {
@@ -104,8 +116,75 @@ const pickChineseVoice = () => {
   )
 }
 
+const cleanupNativeRangeListener = async () => {
+  if (nativeRangeListener.value) {
+    await nativeRangeListener.value.remove()
+    nativeRangeListener.value = null
+  }
+}
+
+const ensureNativeRangeListener = async () => {
+  if (!isNativePlatform || nativeRangeListener.value) {
+    return
+  }
+
+  nativeRangeListener.value = await TextToSpeech.addListener('onRangeStart', (info) => {
+    nativeResumeIndex.value = nativeSpeechOffset.value + info.start
+  })
+}
+
+const speakNativeText = async (text: string, offset: number) => {
+  nativeSpeechText.value = text
+  nativeSpeechOffset.value = offset
+  nativeSessionId.value += 1
+  const sessionId = nativeSessionId.value
+
+  await ensureNativeRangeListener()
+
+  isSpeaking.value = true
+  isPaused.value = false
+
+  try {
+    await TextToSpeech.stop()
+  } catch {
+    // 忽略停止空播报时的异常。
+  }
+
+  try {
+    await TextToSpeech.speak({
+      text,
+      lang: 'zh-CN',
+      rate: 0.95,
+      pitch: 1.0,
+      volume: 1.0,
+    })
+
+    if (sessionId !== nativeSessionId.value) {
+      return
+    }
+
+    isSpeaking.value = false
+    isPaused.value = false
+    nativeResumeIndex.value = 0
+    nativeSpeechOffset.value = 0
+  } catch {
+    if (sessionId !== nativeSessionId.value) {
+      return
+    }
+
+    isSpeaking.value = false
+    isPaused.value = false
+    try {
+      await TextToSpeech.openInstall()
+      ElMessage.warning('设备缺少语音播报组件，请按提示安装后重试')
+    } catch {
+      ElMessage.warning('原生语音播报失败，请检查系统语音播报服务')
+    }
+  }
+}
+
 const startSpeaking = () => {
-  if (!('speechSynthesis' in window)) {
+  if (!isNativePlatform && !('speechSynthesis' in window)) {
     ElMessage.warning('当前浏览器不支持语音播报')
     return
   }
@@ -113,6 +192,12 @@ const startSpeaking = () => {
   const text = buildSpeechText()
   if (!text.trim()) {
     ElMessage.warning('暂无可播报的查询结果')
+    return
+  }
+
+  if (isNativePlatform) {
+    nativeResumeIndex.value = 0
+    void speakNativeText(text, 0)
     return
   }
 
@@ -148,6 +233,16 @@ const startSpeaking = () => {
 }
 
 const pauseSpeaking = () => {
+  if (isNativePlatform) {
+    if (!isSpeaking.value) {
+      return
+    }
+    nativeSessionId.value += 1
+    TextToSpeech.stop().catch(() => {})
+    isSpeaking.value = false
+    isPaused.value = true
+    return
+  }
   if (!('speechSynthesis' in window) || !window.speechSynthesis.speaking) {
     return
   }
@@ -156,6 +251,18 @@ const pauseSpeaking = () => {
 }
 
 const resumeSpeaking = () => {
+  if (isNativePlatform) {
+    const fullText = buildSpeechText()
+    const resumeText = fullText.slice(nativeResumeIndex.value).trim()
+    if (!resumeText) {
+      isPaused.value = false
+      isSpeaking.value = false
+      nativeResumeIndex.value = 0
+      return
+    }
+    void speakNativeText(resumeText, nativeResumeIndex.value)
+    return
+  }
   if (!('speechSynthesis' in window)) {
     return
   }
@@ -165,6 +272,15 @@ const resumeSpeaking = () => {
 }
 
 const stopSpeaking = () => {
+  if (isNativePlatform) {
+    nativeSessionId.value += 1
+    TextToSpeech.stop().catch(() => {})
+    isSpeaking.value = false
+    isPaused.value = false
+    nativeResumeIndex.value = 0
+    nativeSpeechOffset.value = 0
+    return
+  }
   if (!('speechSynthesis' in window)) {
     return
   }
@@ -182,6 +298,9 @@ watch(
 
 onBeforeUnmount(() => {
   stopSpeaking()
+  if (isNativePlatform) {
+    void cleanupNativeRangeListener()
+  }
 })
 </script>
 
