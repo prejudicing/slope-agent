@@ -128,6 +128,8 @@ const cleanupBrowserRecorder = () => {
   }
 }
 
+type BrowserRecordingStartResult = 'started' | 'blocked' | 'fallback'
+
 const blobToBase64 = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -292,17 +294,15 @@ const stopBrowserSpeechInput = async () => {
   await stopPromise
 }
 
-const startBrowserRecordingInput = async () => {
+const startBrowserRecordingInput = async (): Promise<BrowserRecordingStartResult> => {
   if (!isSpeechSecureOrigin()) {
-    speechHint.value = '语音输入需要 HTTPS 或 localhost'
-    ElMessage.warning('浏览器录音通常要求 HTTPS 或 localhost')
-    return
+    speechHint.value = '当前页面不是安全地址，浏览器通常不会开放麦克风'
+    ElMessage.warning('请改用 HTTPS 地址或 localhost 后再使用浏览器语音输入')
+    return 'blocked'
   }
 
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-    speechHint.value = '当前浏览器不支持录音上传转写'
-    ElMessage.warning('当前浏览器不支持录音上传转写')
-    return
+    return 'fallback'
   }
 
   try {
@@ -335,11 +335,13 @@ const startBrowserRecordingInput = async () => {
     browserRecorder.value = recorder
     recorder.start()
     isListening.value = true
+    return 'started'
   } catch {
     cleanupBrowserRecorder()
     isListening.value = false
     speechHint.value = '浏览器录音启动失败'
     ElMessage.warning('浏览器录音启动失败，请检查麦克风权限')
+    return 'blocked'
   }
 }
 
@@ -367,14 +369,17 @@ const startSpeechInput = async () => {
     return
   }
 
-  await startBrowserRecordingInput()
-  if (browserRecorder.value) {
+  const browserRecordingState = await startBrowserRecordingInput()
+  if (browserRecordingState === 'started') {
+    return
+  }
+  if (browserRecordingState === 'blocked') {
     return
   }
 
   if (!isSpeechSecureOrigin()) {
-    speechHint.value = '语音输入需要 HTTPS 或 localhost'
-    ElMessage.warning('浏览器通常要求 HTTPS 或 localhost 才能使用麦克风语音识别')
+    speechHint.value = '当前页面不是安全地址，浏览器通常不会开放麦克风'
+    ElMessage.warning('请改用 HTTPS 地址或 localhost 后再使用浏览器语音输入')
     return
   }
 

@@ -44,6 +44,8 @@ const isSpeaking = ref(false)
 const isPaused = ref(false)
 const nativeTtsAvailable = ref(false)
 const nativeListener = ref<PluginListenerHandle | null>(null)
+const browserUtterance = ref<SpeechSynthesisUtterance | null>(null)
+const ignoreBrowserCancelError = ref(false)
 const isNativePlatform = Capacitor.isNativePlatform()
 
 const canSpeak = computed(() => {
@@ -188,6 +190,7 @@ const startSpeaking = async () => {
   }
 
   window.speechSynthesis.cancel()
+  ignoreBrowserCancelError.value = false
 
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'zh-CN'
@@ -200,16 +203,37 @@ const startSpeaking = async () => {
   }
 
   utterance.onstart = () => {
+    browserUtterance.value = utterance
     isSpeaking.value = true
     isPaused.value = false
   }
 
   utterance.onend = () => {
+    if (browserUtterance.value === utterance) {
+      browserUtterance.value = null
+    }
     isSpeaking.value = false
     isPaused.value = false
+    ignoreBrowserCancelError.value = false
   }
 
-  utterance.onerror = () => {
+  utterance.onerror = (event) => {
+    if (
+      ignoreBrowserCancelError.value ||
+      event.error === 'canceled' ||
+      event.error === 'interrupted'
+    ) {
+      if (browserUtterance.value === utterance) {
+        browserUtterance.value = null
+      }
+      isSpeaking.value = false
+      isPaused.value = false
+      ignoreBrowserCancelError.value = false
+      return
+    }
+    if (browserUtterance.value === utterance) {
+      browserUtterance.value = null
+    }
     isSpeaking.value = false
     isPaused.value = false
     ElMessage.warning('语音播报失败，请检查浏览器语音设置')
@@ -272,7 +296,9 @@ const stopSpeaking = async () => {
   if (!('speechSynthesis' in window)) {
     return
   }
+  ignoreBrowserCancelError.value = true
   window.speechSynthesis.cancel()
+  browserUtterance.value = null
   isSpeaking.value = false
   isPaused.value = false
 }
