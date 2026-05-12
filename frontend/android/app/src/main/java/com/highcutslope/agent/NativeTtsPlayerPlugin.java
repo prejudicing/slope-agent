@@ -16,6 +16,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.File;
 import java.util.Locale;
 import java.util.UUID;
+import android.speech.tts.Voice;
 
 @CapacitorPlugin(name = "NativeTtsPlayer")
 public class NativeTtsPlayerPlugin extends Plugin implements TextToSpeech.OnInitListener {
@@ -85,6 +86,7 @@ public class NativeTtsPlayerPlugin extends Plugin implements TextToSpeech.OnInit
         float rate = call.getFloat("rate", 1.0f);
         float pitch = call.getFloat("pitch", 1.0f);
         currentVolume = call.getFloat("volume", 1.0f);
+        boolean preferFemale = call.getBoolean("preferFemale", true);
 
         stopInternal();
 
@@ -100,6 +102,9 @@ public class NativeTtsPlayerPlugin extends Plugin implements TextToSpeech.OnInit
         }
 
         tts.setLanguage(locale);
+        if (preferFemale) {
+            applyPreferredVoice(locale);
+        }
         tts.setSpeechRate(rate);
         tts.setPitch(pitch);
 
@@ -190,6 +195,44 @@ public class NativeTtsPlayerPlugin extends Plugin implements TextToSpeech.OnInit
         releasePlayerOnly();
         deleteCurrentAudioFile();
         notifyState("stopped", "");
+    }
+
+    private void applyPreferredVoice(Locale locale) {
+        if (tts == null) {
+            return;
+        }
+
+        try {
+            Set<Voice> voices = tts.getVoices();
+            if (voices == null || voices.isEmpty()) {
+                return;
+            }
+
+            for (Voice voice : voices) {
+                if (voice == null || voice.getLocale() == null) {
+                    continue;
+                }
+
+                Locale voiceLocale = voice.getLocale();
+                if (!voiceLocale.getLanguage().equalsIgnoreCase(locale.getLanguage())) {
+                    continue;
+                }
+
+                String voiceName = voice.getName() == null ? "" : voice.getName().toLowerCase();
+                if (
+                    voiceName.contains("female") ||
+                    voiceName.contains("woman") ||
+                    voiceName.contains("girl") ||
+                    voiceName.contains("xiaoxiao") ||
+                    voiceName.contains("xiaoyi") ||
+                    voiceName.contains("xiaomei") ||
+                    voiceName.contains("xiaoyan")
+                ) {
+                    tts.setVoice(voice);
+                    return;
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     private void releasePlayerOnly() {

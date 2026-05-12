@@ -1,30 +1,24 @@
 <template>
-  <el-card shadow="never" class="panel-card speech-card">
-    <template #header>
-      <div class="panel-header">
-        <span>结果播报</span>
-        <span class="status-text">{{ statusText }}</span>
-      </div>
-    </template>
-
-    <div class="speech-body">
+  <div :class="['speech-body', { compact }]">
+    <div v-if="!compact" class="speech-preview-wrap">
       <p class="speech-preview">{{ previewText }}</p>
-      <div class="speech-actions">
-        <el-button type="primary" :disabled="!canSpeak" @click="startSpeaking">
-          开始播报
-        </el-button>
-        <el-button :disabled="!isSpeaking || isPaused" @click="pauseSpeaking">
-          暂停
-        </el-button>
-        <el-button :disabled="!isPaused" @click="resumeSpeaking">
-          继续
-        </el-button>
-        <el-button :disabled="!isSpeaking && !isPaused" @click="stopSpeaking">
-          停止
-        </el-button>
-      </div>
     </div>
-  </el-card>
+    <div class="speech-actions">
+      <span class="status-text">{{ statusText }}</span>
+      <el-button type="primary" :disabled="!canSpeak" @click="startSpeaking">
+        开始播报
+      </el-button>
+      <el-button :disabled="!isSpeaking || isPaused" @click="pauseSpeaking">
+        暂停
+      </el-button>
+      <el-button :disabled="!isPaused" @click="resumeSpeaking">
+        继续
+      </el-button>
+      <el-button :disabled="!isSpeaking && !isPaused" @click="stopSpeaking">
+        停止
+      </el-button>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -34,11 +28,15 @@ import { Capacitor } from '@capacitor/core'
 import { ElMessage } from 'element-plus'
 import { NativeTtsPlayer } from '../plugins/nativeTtsPlayer'
 
-const props = defineProps<{
-  summary: string
-  columns: string[]
-  rows: Record<string, string>[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    summary: string
+    compact?: boolean
+  }>(),
+  {
+    compact: false,
+  }
+)
 
 const isSpeaking = ref(false)
 const isPaused = ref(false)
@@ -48,8 +46,10 @@ const browserUtterance = ref<SpeechSynthesisUtterance | null>(null)
 const ignoreBrowserCancelError = ref(false)
 const isNativePlatform = Capacitor.isNativePlatform()
 
+const buildSpeechText = () => props.summary.trim()
+
 const canSpeak = computed(() => {
-  if (!buildSpeechText().trim()) {
+  if (!buildSpeechText()) {
     return false
   }
   return isNativePlatform ? nativeTtsAvailable.value : 'speechSynthesis' in window
@@ -68,46 +68,16 @@ const statusText = computed(() => {
   if (isSpeaking.value) {
     return '正在播报'
   }
-  return '等待播报'
+  return buildSpeechText() ? '可播报查询总结' : '暂无可播报内容'
 })
 
 const previewText = computed(() => {
   const text = buildSpeechText()
   if (!text) {
-    return '查询完成后，可以将查询总结和表格结果朗读出来。'
+    return '查询完成后，可以直接播报查询总结。'
   }
   return text.length > 120 ? `${text.slice(0, 120)}...` : text
 })
-
-const buildSpeechText = () => {
-  const parts: string[] = []
-  const summary = props.summary.trim()
-
-  if (summary) {
-    parts.push(`查询总结：${summary}`)
-  }
-
-  if (props.rows.length) {
-    parts.push(`查询结果共 ${props.rows.length} 条。`)
-    props.rows.slice(0, 5).forEach((row, index) => {
-      const rowText = props.columns
-        .map((column) => {
-          const value = row[column]
-          return value ? `${column}：${value}` : ''
-        })
-        .filter(Boolean)
-        .join('，')
-      if (rowText) {
-        parts.push(`第 ${index + 1} 条，${rowText}。`)
-      }
-    })
-    if (props.rows.length > 5) {
-      parts.push('其余结果请查看表格。')
-    }
-  }
-
-  return parts.join(' ')
-}
 
 const pickChineseVoice = () => {
   const voices = window.speechSynthesis.getVoices()
@@ -166,8 +136,8 @@ const startSpeaking = async () => {
   }
 
   const text = buildSpeechText()
-  if (!text.trim()) {
-    ElMessage.warning('暂无可播报的查询结果')
+  if (!text) {
+    ElMessage.warning('暂无可播报的查询总结')
     return
   }
 
@@ -180,6 +150,7 @@ const startSpeaking = async () => {
         rate: 0.95,
         pitch: 1.0,
         volume: 1.0,
+        preferFemale: true,
       })
       isSpeaking.value = true
       isPaused.value = false
@@ -304,7 +275,7 @@ const stopSpeaking = async () => {
 }
 
 watch(
-  () => [props.summary, props.rows],
+  () => props.summary,
   () => {
     void stopSpeaking()
   }
@@ -325,28 +296,20 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.panel-card {
-  height: 100%;
-  border: 1px solid #dfe7f2;
-  border-radius: 8px;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.status-text {
-  color: #5f6f86;
-  font-size: 13px;
-  font-weight: 400;
-}
-
 .speech-body {
   display: grid;
   gap: 14px;
+}
+
+.speech-body.compact {
+  gap: 10px;
+}
+
+.speech-preview-wrap {
+  padding: 14px 16px;
+  border: 1px solid #dfe7f2;
+  border-radius: 8px;
+  background: #f8fbff;
 }
 
 .speech-preview {
@@ -360,7 +323,15 @@ onBeforeUnmount(() => {
 .speech-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
+}
+
+.status-text {
+  margin-right: 4px;
+  color: #5f6f86;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .speech-actions :deep(.el-button) {
@@ -371,6 +342,10 @@ onBeforeUnmount(() => {
   .speech-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .status-text {
+    grid-column: 1 / -1;
   }
 }
 </style>

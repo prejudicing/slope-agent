@@ -5,11 +5,15 @@
     </template>
 
     <pre class="summary-block">{{ summary || '暂无总结' }}</pre>
+    <div v-if="summary.trim()" class="speech-inline">
+      <SpeechPlayer :summary="summary" compact />
+    </div>
   </el-card>
 </template>
 
 <script setup lang="ts">
-// 展示 Agent Final Answer；它是业务总结，不作为结果表格的数据源。
+import SpeechPlayer from './SpeechPlayer.vue'
+
 defineProps<{
   summary: string
 }>()
@@ -30,5 +34,11 @@ defineProps<{
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.speech-inline {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #edf2f7;
 }
 </style>

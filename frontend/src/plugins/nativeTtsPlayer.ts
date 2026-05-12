@@ -8,6 +8,7 @@ export interface NativeTtsPlayerPlugin {
     rate?: number
     pitch?: number
     volume?: number
+    preferFemale?: boolean
   }): Promise<void>
   pause(): Promise<void>
   resume(): Promise<void>
