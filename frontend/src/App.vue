@@ -24,7 +24,12 @@
     </el-card>
 
     <div class="grid-container single">
-      <SummaryPanel :summary="summary" />
+      <SummaryPanel
+        :question="question"
+        :summary="summary"
+        :columns="columns"
+        :rows="rows"
+      />
     </div>
 
     <div class="grid-container single">
