@@ -50,6 +50,7 @@ const canShare = computed(() => {
   return Boolean(props.question.trim() || props.summary.trim() || props.rows.length)
 })
 const exporting = ref(false)
+const MAX_EXPORT_ROWS = 20
 
 const buildShareText = () => {
   const sections: string[] = ['高切坡智能查询分享']
@@ -108,7 +109,7 @@ const createExportContainer = () => {
   container.style.position = 'fixed'
   container.style.left = '-10000px'
   container.style.top = '0'
-  container.style.width = '1120px'
+  container.style.width = Capacitor.isNativePlatform() ? '920px' : '1120px'
   container.style.padding = '40px'
   container.style.background = '#ffffff'
   container.style.color = '#1f2d3d'
@@ -171,11 +172,12 @@ const createExportContainer = () => {
     empty.style.background = '#ffffff'
     resultSection.appendChild(empty)
   } else {
+    const exportRows = props.rows.slice(0, MAX_EXPORT_ROWS)
     const table = document.createElement('table')
     table.style.width = '100%'
     table.style.borderCollapse = 'collapse'
     table.style.tableLayout = 'fixed'
-    table.style.fontSize = '13px'
+    table.style.fontSize = '12px'
 
     const thead = document.createElement('thead')
     const headRow = document.createElement('tr')
@@ -193,13 +195,13 @@ const createExportContainer = () => {
     table.appendChild(thead)
 
     const tbody = document.createElement('tbody')
-    props.rows.forEach((row) => {
+    exportRows.forEach((row) => {
       const tr = document.createElement('tr')
       props.columns.forEach((column) => {
         const td = document.createElement('td')
         td.textContent = row[column] || '-'
         td.style.border = '1px solid #dfe7f2'
-        td.style.padding = '10px 8px'
+        td.style.padding = '8px 6px'
         td.style.verticalAlign = 'top'
         td.style.wordBreak = 'break-word'
         tr.appendChild(td)
@@ -208,6 +210,15 @@ const createExportContainer = () => {
     })
     table.appendChild(tbody)
     resultSection.appendChild(table)
+
+    if (props.rows.length > MAX_EXPORT_ROWS) {
+      const note = document.createElement('p')
+      note.textContent = `PDF 为控制体积仅展示前 ${MAX_EXPORT_ROWS} 条结果，其余结果请在系统中查看。`
+      note.style.margin = '12px 0 0'
+      note.style.color = '#5f6f86'
+      note.style.fontSize = '12px'
+      resultSection.appendChild(note)
+    }
   }
 
   container.appendChild(resultSection)
@@ -233,11 +244,11 @@ const exportPdf = async () => {
     container = createExportContainer()
     const canvas = await html2canvas(container, {
       backgroundColor: '#ffffff',
-      scale: 2,
+      scale: Capacitor.isNativePlatform() ? 1.2 : 2,
       useCORS: true,
     })
 
-    const imageData = canvas.toDataURL('image/png')
+    const imageData = canvas.toDataURL('image/jpeg', 0.9)
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
@@ -247,13 +258,13 @@ const exportPdf = async () => {
     let remainingHeight = imageHeight
     let position = 10
 
-    pdf.addImage(imageData, 'PNG', 10, position, imageWidth, imageHeight)
+    pdf.addImage(imageData, 'JPEG', 10, position, imageWidth, imageHeight)
     remainingHeight -= pageHeight - 20
 
     while (remainingHeight > 0) {
       position = remainingHeight - imageHeight + 10
       pdf.addPage()
-      pdf.addImage(imageData, 'PNG', 10, position, imageWidth, imageHeight)
+      pdf.addImage(imageData, 'JPEG', 10, position, imageWidth, imageHeight)
       remainingHeight -= pageHeight - 20
     }
 
