@@ -40,6 +40,7 @@ def query(req: QueryRequest):
         result = run_agent(req.question)
         return result
     except Exception as e:
+        # 非流式接口也保持和前端约定一致的返回结构，避免调用方额外分支判断。
         return {
             "question": req.question,
             "sql": "",
@@ -76,6 +77,7 @@ def asr(req: AsrRequest):
         )
         return {"text": text, "error": None}
     except AsrError as e:
+        # AsrError 属于“用户可理解”的业务错误，直接返回给前端做友好提示。
         return {"text": "", "error": str(e)}
     except Exception as e:
         return {"text": "", "error": f"语音转写失败：{e}"}

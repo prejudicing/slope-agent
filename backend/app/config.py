@@ -9,11 +9,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# 达梦数据库连接配置：项目主要业务数据都从这里读取。
 DM_USER = os.getenv("DM_USER")
 DM_PASSWORD = os.getenv("DM_PASSWORD")
 DM_HOST = os.getenv("DM_HOST")
 DM_PORT = os.getenv("DM_PORT")
 
+# 查询总结仍可使用任意 OpenAI 兼容接口，只要它支持聊天补全即可。
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")

@@ -38,7 +38,11 @@ GQP_TABLE_GUIDE = """
 - t_tilt_model、t_panoramic_data、t_drone_dom：空间数据关联表，分别存倾斜摄影模型、全景数据、高精度无人机 DOM，常用字段包括 name、code、url、gqpbh、x、y、height、create_time、zip_url。
 """
 
-# Agent 系统提示词：限定业务范围、安全 SQL 规则、回答格式，并注入动态 schema guide。
+# Agent 系统提示词：
+# 1. 划定高切坡业务边界，避免模型把自己当成通用数据库助手；
+# 2. 约束 SQL 只读、安全、稳定；
+# 3. 明确 Final Answer 的格式，降低 LangChain 解析失败概率；
+# 4. 通过 {table_guide} 注入每次问题对应的动态 schema 说明。
 GQP_AGENT_PREFIX = """
 你是“高切坡系统智能查询 Agent”，专门帮助用户用自然语言查询高切坡业务数据库。
 

@@ -260,6 +260,7 @@ class AgentProgressHandler(BaseCallbackHandler):
 
 def run_agent(question: str, progress=None) -> dict:
     """执行一次完整查询，并返回 SQL、表格数据、总结和日志。"""
+    # progress 是给 SSE 用的回调；run_agent 本身仍然保持同步返回，方便网页和 App 共用。
     def emit(payload: dict):
         if progress:
             progress(payload)
@@ -269,6 +270,7 @@ def run_agent(question: str, progress=None) -> dict:
 
     deterministic_query = get_deterministic_query(question)
     if deterministic_query:
+        # 高频关键问题优先走稳定模板，避免让 LLM 在异常类型等关键口径上自由发挥。
         emit({
             "type": "progress",
             "message": "命中稳定业务查询模板",
@@ -323,6 +325,8 @@ def run_agent(question: str, progress=None) -> dict:
 
     cached_sql = get_cached_sql(question)
     if cached_sql:
+        # 这里缓存的是“查询口径”而不是结果本身：同一句问题复用已验证 SQL，
+        # 但仍然实时查库，保证数据是新的。
         emit({
             "type": "progress",
             "message": "命中已验证 SQL，复用稳定查询口径",
@@ -387,7 +391,8 @@ def run_agent(question: str, progress=None) -> dict:
             result = agent.invoke({"input": question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
-        # 优先使用最后一次成功执行的 sql_db_query，避免 checker 或日志摘要污染结果表格。
+        # 表格数据必须追溯到最后一次真正成功执行的 sql_db_query。
+        # 不能只拿 checker 或模型自述里的 SQL，否则前端表格和真实结果会对不上。
         sql = (
             state.get("last_success_query_sql")
             or state.get("last_query_sql")
@@ -409,6 +414,7 @@ def run_agent(question: str, progress=None) -> dict:
                 "message": "整理数据库查询表格",
                 "detail": sql,
             })
+            # 最终再次回查数据库，把 SQL 结果转成 columns/rows，作为前端表格唯一数据源。
             columns, rows = query_table_for_display(db, sql)
             emit({
                 "type": "progress",
@@ -420,6 +426,7 @@ def run_agent(question: str, progress=None) -> dict:
                 "type": "progress",
                 "message": "基于查询结果生成业务分析",
             })
+            # 这一步的 LLM 只负责“读表总结”，不再决定查什么表、怎么写 SQL。
             summary = analyze_query_result(
                 llm,
                 question,
@@ -454,6 +461,8 @@ def run_agent(question: str, progress=None) -> dict:
             or extract_sql_from_logs(logs)
         )
         recovered_answer = extract_answer_from_parsing_error(error)
+        # LangChain 偶尔会在“已经查到数据并生成答案”后，因为输出格式不标准而抛解析异常。
+        # 这里尽量从日志和异常里恢复 SQL 与中文答案，避免用户白等一轮却什么都拿不到。
         columns, rows = query_table_for_display(db, sql)
         summary = analyze_query_result(
             build_llm(),
@@ -491,6 +500,7 @@ def stream_agent_events(question: str):
         finally:
             event_queue.put(STREAM_DONE)
 
+    # Agent 查询可能持续几秒到几十秒，单独起线程避免阻塞 SSE 生成器本身。
     threading.Thread(target=worker, daemon=True).start()
 
     while True:

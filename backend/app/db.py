@@ -69,6 +69,7 @@ def get_db(include_tables: list[str] | None = None):
     include_tables, missing_tables = _resolve_existing_tables(uri, requested_tables)
 
     if missing_tables:
+        # 允许旧文档表“存在于候选中但不存在于真实库”；打印出来便于排查，不直接阻断查询。
         print(
             ">>> skip missing high-cut-slope tables: "
             + ", ".join(missing_tables)

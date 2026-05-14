@@ -29,6 +29,7 @@ _MODEL_INSTANCE: WhisperModel | None = None
 
 
 def _guess_suffix(mime_type: str, filename: Optional[str]) -> str:
+    # 前端可能只传 mimeType，也可能同时带文件名；优先保留已有后缀，避免模型读取失败。
     if filename:
         suffix = Path(filename).suffix
         if suffix:
@@ -105,6 +106,7 @@ def transcribe_base64_audio(audio_base64: str, mime_type: str, filename: Optiona
             temp_path = tmp.name
 
         model = _get_model()
+        # 固定中文识别，并关闭“沿用上段文本上下文”的策略，减少短句查询口语被带偏。
         segments, info = model.transcribe(
             temp_path,
             language="zh",

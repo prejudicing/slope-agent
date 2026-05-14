@@ -146,6 +146,7 @@ def retrieve_schema_for_question(question: str, limit: int = 8) -> list[dict[str
         for term in terms[:160]:
             if term.lower() in text:
                 score += min(8, max(1, len(term) // 2))
+        # 默认核心表给轻微保底分，既保证容易召回，又不至于压过明确命中的专项表。
         if table_name.lower() in {name.lower() for name in get_default_core_tables()}:
             score += 5
         if table_name.lower() in SYSTEM_TABLES:
@@ -179,7 +180,7 @@ def select_include_tables(question: str) -> list[str]:
     """为 LangChain SQLDatabase 选择本次查询允许暴露的表。"""
     selected = retrieve_schema_for_question(question)
     table_names = [table["table_name"] for table in selected]
-    # 基础档案表常作为 JOIN 和兜底信息来源，默认补上。
+    # 基础档案表常作为 JOIN 和名称/地区补全来源，默认补上可显著降低结果“只有编号”的概率。
     if "geo_gqp_jbxx" not in {name.lower() for name in table_names}:
         table_names.append("geo_gqp_jbxx")
     return table_names
@@ -232,6 +233,7 @@ def build_schema_guide(question: str, field_limit: int = 28) -> str:
                 if len(important_fields) >= field_limit:
                     break
 
+        # Prompt 中只放最有业务价值的字段，避免把上下文浪费在大量低价值字段上。
         sections.append(
             "\n".join(
                 [

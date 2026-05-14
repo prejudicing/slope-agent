@@ -25,6 +25,8 @@ ABNORMAL_TYPE_FIELDS = [
 def get_deterministic_query(question: str) -> dict[str, Any] | None:
     """识别必须稳定回答的高频业务问题。"""
     if _is_abnormal_type_question(question):
+        # 这类问题的风险在于：LLM 容易把 overallSituation=1 误说成某种具体异常。
+        # 因此直接固定 SQL 和后处理逻辑，确保异常类型来自明确的异常字段。
         return {
             "name": "abnormal_type",
             "tables": ["tb_hcs_monitoring", "geo_gqp_jbxx"],
@@ -94,6 +96,7 @@ def _is_truthy_flag(value) -> bool:
 
 def _enrich_abnormal_type_rows(columns: list[str], rows: list[dict]) -> tuple[list[str], list[dict]]:
     flag_fields = {field_name for field_name, _ in ABNORMAL_TYPE_FIELDS}
+    # 结果表里不直接暴露一串 0/1 标志位，而是折叠成一个更适合业务阅读的 abnormal_type 字段。
     display_columns = [
         column
         for column in columns
