@@ -12,6 +12,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_INPUT = ROOT_DIR / "backend" / "schema_exports" / "database_schema.json"
 DEFAULT_OUTPUT = ROOT_DIR / "backend" / "schema_exports" / "database_schema_explained.json"
 DEFAULT_CHUNKS = ROOT_DIR / "backend" / "schema_exports" / "schema_chunks.jsonl"
+DEFAULT_DOCUMENT_SCHEMA = ROOT_DIR / "backend" / "schema_exports" / "document_schema.json"
 
 
 TABLE_DESCRIPTIONS = {
@@ -150,6 +151,13 @@ def normalize_name(value: str) -> str:
     return value.strip().strip('"').lower()
 
 
+def clean_text(value: str | None) -> str:
+    """清理文档字段说明中的换行和多余空白。"""
+    if value is None:
+        return ""
+    return " ".join(str(value).replace("\n", " ").split())
+
+
 def table_info(table_name: str) -> tuple[str, str]:
     """根据表名推断业务域和表说明；未命中时使用保守兜底描述。"""
     key = normalize_name(table_name)
@@ -168,11 +176,104 @@ def table_info(table_name: str) -> tuple[str, str]:
     return "未分类", "真实数据库中的业务表，初版解释未能自动识别具体业务域。"
 
 
-def infer_field(column: dict[str, Any]) -> dict[str, Any]:
+def clean_doc_label(value: str) -> str:
+    """清理文档里的表标题/章节标题，去掉表名尾巴，尽量保留人写的业务解释。"""
+    value = re.sub(r"\s+", " ", value.strip())
+    value = re.sub(r"\b[A-Za-z_][A-Za-z0-9_]*\s*$", "", value).strip(" -:：")
+    return value
+
+
+def infer_domain_from_doc(document_title: str, document_section: str, fallback_domain: str) -> str:
+    """从文档标题/章节里抽一个短业务域，避免把整句表标题原样塞进 business_domain。"""
+    if (
+        document_section
+        and "_" not in document_section
+        and len(document_section) <= 8
+        and not any(token in document_section for token in ("记录", "说明", "附件", "内容", "数据"))
+    ):
+        return document_section
+
+    if document_title:
+        match = re.match(r"(.+?)(?:表结构说明|数据记录点表|记录点表|记录表|信息表|附件表|内容表|表)$", document_title)
+        if match:
+            candidate = match.group(1).strip()
+            if candidate and len(candidate) <= 12:
+                return candidate
+
+    return fallback_domain
+
+
+def load_document_table_map(path: Path) -> dict[str, dict[str, Any]]:
+    """加载 document_schema.json，供 explained schema 吸收文档中的表级和字段级解释。"""
+    if not path.exists():
+        return {}
+
+    document_schema = json.loads(path.read_text(encoding="utf-8"))
+    table_map: dict[str, dict[str, Any]] = {}
+    for table in document_schema.get("tables", []):
+        key = table.get("normalized_table_name")
+        if not key:
+            continue
+        field_map = {}
+        for column in table.get("columns", []):
+            normalized_field_name = column.get("normalized_name")
+            if not normalized_field_name:
+                continue
+            field_map[normalized_field_name] = {
+                "name": column.get("name", ""),
+                "comment": clean_text(column.get("comment", "")),
+                "type": clean_text(column.get("type", "")),
+            }
+        table_map[key] = {
+            "table_title": clean_doc_label(table.get("table_title", "")),
+            "section": clean_doc_label(table.get("section", "")),
+            "fields": field_map,
+        }
+    return table_map
+
+
+def resolve_table_explanation(
+    table_name: str,
+    document_table: dict[str, str] | None,
+) -> tuple[str, str, dict[str, str]]:
+    """按“手工规则 > 文档解释 > 通用兜底”的优先级确定表说明。"""
+    normalized_name = normalize_name(table_name)
+
+    if normalized_name in TABLE_DESCRIPTIONS:
+        business_domain, description = TABLE_DESCRIPTIONS[normalized_name]
+        return business_domain, description, {"domain": "manual", "description": "manual"}
+
+    fallback_domain, fallback_description = table_info(table_name)
+    source_flags = {"domain": "fallback", "description": "fallback"}
+
+    if not document_table:
+        return fallback_domain, fallback_description, source_flags
+
+    document_title = document_table.get("table_title", "")
+    document_section = document_table.get("section", "")
+
+    business_domain = infer_domain_from_doc(document_title, document_section, fallback_domain)
+    description = document_title or fallback_description
+
+    if business_domain != fallback_domain:
+        source_flags["domain"] = "document_schema"
+    if document_title:
+        source_flags["description"] = "document_schema"
+
+    return business_domain, description, source_flags
+
+
+def infer_field(column: dict[str, Any], document_field: dict[str, str] | None = None) -> dict[str, Any]:
     """根据字段名、注释和规则生成字段业务含义、别名和枚举提示。"""
     name = column["name"]
     normalized = normalize_name(name)
     existing_comment = column.get("comment") or ""
+    comment_source = "database_schema" if existing_comment else ""
+    if not existing_comment and document_field:
+        existing_comment = document_field.get("comment", "")
+        if existing_comment:
+            comment_source = "document_schema"
+
     meaning, aliases = FIELD_MEANINGS.get(normalized, (existing_comment or name, []))
     if existing_comment and existing_comment != meaning:
         meaning = existing_comment
@@ -183,6 +284,7 @@ def infer_field(column: dict[str, Any]) -> dict[str, Any]:
         "nullable": column.get("nullable", True),
         "primary_key": column.get("primary_key", False),
         "comment": existing_comment,
+        "comment_source": comment_source or None,
         "business_meaning": meaning,
         "aliases": aliases,
     }
@@ -254,13 +356,28 @@ def build_embedding_text(table: dict[str, Any]) -> str:
     )
 
 
-def generate_explained_schema(database_schema: dict[str, Any]) -> dict[str, Any]:
+def generate_explained_schema(
+    database_schema: dict[str, Any],
+    document_table_map: dict[str, dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """为真实库中的每张表生成业务解释结构。"""
+    document_table_map = document_table_map or {}
     tables = []
     for source_table in database_schema["tables"]:
         table_name = source_table["table_name"]
-        business_domain, description = table_info(table_name)
-        fields = [infer_field(column) for column in source_table["columns"]]
+        document_table = document_table_map.get(source_table["normalized_table_name"])
+        business_domain, description, explanation_source = resolve_table_explanation(
+            table_name,
+            document_table,
+        )
+        document_fields = document_table.get("fields", {}) if document_table else {}
+        fields = [
+            infer_field(
+                column,
+                document_fields.get(column.get("normalized_name", "")),
+            )
+            for column in source_table["columns"]
+        ]
         explained = {
             "table_name": table_name,
             "normalized_table_name": source_table["normalized_table_name"],
@@ -272,8 +389,11 @@ def generate_explained_schema(database_schema: dict[str, Any]) -> dict[str, Any]
             "query_hints": infer_table_hints(table_name, fields),
             "source": {
                 "schema_source": "database_schema.json",
+                "document_schema_source": "document_schema.json" if document_table_map else None,
                 "column_count": len(fields),
                 "generated_by": "generate_explained_schema.py",
+                "business_domain_source": explanation_source["domain"],
+                "description_source": explanation_source["description"],
             },
         }
         explained["embedding_text"] = build_embedding_text(explained)
@@ -324,10 +444,12 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--chunks", type=Path, default=DEFAULT_CHUNKS)
+    parser.add_argument("--document-schema", type=Path, default=DEFAULT_DOCUMENT_SCHEMA)
     args = parser.parse_args()
 
     database_schema = json.loads(args.input.read_text(encoding="utf-8"))
-    explained = generate_explained_schema(database_schema)
+    document_table_map = load_document_table_map(args.document_schema)
+    explained = generate_explained_schema(database_schema, document_table_map)
     write_json(args.output, explained)
     write_jsonl(args.chunks, explained["tables"])
 
