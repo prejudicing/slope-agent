@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
+import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { ElMessage } from 'element-plus'
 import SpeechPlayer from './SpeechPlayer.vue'
@@ -256,7 +257,27 @@ const exportPdf = async () => {
       remainingHeight -= pageHeight - 20
     }
 
-    pdf.save(`${buildExportTitle()}.pdf`)
+    const filename = `${buildExportTitle()}.pdf`
+
+    if (Capacitor.isNativePlatform()) {
+      const pdfBase64 = pdf.output('datauristring').split(',')[1]
+      const writeResult = await Filesystem.writeFile({
+        path: filename,
+        data: pdfBase64,
+        directory: Directory.Cache,
+      })
+
+      await Share.share({
+        title: '高切坡智能查询导出',
+        text: '已生成本次查询 PDF，可直接分享到微信、文件或邮件。',
+        url: writeResult.uri,
+        dialogTitle: '分享本次查询 PDF',
+      })
+      ElMessage.success('已生成 PDF，请选择分享位置')
+      return
+    }
+
+    pdf.save(filename)
     ElMessage.success('已导出 PDF')
   } catch (error) {
     ElMessage.warning('导出 PDF 失败，请稍后重试')
