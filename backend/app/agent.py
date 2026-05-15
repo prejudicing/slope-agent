@@ -140,8 +140,20 @@ def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
 def build_cached_summary(rows: list[dict]) -> str:
     """复用缓存 SQL 时生成稳定摘要，不再让 LLM 重新改写答案。"""
     if rows:
-        return f"本次复用已验证查询口径，查询到 {len(rows)} 条记录。详细结果见查询结果表格。"
-    return "本次复用已验证查询口径，数据库未返回匹配记录。"
+        return (
+            "查询报告\n\n"
+            "一、查询结论\n"
+            f"本次复用已验证查询口径，查询到 {len(rows)} 条记录。\n\n"
+            "二、结果说明\n"
+            "详细记录请查看下方查询结果表格。"
+        )
+    return (
+        "查询报告\n\n"
+        "一、查询结论\n"
+        "本次复用已验证查询口径，但数据库未返回匹配记录。\n\n"
+        "二、结果说明\n"
+        "建议调整筛选条件后重新查询。"
+    )
 
 
 def build_llm() -> ChatOpenAI:
@@ -163,15 +175,25 @@ def analyze_query_result(
     columns: list[str],
     rows: list[dict],
     fallback: str = "",
+    mode: str = "db_query",
 ) -> str:
-    """把真实查询结果表交给 LLM 生成业务总结。
+    """把真实查询结果表交给 LLM 生成业务报告。
 
     这里的 LLM 只做“读表分析”，不再决定查询哪些表或字段。
     """
     if not columns:
-        return fallback or "本次查询未返回可展示的表格字段，请检查 SQL 是否成功执行。"
+        return (
+            fallback
+            or "查询报告\n\n一、查询结论\n本次查询未返回可展示的表格字段。\n\n二、结果说明\n请检查 SQL 是否成功执行。"
+        )
     if not rows:
-        return "本次查询已执行，但数据库没有返回匹配记录。"
+        return (
+            "查询报告\n\n"
+            "一、查询结论\n"
+            "本次查询已执行，但数据库没有返回匹配记录。\n\n"
+            "二、结果说明\n"
+            "建议调整时间、地区、编号或异常类型等筛选条件后重新查询。"
+        )
 
     sample_rows = rows[:20]
     payload = {
@@ -181,17 +203,39 @@ def analyze_query_result(
         "row_count": len(rows),
         "rows": sample_rows,
     }
-    prompt = (
-        "你是高切坡系统智能查询 Agent 的结果分析器。"
-        "你只能依据下面给出的真实 SQL 查询结果表进行分析，不能补充、猜测或编造表格中没有的数据。\n"
-        "请用中文输出查询总结，要求：\n"
-        "1. 先直接回答用户问题；\n"
-        "2. 说明本次共返回多少条记录；\n"
-        "3. 如果表格包含异常类型、状态、时间、地区等字段，请提炼关键发现；\n"
-        "4. 如果结果较多，只概括前若干条的代表性信息，并提示完整明细见表格；\n"
-        "5. 不要输出 SQL，不要说“我查询了数据库”，不要编造处置建议。\n\n"
-        f"真实查询结果 JSON：\n{json.dumps(payload, ensure_ascii=False, default=str)}"
-    )
+    if mode == "result_analysis":
+        prompt = (
+            "你是高切坡系统智能查询 Agent 的结果分析器。"
+            "你只能依据下面给出的真实 SQL 查询结果表进行分析，不能补充、猜测或编造表格中没有的数据。\n"
+            "当前用户的问题属于分析型问题，请输出一份中文“查询报告”，必须严格使用下面结构：\n"
+            "查询报告\n"
+            "一、查询结论\n"
+            "二、关键发现\n"
+            "三、结果说明\n\n"
+            "写作要求：\n"
+            "1. 在“查询结论”中直接回答用户想看的分析结论，并明确本次共返回多少条记录；\n"
+            "2. 在“关键发现”中用 2 到 4 条短句提炼地区、时间、状态、异常类型、数量分布或排序变化；\n"
+            "3. 在“结果说明”中提示完整明细见结果表格；\n"
+            "4. 不要输出 SQL，不要说“我查询了数据库”，不要编造没有证据的原因或处置建议。\n\n"
+            f"真实查询结果 JSON：\n{json.dumps(payload, ensure_ascii=False, default=str)}"
+        )
+    else:
+        prompt = (
+            "你是高切坡系统智能查询 Agent 的结果分析器。"
+            "你只能依据下面给出的真实 SQL 查询结果表进行分析，不能补充、猜测或编造表格中没有的数据。\n"
+            "请输出一份中文“查询报告”，必须严格使用下面结构：\n"
+            "查询报告\n"
+            "一、查询结论\n"
+            "二、关键发现\n"
+            "三、结果说明\n\n"
+            "写作要求：\n"
+            "1. 在“查询结论”中直接回答用户问题，并明确本次共返回多少条记录；\n"
+            "2. 在“关键发现”中提炼表格中的关键状态、异常类型、时间、地区或统计特征；\n"
+            "3. 如果结果较多，只概括代表性信息；\n"
+            "4. 在“结果说明”中提示完整明细见结果表格；\n"
+            "5. 不要输出 SQL，不要说“我查询了数据库”，不要编造处置建议。\n\n"
+            f"真实查询结果 JSON：\n{json.dumps(payload, ensure_ascii=False, default=str)}"
+        )
 
     try:
         response = llm.invoke(prompt)
@@ -298,8 +342,23 @@ def run_agent(question: str, progress=None) -> dict:
 
     emit({"type": "progress", "message": "连接达梦数据库"})
 
-    deterministic_query = get_deterministic_query(question)
-    if deterministic_query:
+    if route_decision.query_type == "template_query":
+        deterministic_query = get_deterministic_query(question)
+        if not deterministic_query:
+            return {
+                "status": "error",
+                "query_type": "template_query",
+                "question": question,
+                "sql": "",
+                "result": "",
+                "summary": "",
+                "report": None,
+                "suggestion": "当前模板路由未找到对应查询实现，请检查业务模板配置。",
+                "columns": [],
+                "rows": [],
+                "logs": "模板路由命中，但未找到对应 deterministic query。",
+                "error": "template_query implementation missing",
+            }
         # 高频关键问题优先走稳定模板，避免让 LLM 在异常类型等关键口径上自由发挥。
         emit({
             "type": "progress",
@@ -325,15 +384,16 @@ def run_agent(question: str, progress=None) -> dict:
                 f"{deterministic_query['summary']} 本次查询到 {len(rows)} 条异常记录，"
                 "异常类型已在结果表格的 abnormal_type 字段中列出。"
             ),
+            mode="db_query",
         )
         emit({
             "type": "summary",
             "summary": summary,
-            "message": "生成查询总结",
+            "message": "生成查询报告",
         })
         return {
             "status": "success",
-            "query_type": "deterministic",
+            "query_type": "template_query",
             "question": question,
             "sql": sql,
             "result": summary,
@@ -379,15 +439,16 @@ def run_agent(question: str, progress=None) -> dict:
             columns,
             rows,
             build_cached_summary(rows),
+            mode=route_decision.query_type,
         )
         emit({
             "type": "summary",
             "summary": summary,
-            "message": "生成查询总结",
+            "message": "生成查询报告",
         })
         return {
             "status": "success",
-            "query_type": "cached_query",
+            "query_type": route_decision.query_type,
             "question": question,
             "sql": cached_sql,
             "result": summary,
@@ -412,7 +473,7 @@ def run_agent(question: str, progress=None) -> dict:
             top_k="{top_k}",
             table_guide=table_guide,
         ),
-        top_k=20,
+        top_k=2000,
         max_iterations=8,
         verbose=True,
         handle_parsing_errors=True,
@@ -472,16 +533,17 @@ def run_agent(question: str, progress=None) -> dict:
                 columns,
                 rows,
                 agent_output,
+                mode=route_decision.query_type,
             )
             emit({
                 "type": "summary",
                 "summary": summary,
-                "message": "生成查询总结",
+                "message": "生成查询报告",
             })
 
         return {
             "status": "success",
-            "query_type": "db_query",
+            "query_type": route_decision.query_type,
             "question": question,
             "sql": sql,
             "result": summary,
@@ -513,10 +575,11 @@ def run_agent(question: str, progress=None) -> dict:
             columns,
             rows,
             recovered_answer,
+            mode=route_decision.query_type,
         )
         return {
             "status": "success" if summary else "error",
-            "query_type": "db_query",
+            "query_type": route_decision.query_type,
             "question": question,
             "sql": sql,
             "result": summary,

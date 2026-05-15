@@ -1,0 +1,4 @@
+interface:
+  display_name: "GQP Query"
+  short_description: "Route and answer high-cut-slope database questions"
+  default_prompt: "Use $gqp-query to classify, query, and summarize high-cut-slope business questions with the standard workflow and response schema."

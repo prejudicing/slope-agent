@@ -1,4 +1,4 @@
-// 后端最终返回结构。columns/rows 专供查询结果表格使用，summary 是 Agent 总结。
+// 后端最终返回结构。columns/rows 专供查询结果表格使用，summary 当前用于承载查询报告正文。
 export interface QueryResponse {
   question: string
   sql: string

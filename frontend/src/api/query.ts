@@ -87,7 +87,7 @@ export async function streamQuery(
       onEvent({
         type: 'summary',
         summary: data.summary || data.result,
-        message: '已生成查询总结',
+        message: '已生成查询报告',
       })
     }
 

@@ -86,7 +86,6 @@ FROM tb_hcs_monitoring m
 LEFT JOIN geo_gqp_jbxx b ON m.gqpbh = b.gqpbh
 WHERE {abnormal_conditions}
 ORDER BY m.createdOn DESC, m.gqpbh ASC
-LIMIT 20
 """.strip()
 
 

@@ -68,13 +68,13 @@ const statusText = computed(() => {
   if (isSpeaking.value) {
     return '正在播报'
   }
-  return buildSpeechText() ? '可播报查询总结' : '暂无可播报内容'
+  return buildSpeechText() ? '可播报查询报告' : '暂无可播报内容'
 })
 
 const previewText = computed(() => {
   const text = buildSpeechText()
   if (!text) {
-    return '查询完成后，可以直接播报查询总结。'
+    return '查询完成后，可以直接播报查询报告。'
   }
   return text.length > 120 ? `${text.slice(0, 120)}...` : text
 })
@@ -137,7 +137,7 @@ const startSpeaking = async () => {
 
   const text = buildSpeechText()
   if (!text) {
-    ElMessage.warning('暂无可播报的查询总结')
+    ElMessage.warning('暂无可播报的查询报告')
     return
   }
 

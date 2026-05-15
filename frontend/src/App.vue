@@ -2,7 +2,7 @@
   <div class="app-container">
     <div class="page-header">
       <h1>高切坡智能查询</h1>
-      <p>输入业务问题，系统将返回查询结果和结果解读。</p>
+      <p>输入业务问题，系统将返回查询结果和查询报告。</p>
     </div>
 
     <el-card shadow="never" class="top-card">

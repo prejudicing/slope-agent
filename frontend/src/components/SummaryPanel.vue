@@ -2,7 +2,7 @@
   <el-card shadow="never" class="panel-card">
     <template #header>
       <div class="panel-header">
-        <span>查询总结</span>
+        <span>查询报告</span>
         <div class="header-actions">
           <el-button
             text
@@ -24,7 +24,7 @@
       </div>
     </template>
 
-    <pre class="summary-block">{{ summary || '暂无总结' }}</pre>
+    <pre class="summary-block">{{ summary || '暂无报告' }}</pre>
     <div v-if="summary.trim()" class="speech-inline">
       <SpeechPlayer :summary="summary" compact />
     </div>
@@ -60,7 +60,7 @@ const buildShareText = () => {
   }
 
   if (props.summary.trim()) {
-    sections.push(`查询总结：${props.summary.trim()}`)
+    sections.push(`查询报告：${props.summary.trim()}`)
   }
 
   if (props.rows.length) {
@@ -151,7 +151,7 @@ const createExportContainer = () => {
   }
 
   appendSection('问题', props.question.trim())
-  appendSection('查询总结', props.summary.trim())
+  appendSection('查询报告', props.summary.trim())
 
   const resultSection = document.createElement('section')
   resultSection.style.marginBottom = '12px'
