@@ -25,6 +25,7 @@ from app.business_queries import enrich_rows, get_deterministic_query
 from app.config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 from app.domain import GQP_AGENT_PREFIX
 from app.query_cache import get_cached_sql, save_cached_sql
+from app.query_router import QueryRouteDecision, route_question
 from app.schema_knowledge import build_schema_guide, select_include_tables
 
 
@@ -43,6 +44,24 @@ SCHEMA_DDL_RE = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 STREAM_DONE = object()
+
+
+def build_non_query_result(question: str, decision: QueryRouteDecision) -> dict:
+    """把拒答/澄清类路由结果整理成与查询结果兼容的固定响应结构。"""
+    return {
+        "status": decision.status,
+        "query_type": decision.query_type,
+        "question": question,
+        "sql": "",
+        "result": decision.summary,
+        "summary": decision.summary,
+        "report": None,
+        "suggestion": decision.suggestion,
+        "columns": [],
+        "rows": [],
+        "logs": f"问题路由结果：{decision.reason}",
+        "error": None,
+    }
 
 
 def extract_sql_from_logs(log_text: str) -> str:
@@ -266,6 +285,17 @@ def run_agent(question: str, progress=None) -> dict:
             progress(payload)
 
     print(">>> high-cut-slope SQL agent loaded")
+    route_decision = route_question(question)
+    emit({"type": "progress", "message": "分析问题意图与业务范围"})
+
+    if route_decision.status != "query":
+        emit({
+            "type": "summary",
+            "summary": route_decision.summary,
+            "message": "返回问题路由结果",
+        })
+        return build_non_query_result(question, route_decision)
+
     emit({"type": "progress", "message": "连接达梦数据库"})
 
     deterministic_query = get_deterministic_query(question)
@@ -302,10 +332,14 @@ def run_agent(question: str, progress=None) -> dict:
             "message": "生成查询总结",
         })
         return {
+            "status": "success",
+            "query_type": "deterministic",
             "question": question,
             "sql": sql,
             "result": summary,
             "summary": summary,
+            "report": None,
+            "suggestion": None,
             "columns": columns,
             "rows": rows,
             "logs": "命中稳定业务查询模板，未重新调用 Agent 生成 SQL。",
@@ -352,10 +386,14 @@ def run_agent(question: str, progress=None) -> dict:
             "message": "生成查询总结",
         })
         return {
+            "status": "success",
+            "query_type": "cached_query",
             "question": question,
             "sql": cached_sql,
             "result": summary,
             "summary": summary,
+            "report": None,
+            "suggestion": None,
             "columns": columns,
             "rows": rows,
             "logs": "命中已验证 SQL 缓存，未重新调用 Agent 生成 SQL。",
@@ -442,10 +480,14 @@ def run_agent(question: str, progress=None) -> dict:
             })
 
         return {
+            "status": "success",
+            "query_type": "db_query",
             "question": question,
             "sql": sql,
             "result": summary,
             "summary": summary,
+            "report": None,
+            "suggestion": None,
             "columns": columns,
             "rows": rows,
             "logs": clean_logs(logs),
@@ -473,10 +515,14 @@ def run_agent(question: str, progress=None) -> dict:
             recovered_answer,
         )
         return {
+            "status": "success" if summary else "error",
+            "query_type": "db_query",
             "question": question,
             "sql": sql,
             "result": summary,
             "summary": summary,
+            "report": None,
+            "suggestion": None,
             "columns": columns,
             "rows": rows,
             "logs": clean_logs(logs),

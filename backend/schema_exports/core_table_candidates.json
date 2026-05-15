@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T15:23:26",
+  "generated_at": "2026-05-14T19:50:00",
   "core_tables": [
     {
       "table_name": "geo_gqp_jbxx",
@@ -808,11 +808,11 @@
       "table_name": "t_log",
       "business_domain": "未分类",
       "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
-      "row_count": 9343,
+      "row_count": 9347,
       "score": 6,
       "recommended_level": "exclude",
       "reasons": [
-        "真实库有数据：9343 行"
+        "真实库有数据：9347 行"
       ],
       "join_keys": [],
       "query_hints": []

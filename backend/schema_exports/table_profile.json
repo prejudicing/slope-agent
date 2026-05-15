@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T15:23:26",
+  "generated_at": "2026-05-14T19:50:00",
   "table_count": 55,
   "tables": [
     {
@@ -6609,7 +6609,7 @@
       "table_name": "t_log",
       "business_domain": "未分类",
       "description": "真实数据库中的业务表，初版解释未能自动识别具体业务域。",
-      "row_count": 9343,
+      "row_count": 9347,
       "column_count": 9,
       "populated_column_count": 9,
       "populated_columns": [
@@ -6630,7 +6630,7 @@
           "values": [
             {
               "value": "登录",
-              "count": 5981
+              "count": 5985
             },
             {
               "value": "预防预警",
@@ -6684,7 +6684,7 @@
           "values": [
             {
               "value": "登录",
-              "count": 5981
+              "count": 5985
             },
             {
               "value": "图层树",
@@ -6738,7 +6738,7 @@
           "name": "operate_time",
           "business_meaning": "生产日志时间",
           "min_value": "2019-11-09 11:11:23.659000",
-          "max_value": "2026-03-26 11:51:56.627000"
+          "max_value": "2026-05-14 16:19:14.883000"
         }
       ],
       "columns": [
@@ -6746,7 +6746,7 @@
           "name": "id",
           "type": "INTEGER",
           "business_meaning": "id",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [],
           "min_value": null,
@@ -6756,7 +6756,7 @@
           "name": "user_id",
           "type": "INTEGER",
           "business_meaning": "执行者的用户id",
-          "non_null_count": 8176,
+          "non_null_count": 8180,
           "non_null_ratio": 0.8751,
           "distinct_sample": [],
           "min_value": null,
@@ -6766,7 +6766,7 @@
           "name": "user_name",
           "type": "VARCHAR(20)",
           "business_meaning": "执行者的用户姓名",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [],
           "min_value": null,
@@ -6776,12 +6776,12 @@
           "name": "first_level",
           "type": "VARCHAR(200)",
           "business_meaning": "一级分类",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [
             {
               "value": "登录",
-              "count": 5981
+              "count": 5985
             },
             {
               "value": "预防预警",
@@ -6835,12 +6835,12 @@
           "name": "second_level",
           "type": "VARCHAR(200)",
           "business_meaning": "二级分类",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [
             {
               "value": "登录",
-              "count": 5981
+              "count": 5985
             },
             {
               "value": "图层树",
@@ -6894,7 +6894,7 @@
           "name": "note",
           "type": "VARCHAR(500)",
           "business_meaning": "自定义注释",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [],
           "min_value": null,
@@ -6904,17 +6904,17 @@
           "name": "operate_time",
           "type": "TIMESTAMP",
           "business_meaning": "生产日志时间",
-          "non_null_count": 9341,
+          "non_null_count": 9345,
           "non_null_ratio": 0.9998,
           "distinct_sample": [],
           "min_value": "2019-11-09 11:11:23.659000",
-          "max_value": "2026-03-26 11:51:56.627000"
+          "max_value": "2026-05-14 16:19:14.883000"
         },
         {
           "name": "operate_method",
           "type": "VARCHAR(200)",
           "business_meaning": "操作时对应的方法名",
-          "non_null_count": 9343,
+          "non_null_count": 9347,
           "non_null_ratio": 1.0,
           "distinct_sample": [],
           "min_value": null,

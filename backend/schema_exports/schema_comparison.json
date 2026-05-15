@@ -1,17 +1,14 @@
 {
-  "generated_at": "2026-04-13T14:34:36",
+  "generated_at": "2026-05-14T19:48:54",
   "summary": {
     "database_table_count": 55,
     "document_table_count": 23,
-    "matched_table_count": 20,
-    "document_only_table_count": 2,
-    "database_only_table_count": 35,
-    "tables_with_column_differences": 16
+    "matched_table_count": 22,
+    "document_only_table_count": 0,
+    "database_only_table_count": 33,
+    "tables_with_column_differences": 18
   },
-  "document_only_tables": [
-    "geo_wyjcsjjlb",
-    "qcqfhgxcjl"
-  ],
+  "document_only_tables": [],
   "database_only_tables": [
     "geo_extent",
     "geo_gqp_jbxx2",
@@ -23,7 +20,6 @@
     "geo_house2",
     "geo_qcqfjcjl",
     "geo_qydzzhbj",
-    "geo_wyjcsjjl",
     "geo_wyjcsjjl_ljyc",
     "geo_zyjc",
     "t_area",
@@ -40,7 +36,6 @@
     "t_log",
     "t_menu",
     "t_message",
-    "t_qcqfhgxcjl",
     "t_rainfall_station",
     "t_rainfall_station_data",
     "t_region",
@@ -54,35 +49,9 @@
       "table_name": "geo_dzbjjbxx",
       "document_title": "地质背景资料表 geo_dzbjjbxx",
       "database_column_count": 36,
-      "document_column_count": 11,
+      "document_column_count": 36,
       "missing_in_database_columns": [],
-      "extra_in_database_columns": [
-        "bxml",
-        "cslx",
-        "csxx",
-        "czlbz",
-        "dcms",
-        "dw",
-        "dxslx",
-        "dzdh",
-        "dzmc",
-        "dzms",
-        "dzzc",
-        "fhzt",
-        "kjqdcs",
-        "kjqdcsc",
-        "kyqd",
-        "npjjyl",
-        "nzdjyl",
-        "phms",
-        "remark",
-        "rzdjyl",
-        "sl",
-        "trrl",
-        "yxfw",
-        "yxmc",
-        "yxrk"
-      ],
+      "extra_in_database_columns": [],
       "type_mismatches": [
         {
           "column": "id",
@@ -95,46 +64,38 @@
       "table_name": "geo_gqp_jbxx",
       "document_title": "高切坡基本信息表结构说明 geo_gqp_jbxx",
       "database_column_count": 114,
-      "document_column_count": 80,
+      "document_column_count": 96,
       "missing_in_database_columns": [
+        "fhjgxsGgzh",
+        "fhjgxsMpzh",
+        "fhjgxsYkhzzh",
+        "fhjgxsZlsdq",
         "jcy"
       ],
       "extra_in_database_columns": [
         "assessment",
         "district_management_staff",
         "district_management_unit",
-        "dl",
         "emergency_response_status",
         "engineering_status",
         "fhjgxs_ggzh",
         "fhjgxs_mpzh",
         "fhjgxs_ykhzzh",
         "fhjgxs_zlsdq",
-        "jcjb",
         "jcr",
-        "jcss",
-        "jgrq",
-        "jsnrhgmms",
         "last_warning_date",
         "occurrence_time",
         "patrol_enable",
-        "pgzxz",
-        "pjzxz",
         "point_hcs_id",
         "professional_technical_unit",
         "ptu_contact",
         "ptu_phone",
-        "sfqcqf",
-        "sjtbsj",
         "slope_angle_max",
         "slope_height_max",
         "statistics_status",
         "stcd",
         "warned",
-        "warning_level",
-        "wxcd",
-        "ytxz",
-        "zlgdszwz"
+        "warning_level"
       ],
       "type_mismatches": [
         {
@@ -155,6 +116,16 @@
         {
           "column": "is_stop",
           "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "jcjb",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "jsnrhgmms",
+          "database_type": "VARCHAR(1000)",
           "document_type": "VARCHAR(255)"
         },
         {
@@ -198,6 +169,11 @@
           "document_type": "VARCHAR(255)"
         },
         {
+          "column": "sjtbsj",
+          "database_type": "DATETIME",
+          "document_type": "VARCHAR(255)"
+        },
+        {
           "column": "ssjd",
           "database_type": "VARCHAR(200)",
           "document_type": "VARCHAR(255)"
@@ -208,6 +184,16 @@
           "document_type": "VARCHAR(255)"
         },
         {
+          "column": "wxcd",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "ytxz",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
           "column": "zbyxfw",
           "database_type": "NUMBER",
           "document_type": "VARCHAR(255)"
@@ -215,6 +201,11 @@
         {
           "column": "zbyyrk",
           "database_type": "NUMBER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "zlgdszwz",
+          "database_type": "VARCHAR(200)",
           "document_type": "VARCHAR(255)"
         },
         {
@@ -279,6 +270,67 @@
           "column": "id",
           "database_type": "INTEGER",
           "document_type": "SERIAL"
+        }
+      ]
+    },
+    {
+      "table_name": "geo_wyjcsjjl",
+      "document_title": "专业监测数据记录点表 geo_wyjcsjjl",
+      "database_column_count": 28,
+      "document_column_count": 20,
+      "missing_in_database_columns": [
+        "LevelOneId",
+        "LevelTwoId",
+        "LevelType"
+      ],
+      "extra_in_database_columns": [
+        "hhl_h_mmd",
+        "hhl_x_mmd",
+        "hhl_y_mmd",
+        "isupdate",
+        "item_id",
+        "ljhwy_mm",
+        "ljxwy_mm",
+        "ljywy_mm",
+        "tb_id",
+        "tb_time",
+        "vardate"
+      ],
+      "type_mismatches": [
+        {
+          "column": "bz",
+          "database_type": "TEXT",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "jcdbh",
+          "database_type": "VARCHAR(500)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "jcsj",
+          "database_type": "DATE",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "tbr",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "type",
+          "database_type": "VARCHAR(200)",
+          "document_type": "VARCHAR(255)"
+        },
+        {
+          "column": "yc",
+          "database_type": "VARCHAR(500)",
+          "document_type": "VARCHAR(255)"
         }
       ]
     },
@@ -369,6 +421,38 @@
       "missing_in_database_columns": [],
       "extra_in_database_columns": [],
       "type_mismatches": []
+    },
+    {
+      "table_name": "t_qcqfhgxcjl",
+      "document_title": "群测群防宏观巡查记录表 t_qcqfhgxcjl",
+      "database_column_count": 37,
+      "document_column_count": 36,
+      "missing_in_database_columns": [],
+      "extra_in_database_columns": [
+        "vdate"
+      ],
+      "type_mismatches": [
+        {
+          "column": "id",
+          "database_type": "INTEGER",
+          "document_type": "SERIAL"
+        },
+        {
+          "column": "qtgqpwhglxcjg",
+          "database_type": "TEXT",
+          "document_type": "VARCHAR(100)"
+        },
+        {
+          "column": "qtpdhgxcjg",
+          "database_type": "TEXT",
+          "document_type": "VARCHAR(100)"
+        },
+        {
+          "column": "qtpmhgxcjg",
+          "database_type": "TEXT",
+          "document_type": "VARCHAR(100)"
+        }
+      ]
     },
     {
       "table_name": "t_review_record",
@@ -514,14 +598,12 @@
       "table_name": "t_warning_report",
       "document_title": "预警专报表 t_warning_report",
       "database_column_count": 11,
-      "document_column_count": 6,
+      "document_column_count": 8,
       "missing_in_database_columns": [],
       "extra_in_database_columns": [
         "delete_flag",
         "ifzh",
-        "month",
-        "pdf",
-        "year"
+        "pdf"
       ],
       "type_mismatches": [
         {

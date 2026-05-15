@@ -42,10 +42,14 @@ def query(req: QueryRequest):
     except Exception as e:
         # 非流式接口也保持和前端约定一致的返回结构，避免调用方额外分支判断。
         return {
+            "status": "error",
+            "query_type": "error",
             "question": req.question,
             "sql": "",
             "result": "",
             "summary": "",
+            "report": None,
+            "suggestion": None,
             "columns": [],
             "rows": [],
             "logs": "",

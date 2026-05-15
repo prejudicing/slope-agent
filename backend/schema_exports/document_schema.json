@@ -1,6 +1,6 @@
 {
-  "source": "/home/lzb/projects/lm-dm8/高切坡数据库设计文档.docx",
-  "exported_at": "2026-04-13T14:34:36",
+  "source": "数据库设计文档.docx",
+  "exported_at": "2026-05-14T19:48:54",
   "table_count": 23,
   "tables": [
     {
@@ -1069,9 +1069,9 @@
       ]
     },
     {
-      "table_name": "qcqfhgxcjl",
-      "normalized_table_name": "qcqfhgxcjl",
-      "table_title": "群测群防宏观巡查记录表 qcqfhgxcjl",
+      "table_name": "t_qcqfhgxcjl",
+      "normalized_table_name": "t_qcqfhgxcjl",
+      "table_title": "群测群防宏观巡查记录表 t_qcqfhgxcjl",
       "section": "专业监测点表 geo_gqp_zyjc",
       "columns": [
         {
@@ -1401,10 +1401,10 @@
       ]
     },
     {
-      "table_name": "geo_wyjcsjjlb",
-      "normalized_table_name": "geo_wyjcsjjlb",
-      "table_title": "专业监测数据记录点表 geo_wyjcsjjlb",
-      "section": "群测群防宏观巡查记录表 qcqfhgxcjl",
+      "table_name": "geo_wyjcsjjl",
+      "normalized_table_name": "geo_wyjcsjjl",
+      "table_title": "专业监测数据记录点表 geo_wyjcsjjl",
+      "section": "群测群防宏观巡查记录表 t_qcqfhgxcjl",
       "columns": [
         {
           "name": "GQPBH",
@@ -1798,6 +1798,24 @@
           "nullable_mark": "",
           "default": "",
           "comment": "高切坡编号"
+        },
+        {
+          "name": "year",
+          "normalized_name": "year",
+          "type": "VARCHAR(10)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "年"
+        },
+        {
+          "name": "month",
+          "normalized_name": "month",
+          "type": "VARCHAR(10)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "月"
         },
         {
           "name": "create_time",
@@ -2687,6 +2705,150 @@
           "nullable_mark": "",
           "default": "",
           "comment": "监测员"
+        },
+        {
+          "name": "dl",
+          "normalized_name": "dl",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "道路（千米）"
+        },
+        {
+          "name": "jcss",
+          "normalized_name": "jcss",
+          "type": "NUMERIC(10,5)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "基本设施（坐）"
+        },
+        {
+          "name": "jcjb",
+          "normalized_name": "jcjb",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "监测级别"
+        },
+        {
+          "name": "fhjgxsZlsdq",
+          "normalized_name": "fhjgxszlsdq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "防护结构形式 重力试挡墙（是/否）"
+        },
+        {
+          "name": "fhjgxsMpzh",
+          "normalized_name": "fhjgxsmpzh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "防护结构形式 锚喷支护（是/否）"
+        },
+        {
+          "name": "fhjgxsGgzh",
+          "normalized_name": "fhjgxsggzh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "防护结构形式 格构支护（是/否）"
+        },
+        {
+          "name": "fhjgxsYkhzzh",
+          "normalized_name": "fhjgxsykhzzh",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "防护结构形式 岩抗滑桩支护（是/否）"
+        },
+        {
+          "name": "ytxz",
+          "normalized_name": "ytxz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "岩土性质"
+        },
+        {
+          "name": "jsnrhgmms",
+          "normalized_name": "jsnrhgmms",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "建设内容和规模描述"
+        },
+        {
+          "name": "zlgdszwz",
+          "normalized_name": "zlgdszwz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "资料归档所在位置"
+        },
+        {
+          "name": "wxcd",
+          "normalized_name": "wxcd",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "威胁程度"
+        },
+        {
+          "name": "jgrq",
+          "normalized_name": "jgrq",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "竣工日期"
+        },
+        {
+          "name": "sfqcqf",
+          "normalized_name": "sfqcqf",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "是否群测群防"
+        },
+        {
+          "name": "sjtbsj",
+          "normalized_name": "sjtbsj",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数据同步时间"
+        },
+        {
+          "name": "pjzxz",
+          "normalized_name": "pjzxz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡角(°)最小值"
+        },
+        {
+          "name": "pgzxz",
+          "normalized_name": "pgzxz",
+          "type": "VARCHAR(255)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "坡高(m)最小值"
         }
       ]
     },
@@ -2810,7 +2972,7 @@
           "primary_key_mark": "",
           "nullable_mark": "",
           "default": "",
-          "comment": "复核状态"
+          "comment": "复核状态：1 异常监测数据上传 2 复核 3 解除预警 4上传预警报告"
         },
         {
           "name": "review_time",
@@ -2963,6 +3125,231 @@
           "nullable_mark": "",
           "default": "",
           "comment": "删除标志1未删除 0已删除"
+        },
+        {
+          "name": "yxmc",
+          "normalized_name": "yxmc",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "岩性名称"
+        },
+        {
+          "name": "fhzt",
+          "normalized_name": "fhzt",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "风化状态"
+        },
+        {
+          "name": "trrl",
+          "normalized_name": "trrl",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "天然容量"
+        },
+        {
+          "name": "kyqd",
+          "normalized_name": "kyqd",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "抗压强度"
+        },
+        {
+          "name": "bxml",
+          "normalized_name": "bxml",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "变形模量"
+        },
+        {
+          "name": "czlbz",
+          "normalized_name": "czlbz",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "承载力标准"
+        },
+        {
+          "name": "kjqdcsc",
+          "normalized_name": "kjqdcsc",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "抗剪强度参数c(Mpa)"
+        },
+        {
+          "name": "kjqdcs",
+          "normalized_name": "kjqdcs",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "抗剪强度参数φ"
+        },
+        {
+          "name": "dcms",
+          "normalized_name": "dcms",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地层描述"
+        },
+        {
+          "name": "cslx",
+          "normalized_name": "cslx",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "措施类型"
+        },
+        {
+          "name": "csxx",
+          "normalized_name": "csxx",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "措施细项"
+        },
+        {
+          "name": "sl",
+          "normalized_name": "sl",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "数量"
+        },
+        {
+          "name": "dw",
+          "normalized_name": "dw",
+          "type": "VARCHAR(200)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "单位"
+        },
+        {
+          "name": "remark",
+          "normalized_name": "remark",
+          "type": "TEXT",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "备注"
+        },
+        {
+          "name": "dzzc",
+          "normalized_name": "dzzc",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地质组成"
+        },
+        {
+          "name": "dzdh",
+          "normalized_name": "dzdh",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地质代号"
+        },
+        {
+          "name": "dzmc",
+          "normalized_name": "dzmc",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地质名称"
+        },
+        {
+          "name": "dzms",
+          "normalized_name": "dzms",
+          "type": "TEXT",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地质描述"
+        },
+        {
+          "name": "npjjyl",
+          "normalized_name": "npjjyl",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "年平均降雨量"
+        },
+        {
+          "name": "nzdjyl",
+          "normalized_name": "nzdjyl",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "年最大降雨量"
+        },
+        {
+          "name": "phms",
+          "normalized_name": "phms",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "预测破坏模式"
+        },
+        {
+          "name": "yxrk",
+          "normalized_name": "yxrk",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "影响人口"
+        },
+        {
+          "name": "yxfw",
+          "normalized_name": "yxfw",
+          "type": "INT4",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "影响房屋"
+        },
+        {
+          "name": "dxslx",
+          "normalized_name": "dxslx",
+          "type": "VARCHAR(500)",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "地下水类型"
+        },
+        {
+          "name": "rzdjyl",
+          "normalized_name": "rzdjyl",
+          "type": "NUMERIC",
+          "primary_key_mark": "",
+          "nullable_mark": "",
+          "default": "",
+          "comment": "日最大降雨量"
         }
       ]
     },
