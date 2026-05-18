@@ -3,12 +3,15 @@
     <template #header>
       <div class="panel-header">
         <span>查询结果</span>
-        <span v-if="rows.length" class="row-count">{{ rows.length }} 条</span>
+        <span v-if="totalRows" class="row-count">{{ totalRows }} 条</span>
       </div>
     </template>
 
     <el-empty v-if="!rows.length" description="暂无表格数据" />
-    <el-table v-else :data="rows" border stripe height="360" class="result-table desktop-table">
+    <div v-else-if="totalRows > rows.length" class="result-note">
+      当前仅展示前 {{ rows.length }} 条，完整结果共 {{ totalRows }} 条。
+    </div>
+    <el-table v-if="rows.length" :data="rows" border stripe height="360" class="result-table desktop-table">
       <el-table-column
         v-for="column in columns"
         :key="column"
@@ -37,6 +40,7 @@
 defineProps<{
   columns: string[]
   rows: Record<string, string>[]
+  totalRows: number
 }>()
 </script>
 
@@ -63,6 +67,12 @@ defineProps<{
 .result-card :deep(.el-card__body) {
   padding: 0;
   overflow: hidden;
+}
+
+.result-note {
+  padding: 12px 16px 0;
+  color: #5f6f86;
+  font-size: 13px;
 }
 
 .result-table {

@@ -6,6 +6,7 @@ export interface QueryResponse {
   summary: string
   columns: string[]
   rows: Record<string, string>[]
+  total_rows?: number
   logs: string
   error: string | null
 }

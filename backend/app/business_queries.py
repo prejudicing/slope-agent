@@ -33,6 +33,15 @@ def get_deterministic_query(question: str) -> dict[str, Any] | None:
             "sql": _abnormal_type_sql(),
             "summary": "按群测群防监测记录中的具体异常项识别异常类型，未仅以“总体情况=异常”作为异常类型。",
         }
+    if _is_county_abnormal_compare_question(question):
+        # “各区县异常数量对比/分布”是典型汇报口径问题，应该固定成按区县聚合的稳定 SQL。
+        # 这里按异常高切坡数量统计，避免把同一个高切坡的多条监测记录重复计数。
+        return {
+            "name": "county_abnormal_compare",
+            "tables": ["tb_hcs_monitoring", "geo_gqp_jbxx"],
+            "sql": _county_abnormal_compare_sql(),
+            "summary": "按区县统计存在异常监测记录的高切坡数量，用于横向对比各区县异常高切坡分布。",
+        }
     return None
 
 
@@ -55,6 +64,15 @@ def _is_abnormal_type_question(question: str) -> bool:
             or "属于哪类" in compact
         )
     )
+
+
+def _is_county_abnormal_compare_question(question: str) -> bool:
+    compact = "".join(question.split())
+    has_county_scope = "区县" in compact
+    has_abnormal_target = "高切坡" in compact and "异常" in compact
+    has_compare_intent = any(keyword in compact for keyword in ("对比", "比较", "分布", "排行", "排名"))
+    has_count_intent = "数量" in compact or "多少" in compact
+    return has_county_scope and has_abnormal_target and (has_compare_intent or has_count_intent)
 
 
 def _abnormal_type_sql() -> str:
@@ -86,6 +104,24 @@ FROM tb_hcs_monitoring m
 LEFT JOIN geo_gqp_jbxx b ON m.gqpbh = b.gqpbh
 WHERE {abnormal_conditions}
 ORDER BY m.createdOn DESC, m.gqpbh ASC
+""".strip()
+
+
+def _county_abnormal_compare_sql() -> str:
+    abnormal_conditions = " OR ".join(
+        f"m.{field_name} = 1" for field_name, _ in ABNORMAL_TYPE_FIELDS
+    )
+    return f"""
+SELECT
+  b.ssqx,
+  COUNT(DISTINCT m.gqpbh) AS abnormal_slope_count
+FROM tb_hcs_monitoring m
+JOIN geo_gqp_jbxx b ON m.gqpbh = b.gqpbh
+WHERE b.delete_flag = 1
+  AND b.ssqx IS NOT NULL
+  AND ({abnormal_conditions})
+GROUP BY b.ssqx
+ORDER BY abnormal_slope_count DESC, b.ssqx ASC
 """.strip()
 
 

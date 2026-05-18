@@ -44,10 +44,11 @@ const props = defineProps<{
   summary: string
   columns: string[]
   rows: Record<string, string>[]
+  totalRows: number
 }>()
 
 const canShare = computed(() => {
-  return Boolean(props.question.trim() || props.summary.trim() || props.rows.length)
+  return Boolean(props.question.trim() || props.summary.trim() || props.totalRows)
 })
 const exporting = ref(false)
 const MAX_EXPORT_ROWS = 20
@@ -63,15 +64,15 @@ const buildShareText = () => {
     sections.push(`查询报告：${props.summary.trim()}`)
   }
 
-  if (props.rows.length) {
-    sections.push(`查询结果：共 ${props.rows.length} 条`)
+  if (props.totalRows) {
+    sections.push(`查询结果：共 ${props.totalRows} 条`)
     props.rows.slice(0, 10).forEach((row, index) => {
       const rowText = props.columns
         .map((column) => `${column}：${row[column] || '-'}`)
         .join('，')
       sections.push(`${index + 1}. ${rowText}`)
     })
-    if (props.rows.length > 10) {
+    if (props.totalRows > props.rows.length) {
       sections.push('其余结果请在系统中查看。')
     }
   }
@@ -157,7 +158,7 @@ const createExportContainer = () => {
   resultSection.style.marginBottom = '12px'
 
   const resultHeading = document.createElement('h2')
-  resultHeading.textContent = `查询结果${props.rows.length ? `（共 ${props.rows.length} 条）` : ''}`
+  resultHeading.textContent = `查询结果${props.totalRows ? `（共 ${props.totalRows} 条）` : ''}`
   resultHeading.style.margin = '0 0 12px'
   resultHeading.style.fontSize = '18px'
   resultHeading.style.fontWeight = '700'
@@ -211,7 +212,7 @@ const createExportContainer = () => {
     table.appendChild(tbody)
     resultSection.appendChild(table)
 
-    if (props.rows.length > MAX_EXPORT_ROWS) {
+    if (props.totalRows > MAX_EXPORT_ROWS) {
       const note = document.createElement('p')
       note.textContent = `PDF 为控制体积仅展示前 ${MAX_EXPORT_ROWS} 条结果，其余结果请在系统中查看。`
       note.style.margin = '12px 0 0'

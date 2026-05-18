@@ -10,3 +10,4 @@ backend/runtime/
 .DS_Store
 .vscode
 ./codex
+.docx

@@ -52,6 +52,7 @@ def query(req: QueryRequest):
             "suggestion": None,
             "columns": [],
             "rows": [],
+            "total_rows": 0,
             "logs": "",
             "error": str(e),
         }

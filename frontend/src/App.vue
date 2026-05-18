@@ -29,11 +29,12 @@
         :summary="summary"
         :columns="columns"
         :rows="rows"
+        :total-rows="totalRows"
       />
     </div>
 
     <div class="grid-container single">
-      <ResultPanel :columns="columns" :rows="rows" />
+      <ResultPanel :columns="columns" :rows="rows" :total-rows="totalRows" />
     </div>
 
     <el-alert
@@ -58,6 +59,7 @@ const question = ref('')
 const summary = ref('')
 const columns = ref<string[]>([])
 const rows = ref<Record<string, string>[]>([])
+const totalRows = ref(0)
 const error = ref('')
 const loading = ref(false)
 
@@ -71,6 +73,7 @@ const handleSubmit = async () => {
   summary.value = ''
   columns.value = []
   rows.value = []
+  totalRows.value = 0
   error.value = ''
 
   try {
@@ -85,6 +88,7 @@ const handleSubmit = async () => {
         summary.value = res.summary || res.result || summary.value
         columns.value = res.columns || []
         rows.value = res.rows || []
+        totalRows.value = res.total_rows || res.rows?.length || 0
         error.value = res.error || ''
         return
       }

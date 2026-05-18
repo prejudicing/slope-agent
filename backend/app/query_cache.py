@@ -11,6 +11,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
+from app.question_normalizer import normalize_query_question
+
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 CACHE_DIR = ROOT_DIR / "backend" / "runtime"
@@ -20,7 +22,7 @@ _LOCK = Lock()
 
 def normalize_question(question: str) -> str:
     """统一问题文本，减少空格、换行等输入差异对缓存命中的影响。"""
-    return " ".join(question.strip().split())
+    return " ".join(normalize_query_question(question).split())
 
 
 def cache_key(question: str) -> str:

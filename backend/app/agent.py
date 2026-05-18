@@ -22,9 +22,22 @@ except Exception:
 
 from app.db import get_db
 from app.business_queries import enrich_rows, get_deterministic_query
-from app.config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
+from app.config import (
+    QUERY_API_KEY,
+    QUERY_BASE_URL,
+    QUERY_MODEL,
+    QUERY_PROVIDER,
+    QUERY_THINKING_ENABLED,
+    REPORT_API_KEY,
+    REPORT_BASE_URL,
+    REPORT_MODEL,
+    REPORT_PROVIDER,
+    REPORT_REASONING_EFFORT,
+    REPORT_THINKING_ENABLED,
+)
 from app.domain import GQP_AGENT_PREFIX
 from app.query_cache import get_cached_sql, save_cached_sql
+from app.question_normalizer import normalize_query_question
 from app.query_router import QueryRouteDecision, route_question
 from app.schema_knowledge import build_schema_guide, select_include_tables
 
@@ -44,6 +57,34 @@ SCHEMA_DDL_RE = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 STREAM_DONE = object()
+DISPLAY_ROW_LIMIT = 200
+
+
+def _mask_base_url(base_url: str | None) -> str:
+    if not base_url:
+        return ""
+    return base_url.rstrip("/")
+
+
+def _log_llm_selection(
+    *,
+    stage: str,
+    provider: str,
+    model: str,
+    base_url: str | None,
+    thinking_enabled: bool,
+    reasoning_effort: str | None = None,
+) -> None:
+    parts = [
+        f"provider={provider or 'auto'}",
+        f"model={model}",
+    ]
+    if base_url:
+        parts.append(f"base_url={_mask_base_url(base_url)}")
+    parts.append(f"thinking={'on' if thinking_enabled else 'off'}")
+    if reasoning_effort:
+        parts.append(f"reasoning_effort={reasoning_effort}")
+    print(f">>> [{stage}_llm] {' '.join(parts)}")
 
 
 def build_non_query_result(question: str, decision: QueryRouteDecision) -> dict:
@@ -59,6 +100,7 @@ def build_non_query_result(question: str, decision: QueryRouteDecision) -> dict:
         "suggestion": decision.suggestion,
         "columns": [],
         "rows": [],
+        "total_rows": 0,
         "logs": f"问题路由结果：{decision.reason}",
         "error": None,
     }
@@ -114,38 +156,52 @@ def _serialize_cell(value) -> str:
     return str(value)
 
 
-def query_table_for_display(db, sql: str) -> tuple[list[str], list[dict]]:
-    """用最终 SQL 重新查询一次数据库，生成前端 ResultPanel 需要的 columns/rows。"""
+def query_table_for_display(
+    db,
+    sql: str,
+    display_limit: int = DISPLAY_ROW_LIMIT,
+) -> tuple[list[str], list[dict], int]:
+    """用最终 SQL 重新查询一次数据库，生成前端 ResultPanel 需要的 columns/rows。
+
+    页面只展示前若干条样本，但仍单独统计总条数，避免大结果集把前端压垮。
+    """
     sql = normalize_sql(sql)
     if not sql or FORBIDDEN_SQL_RE.search(sql):
-        return [], []
+        return [], [], 0
 
     engine = getattr(db, "_engine", None)
     if engine is None:
-        return [], []
+        return [], [], 0
 
     try:
         with engine.connect() as conn:
+            total_rows = 0
+            try:
+                count_sql = f"SELECT COUNT(*) AS total_count FROM ({sql}) result_count_subquery"
+                total_rows = int(conn.execute(text(count_sql)).scalar() or 0)
+            except Exception:
+                total_rows = 0
+
             result = conn.execute(text(sql))
             columns = list(result.keys())
             rows = [
                 {column: _serialize_cell(row[column]) for column in columns}
-                for row in result.mappings().all()
+                for row in result.mappings().fetchmany(display_limit)
             ]
-        return columns, rows
+        return columns, rows, total_rows or len(rows)
     except Exception:
-        return [], []
+        return [], [], 0
 
 
-def build_cached_summary(rows: list[dict]) -> str:
+def build_cached_summary(rows: list[dict], total_rows: int) -> str:
     """复用缓存 SQL 时生成稳定摘要，不再让 LLM 重新改写答案。"""
-    if rows:
+    if total_rows:
         return (
             "查询报告\n\n"
             "一、查询结论\n"
-            f"本次复用已验证查询口径，查询到 {len(rows)} 条记录。\n\n"
+            f"本次复用已验证查询口径，查询到 {total_rows} 条记录。\n\n"
             "二、结果说明\n"
-            "详细记录请查看下方查询结果表格。"
+            f"当前页面展示前 {len(rows)} 条样本，详细记录请查看下方查询结果表格。"
         )
     return (
         "查询报告\n\n"
@@ -156,16 +212,83 @@ def build_cached_summary(rows: list[dict]) -> str:
     )
 
 
-def build_llm() -> ChatOpenAI:
-    """统一创建 LLM，供 SQL Agent 和结果分析复用。"""
+def _build_chat_llm(
+    *,
+    model: str,
+    api_key: str | None,
+    base_url: str | None,
+    provider: str,
+    thinking_enabled: bool,
+    reasoning_effort: str | None = None,
+) -> ChatOpenAI:
+    """创建 OpenAI 兼容聊天模型，并按需注入 DeepSeek thinking 配置。"""
     llm_kwargs = {
-        "model": OPENAI_MODEL,
+        "model": model,
         "temperature": 0,
-        "api_key": OPENAI_API_KEY,
+        "api_key": api_key,
     }
-    if OPENAI_BASE_URL:
-        llm_kwargs["base_url"] = OPENAI_BASE_URL
+    if base_url:
+        llm_kwargs["base_url"] = base_url
+
+    # 优先尊重显式 provider 配置，避免 GPT 走中转站时被域名误判。
+    # provider=auto 时再退回到基于模型名 / base_url 的轻量识别。
+    provider_hint = f"{model} {base_url or ''}".lower()
+    normalized_provider = (provider or "auto").strip().lower()
+    if normalized_provider == "deepseek":
+        is_deepseek_compatible = True
+    elif normalized_provider == "openai":
+        is_deepseek_compatible = False
+    else:
+        is_deepseek_compatible = "deepseek" in provider_hint
+
+    # thinking / reasoning_effort 目前按 DeepSeek 兼容接口接入。
+    # GPT 即使走第三方中转站，也不应发送这些 DeepSeek 专有参数。
+    if is_deepseek_compatible:
+        llm_kwargs["extra_body"] = {
+            "thinking": {"type": "enabled" if thinking_enabled else "disabled"}
+        }
+        if reasoning_effort:
+            llm_kwargs["reasoning_effort"] = reasoning_effort
+
     return ChatOpenAI(**llm_kwargs)
+
+
+def build_query_llm() -> ChatOpenAI:
+    """查询阶段模型：默认关闭 thinking，优先保证工具调用和 SQL 结果稳定。"""
+    _log_llm_selection(
+        stage="query",
+        provider=QUERY_PROVIDER,
+        model=QUERY_MODEL,
+        base_url=QUERY_BASE_URL,
+        thinking_enabled=QUERY_THINKING_ENABLED,
+    )
+    return _build_chat_llm(
+        model=QUERY_MODEL,
+        api_key=QUERY_API_KEY,
+        base_url=QUERY_BASE_URL,
+        provider=QUERY_PROVIDER,
+        thinking_enabled=QUERY_THINKING_ENABLED,
+    )
+
+
+def build_report_llm() -> ChatOpenAI:
+    """报告阶段模型：允许开启 thinking，但限制在 high 级别。"""
+    _log_llm_selection(
+        stage="report",
+        provider=REPORT_PROVIDER,
+        model=REPORT_MODEL,
+        base_url=REPORT_BASE_URL,
+        thinking_enabled=REPORT_THINKING_ENABLED,
+        reasoning_effort=REPORT_REASONING_EFFORT if REPORT_THINKING_ENABLED else None,
+    )
+    return _build_chat_llm(
+        model=REPORT_MODEL,
+        api_key=REPORT_API_KEY,
+        base_url=REPORT_BASE_URL,
+        provider=REPORT_PROVIDER,
+        thinking_enabled=REPORT_THINKING_ENABLED,
+        reasoning_effort=REPORT_REASONING_EFFORT if REPORT_THINKING_ENABLED else None,
+    )
 
 
 def analyze_query_result(
@@ -174,6 +297,7 @@ def analyze_query_result(
     sql: str,
     columns: list[str],
     rows: list[dict],
+    total_rows: int,
     fallback: str = "",
     mode: str = "db_query",
 ) -> str:
@@ -200,7 +324,7 @@ def analyze_query_result(
         "question": question,
         "sql": sql,
         "columns": columns,
-        "row_count": len(rows),
+        "row_count": total_rows,
         "rows": sample_rows,
     }
     if mode == "result_analysis":
@@ -242,7 +366,7 @@ def analyze_query_result(
         content = getattr(response, "content", response)
         return str(content).strip() or fallback
     except Exception:
-        return fallback or build_cached_summary(rows)
+        return fallback or build_cached_summary(rows, total_rows)
 
 
 def clean_logs(logs: str) -> str:
@@ -329,7 +453,17 @@ def run_agent(question: str, progress=None) -> dict:
             progress(payload)
 
     print(">>> high-cut-slope SQL agent loaded")
-    route_decision = route_question(question)
+    normalized_question = normalize_query_question(question)
+    if normalized_question != question:
+        print(f">>> [normalized_question] {question} -> {normalized_question}")
+    route_decision = route_question(normalized_question)
+    print(
+        ">>> [route] "
+        f"status={route_decision.status} "
+        f"query_type={route_decision.query_type} "
+        f"route_name={route_decision.route_name or ''} "
+        f"reason={route_decision.reason or ''}"
+    )
     emit({"type": "progress", "message": "分析问题意图与业务范围"})
 
     if route_decision.status != "query":
@@ -343,7 +477,8 @@ def run_agent(question: str, progress=None) -> dict:
     emit({"type": "progress", "message": "连接达梦数据库"})
 
     if route_decision.query_type == "template_query":
-        deterministic_query = get_deterministic_query(question)
+        print(">>> [query_path] template_query")
+        deterministic_query = get_deterministic_query(normalized_question)
         if not deterministic_query:
             return {
                 "status": "error",
@@ -356,6 +491,7 @@ def run_agent(question: str, progress=None) -> dict:
                 "suggestion": "当前模板路由未找到对应查询实现，请检查业务模板配置。",
                 "columns": [],
                 "rows": [],
+                "total_rows": 0,
                 "logs": "模板路由命中，但未找到对应 deterministic query。",
                 "error": "template_query implementation missing",
             }
@@ -368,21 +504,22 @@ def run_agent(question: str, progress=None) -> dict:
         db = get_db(include_tables=deterministic_query["tables"])
         sql = deterministic_query["sql"]
         emit({"type": "sql", "sql": sql})
-        columns, rows = query_table_for_display(db, sql)
+        columns, rows, total_rows = query_table_for_display(db, sql)
         columns, rows = enrich_rows(deterministic_query["name"], columns, rows)
         emit({
             "type": "progress",
             "message": "基于查询结果生成业务分析",
         })
         summary = analyze_query_result(
-            build_llm(),
+            build_report_llm(),
             question,
             sql,
             columns,
             rows,
+            total_rows,
             (
-                f"{deterministic_query['summary']} 本次查询到 {len(rows)} 条异常记录，"
-                "异常类型已在结果表格的 abnormal_type 字段中列出。"
+                f"{deterministic_query['summary']} 本次查询到 {total_rows} 条异常记录，"
+                f"当前页面展示前 {len(rows)} 条样本，异常类型已在结果表格的 abnormal_type 字段中列出。"
             ),
             mode="db_query",
         )
@@ -402,12 +539,13 @@ def run_agent(question: str, progress=None) -> dict:
             "suggestion": None,
             "columns": columns,
             "rows": rows,
+            "total_rows": total_rows,
             "logs": "命中稳定业务查询模板，未重新调用 Agent 生成 SQL。",
             "error": None,
         }
 
-    include_tables = select_include_tables(question)
-    table_guide = build_schema_guide(question)
+    include_tables = select_include_tables(normalized_question)
+    table_guide = build_schema_guide(normalized_question)
     emit({
         "type": "progress",
         "message": "检索真实数据库 schema 知识",
@@ -417,8 +555,11 @@ def run_agent(question: str, progress=None) -> dict:
     db = get_db(include_tables=include_tables)
     emit({"type": "progress", "message": "初始化高切坡业务 Agent"})
 
-    cached_sql = get_cached_sql(question)
+    # 结果分析型问题更依赖“这次问题的聚合口径”，缓存很容易把历史错误 SQL 放大。
+    # 因此当前只对普通事实查询复用 SQL 缓存，分析类问题每次重新确定查询口径。
+    cached_sql = get_cached_sql(normalized_question) if route_decision.query_type == "db_query" else ""
     if cached_sql:
+        print(">>> [query_path] cached_sql")
         # 这里缓存的是“查询口径”而不是结果本身：同一句问题复用已验证 SQL，
         # 但仍然实时查库，保证数据是新的。
         emit({
@@ -427,18 +568,19 @@ def run_agent(question: str, progress=None) -> dict:
             "detail": cached_sql,
         })
         emit({"type": "sql", "sql": cached_sql})
-        columns, rows = query_table_for_display(db, cached_sql)
+        columns, rows, total_rows = query_table_for_display(db, cached_sql)
         emit({
             "type": "progress",
             "message": "基于缓存 SQL 的查询结果生成业务分析",
         })
         summary = analyze_query_result(
-            build_llm(),
+            build_report_llm(),
             question,
             cached_sql,
             columns,
             rows,
-            build_cached_summary(rows),
+            total_rows,
+            build_cached_summary(rows, total_rows),
             mode=route_decision.query_type,
         )
         emit({
@@ -457,16 +599,18 @@ def run_agent(question: str, progress=None) -> dict:
             "suggestion": None,
             "columns": columns,
             "rows": rows,
+            "total_rows": total_rows,
             "logs": "命中已验证 SQL 缓存，未重新调用 Agent 生成 SQL。",
             "error": None,
         }
 
-    llm = build_llm()
+    query_llm = build_query_llm()
+    print(">>> [query_path] agent_sql")
     state: dict[str, str] = {}
     callbacks = [AgentProgressHandler(emit, state)]
 
     agent = create_sql_agent(
-        llm=llm,
+        llm=query_llm,
         db=db,
         prefix=GQP_AGENT_PREFIX.format(
             dialect="{dialect}",
@@ -487,7 +631,7 @@ def run_agent(question: str, progress=None) -> dict:
 
     try:
         with redirect_stdout(log_buffer):
-            result = agent.invoke({"input": question}, config={"callbacks": callbacks})
+            result = agent.invoke({"input": normalized_question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
         # 表格数据必须追溯到最后一次真正成功执行的 sql_db_query。
@@ -502,6 +646,7 @@ def run_agent(question: str, progress=None) -> dict:
         summary = ""
         columns = []
         rows = []
+        total_rows = 0
         error = None
 
         if sql and FORBIDDEN_SQL_RE.search(sql):
@@ -514,24 +659,25 @@ def run_agent(question: str, progress=None) -> dict:
                 "detail": sql,
             })
             # 最终再次回查数据库，把 SQL 结果转成 columns/rows，作为前端表格唯一数据源。
-            columns, rows = query_table_for_display(db, sql)
+            columns, rows, total_rows = query_table_for_display(db, sql)
             emit({
                 "type": "progress",
-                "message": f"查询结果已同步到表格：{len(rows)} 条",
+                "message": f"查询结果已同步到表格：总计 {total_rows} 条，当前展示 {len(rows)} 条",
             })
             if sql:
-                save_cached_sql(question, sql)
+                save_cached_sql(normalized_question, sql)
             emit({
                 "type": "progress",
                 "message": "基于查询结果生成业务分析",
             })
             # 这一步的 LLM 只负责“读表总结”，不再决定查什么表、怎么写 SQL。
             summary = analyze_query_result(
-                llm,
+                build_report_llm(),
                 question,
                 sql,
                 columns,
                 rows,
+                total_rows,
                 agent_output,
                 mode=route_decision.query_type,
             )
@@ -552,6 +698,7 @@ def run_agent(question: str, progress=None) -> dict:
             "suggestion": None,
             "columns": columns,
             "rows": rows,
+            "total_rows": total_rows,
             "logs": clean_logs(logs),
             "error": error,
         }
@@ -567,13 +714,14 @@ def run_agent(question: str, progress=None) -> dict:
         recovered_answer = extract_answer_from_parsing_error(error)
         # LangChain 偶尔会在“已经查到数据并生成答案”后，因为输出格式不标准而抛解析异常。
         # 这里尽量从日志和异常里恢复 SQL 与中文答案，避免用户白等一轮却什么都拿不到。
-        columns, rows = query_table_for_display(db, sql)
+        columns, rows, total_rows = query_table_for_display(db, sql)
         summary = analyze_query_result(
-            build_llm(),
+            build_report_llm(),
             question,
             sql,
             columns,
             rows,
+            total_rows,
             recovered_answer,
             mode=route_decision.query_type,
         )
@@ -588,6 +736,7 @@ def run_agent(question: str, progress=None) -> dict:
             "suggestion": None,
             "columns": columns,
             "rows": rows,
+            "total_rows": total_rows,
             "logs": clean_logs(logs),
             "error": None if summary else error,
         }
