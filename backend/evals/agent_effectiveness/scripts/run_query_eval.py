@@ -2,27 +2,32 @@
 
 运行方式示例：
 
-    conda run -n dm python backend/scripts/run_query_eval.py
-    conda run -n dm python backend/scripts/run_query_eval.py --limit 5
-    conda run -n dm python backend/scripts/run_query_eval.py --question "查询渝北区高切坡基本信息"
+    conda run -n dm python backend/evals/agent_effectiveness/scripts/run_query_eval.py
+    conda run -n dm python backend/evals/agent_effectiveness/scripts/run_query_eval.py --limit 5
+    conda run -n dm python backend/evals/agent_effectiveness/scripts/run_query_eval.py --question "查询渝北区高切坡基本信息"
 
 输出：
 1. 终端打印简要摘要；
-2. backend/runtime/query_eval_results.json 写入结构化结果，便于继续人工评估。
+2. backend/evals/agent_effectiveness/results/query_eval_results_时间戳.json 写入结构化结果，便于继续人工评估。
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 
+ROOT_DIR = Path(__file__).resolve().parents[4]
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 from app.agent import run_agent
 
-
-ROOT_DIR = Path(__file__).resolve().parents[2]
-OUTPUT_PATH = ROOT_DIR / "backend" / "runtime" / "query_eval_results.json"
+EVAL_DIR = Path(__file__).resolve().parents[1]
+RESULTS_DIR = EVAL_DIR / "results"
 
 DEFAULT_QUESTIONS = [
     "查询渝北区高切坡基本信息",
@@ -63,6 +68,8 @@ def summarize_result(result: dict) -> dict:
 
 def main() -> None:
     args = build_parser().parse_args()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = RESULTS_DIR / f"query_eval_results_{timestamp}.json"
 
     questions = list(DEFAULT_QUESTIONS)
     if args.limit and args.limit > 0:
@@ -93,14 +100,14 @@ def main() -> None:
             results.append({"question": question, "result": failure})
             print(json.dumps(failure, ensure_ascii=False, indent=2))
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "question_count": len(results),
         "results": results,
     }
-    OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\n评测结果已写入：{OUTPUT_PATH}")
+    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"\n评测结果已写入：{output_path}")
 
 
 if __name__ == "__main__":
