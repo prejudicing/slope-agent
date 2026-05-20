@@ -11,3 +11,7 @@ backend/runtime/
 .vscode
 ./codex
 .docx
+.vscode/
+.codex/
+**/.vscode/
+**/.codex/
