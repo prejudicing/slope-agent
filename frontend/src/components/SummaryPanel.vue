@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="never" class="panel-card">
+  <el-card :shadow="embedded ? 'never' : 'never'" :class="['panel-card', { embedded }]">
     <template #header>
       <div class="panel-header">
         <span>查询报告</span>
@@ -45,6 +45,7 @@ const props = defineProps<{
   columns: string[]
   rows: Record<string, string>[]
   totalRows: number
+  embedded?: boolean
 }>()
 
 const canShare = computed(() => {
@@ -348,6 +349,11 @@ const shareQuery = async () => {
   border-radius: 8px;
 }
 
+.panel-card.embedded {
+  border-color: #e5ecea;
+  background: #ffffff;
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -362,13 +368,19 @@ const shareQuery = async () => {
 }
 
 .summary-block {
-  min-height: 120px;
+  min-height: 96px;
   margin: 0;
   color: #253044;
   font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.embedded :deep(.el-card__body) {
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .speech-inline {

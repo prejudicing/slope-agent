@@ -17,6 +17,7 @@ class QueryRequest(BaseModel):
     """前端提交的自然语言查询问题。"""
 
     question: str
+    history: list[dict] = []
 
 
 class AsrRequest(BaseModel):
@@ -37,7 +38,7 @@ def health():
 def query(req: QueryRequest):
     """非流式查询接口，保留给调试或简单调用场景。"""
     try:
-        result = run_agent(req.question)
+        result = run_agent(req.question, history=req.history)
         return result
     except Exception as e:
         # 非流式接口也保持和前端约定一致的返回结构，避免调用方额外分支判断。
@@ -62,7 +63,7 @@ def query(req: QueryRequest):
 def query_stream(req: QueryRequest):
     """流式查询接口，使用 SSE 持续返回 Agent 进度、SQL、总结和最终表格数据。"""
     return StreamingResponse(
-        stream_agent_events(req.question),
+        stream_agent_events(req.question, history=req.history),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

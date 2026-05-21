@@ -130,6 +130,16 @@ VAGUE_PATTERNS = (
     "帮我查一下",
 )
 
+SMALL_TALK_PATTERNS = (
+    "你是谁",
+    "你叫什么",
+    "你能做什么",
+    "你是做什么的",
+    "介绍一下你自己",
+    "自我介绍",
+    "你是什么",
+)
+
 WHITESPACE_RE = re.compile(r"\s+")
 
 
@@ -161,6 +171,16 @@ def route_question(question: str) -> QueryRouteDecision:
             suggestion="请直接描述要查询的高切坡信息，例如“统计各区县高切坡数量”或“查询最近异常巡查记录”。",
             reason="empty_question",
             route_name="clarify",
+        )
+
+    if any(pattern in normalized for pattern in SMALL_TALK_PATTERNS):
+        return QueryRouteDecision(
+            status="rejected",
+            query_type="out_of_scope",
+            summary="当前问题属于闲聊或身份介绍，不属于高切坡业务智能查询范围。",
+            suggestion="请改为查询高切坡基本信息、监测、巡查、预警或复核相关业务数据。",
+            reason="small_talk",
+            route_name="out_of_scope",
         )
 
     if len(normalized) <= 3 or normalized in {"查一下", "看一下", "查查", "看看"}:

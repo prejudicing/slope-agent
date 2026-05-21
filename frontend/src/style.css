@@ -10,8 +10,8 @@ html {
 
 body {
   margin: 0;
-  background: #eef3f8;
-  color: #222;
+  background: #f5f8f7;
+  color: #1a2422;
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
@@ -30,10 +30,11 @@ body {
 
 .el-card {
   --el-card-padding: 22px;
+  border-radius: 8px;
 }
 
 .el-card__header {
-  color: #1f2d3d;
+  color: #15231f;
   font-size: 17px;
   font-weight: 700;
 }

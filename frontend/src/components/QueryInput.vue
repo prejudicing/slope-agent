@@ -1,29 +1,51 @@
 <template>
   <div class="query-input">
-    <el-input
-      v-model="localQuestion"
-      type="textarea"
-      :rows="4"
-      placeholder="请输入你的问题，例如：统计各区县高切坡数量，或查询最近有异常的巡查记录"
-    />
-    <div class="query-actions">
-      <span v-if="speechHint" class="speech-hint">{{ speechHint }}</span>
-      <el-button
-        :type="isListening ? 'danger' : 'default'"
-        :disabled="loading || isTranscribing"
-        @click="toggleSpeechInput"
+    <div v-if="speechHint" class="speech-hint">{{ speechHint }}</div>
+    <div class="composer-row">
+      <button
+        type="button"
+        class="new-chat-button"
+        :disabled="loading || isListening || isTranscribing"
+        title="上下文已清除，开始新的对话"
+        @click="emit('clear')"
       >
-        {{ isListening ? '停止录音' : '中文语音输入' }}
-      </el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">
-        查询
-      </el-button>
+        <span class="new-chat-glyph" aria-hidden="true">
+          <span class="bubble-outline"></span>
+          <span class="bubble-plus"></span>
+        </span>
+      </button>
+
+      <div class="input-shell">
+        <el-input
+          v-model="localQuestion"
+          type="textarea"
+          :autosize="{ minRows: 1, maxRows: 5 }"
+          resize="none"
+          :placeholder="
+            placeholder ||
+            '请输入你的问题，例如：统计各区县高切坡数量，或查询最近有异常的巡查记录'
+          "
+          @keydown.enter.exact.prevent="handleSubmit"
+        />
+
+        <button
+          type="button"
+          class="action-button"
+          :class="{ listening: isListening, sending: hasQuestion }"
+          :disabled="loading || isTranscribing"
+          @click="hasQuestion ? handleSubmit() : toggleSpeechInput()"
+        >
+          <el-icon v-if="hasQuestion"><Promotion /></el-icon>
+          <el-icon v-else><Microphone /></el-icon>
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { Microphone, Promotion } from '@element-plus/icons-vue'
 import { Capacitor } from '@capacitor/core'
 import { VoiceRecorder } from 'capacitor-voice-recorder'
 import { ElMessage } from 'element-plus'
@@ -65,17 +87,20 @@ interface SpeechRecognitionErrorEventLike {
 const props = defineProps<{
   question: string
   loading: boolean
+  placeholder?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:question', value: string): void
   (e: 'submit'): void
+  (e: 'clear'): void
 }>()
 
 const localQuestion = ref(props.question)
 const isListening = ref(false)
 const isTranscribing = ref(false)
 const speechHint = ref('')
+const hasQuestion = ref(false)
 const recognition = ref<SpeechRecognitionLike | null>(null)
 const browserRecorder = ref<MediaRecorder | null>(null)
 const browserStream = ref<MediaStream | null>(null)
@@ -93,6 +118,7 @@ watch(
 
 // 输入框变化时，向父组件同步 question。
 watch(localQuestion, (val) => {
+  hasQuestion.value = Boolean(val.trim())
   emit('update:question', val)
 })
 
@@ -484,37 +510,155 @@ onBeforeUnmount(() => {
 .query-input {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
-.query-actions {
+.composer-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  justify-content: flex-end;
+  gap: 12px;
 }
 
 .speech-hint {
-  min-width: 0;
-  color: #5f6f86;
-  font-size: 13px;
+  color: #5b6f69;
+  font-size: 12px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
+.new-chat-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #d8d9df;
+  border-radius: 999px;
+  background: #fff;
+  color: #7c7f87;
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.new-chat-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.new-chat-glyph {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.bubble-outline {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 16px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+}
+
+.bubble-outline::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: skewX(-28deg);
+}
+
+.bubble-plus {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  width: 9px;
+  height: 9px;
+}
+
+.bubble-plus::before,
+.bubble-plus::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  border-radius: 999px;
+}
+
+.bubble-plus::before {
+  top: 4px;
+  left: 1px;
+  width: 7px;
+  height: 2px;
+}
+
+.bubble-plus::after {
+  top: 1px;
+  left: 4px;
+  width: 2px;
+  height: 7px;
+}
+
+.input-shell {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .query-input :deep(.el-textarea__inner) {
-  border-radius: 8px;
+  min-height: 56px !important;
+  padding: 16px 68px 16px 22px;
+  border: 1px solid #d8d9df;
+  border-radius: 999px;
+  box-shadow: none;
+  color: #1f1f1f;
+  font-size: 15px;
   line-height: 1.6;
 }
 
-@media (max-width: 640px) {
-  .query-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.query-input :deep(.el-textarea__inner:focus) {
+  border-color: #6f63ff;
+}
 
-  .query-actions :deep(.el-button) {
-    width: 100%;
-    margin-left: 0;
+.action-button {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #3b3b3b;
+  cursor: pointer;
+  transform: translateY(-50%);
+  font-size: 22px;
+}
+
+.action-button.sending {
+  background: #5e63ff;
+  color: #fff;
+}
+
+.action-button.listening {
+  color: #d9534f;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .composer-row {
+    gap: 10px;
   }
 }
 </style>

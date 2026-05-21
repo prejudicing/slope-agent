@@ -389,6 +389,19 @@ python scripts/profile_business_schema.py
 python scripts/export_enum_review.py
 ```
 
+该脚本会同时更新：
+
+- `backend/schema_exports/enum_fields_01_review.csv`
+- `docs/notes/枚举字段01人工校验清单.md`
+
+并直接查询真实数据库，为每个字段补充：
+
+- 总记录数
+- `0` 记录数
+- `1` 记录数
+- 空值记录数
+- 其他值记录数
+
 ## 当前系统行为说明
 
 ### 1. 查询结果和查询报告分离

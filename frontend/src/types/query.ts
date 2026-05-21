@@ -1,14 +1,23 @@
 // 后端最终返回结构。columns/rows 专供查询结果表格使用，summary 当前用于承载查询报告正文。
 export interface QueryResponse {
+  status?: string
+  query_type?: string
   question: string
   sql: string
   result: string
   summary: string
+  suggestion?: string | null
   columns: string[]
   rows: Record<string, string>[]
   total_rows?: number
   logs: string
   error: string | null
+}
+
+export interface ConversationHistoryTurn {
+  question: string
+  summary: string
+  total_rows: number
 }
 
 export interface AsrResponse {

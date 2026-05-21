@@ -1,6 +1,11 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import axios from 'axios'
-import type { AsrResponse, QueryResponse, QueryStreamEvent } from '../types/query'
+import type {
+  AsrResponse,
+  ConversationHistoryTurn,
+  QueryResponse,
+  QueryStreamEvent,
+} from '../types/query'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
@@ -12,9 +17,13 @@ function buildApiUrl(path: string): string {
 }
 
 // 非流式接口保留给调试；当前页面主要使用 streamQuery。
-export async function postQuery(question: string): Promise<QueryResponse> {
+export async function postQuery(
+  question: string,
+  history: ConversationHistoryTurn[] = []
+): Promise<QueryResponse> {
   const res = await axios.post(buildApiUrl('/api/query'), {
     question,
+    history,
   })
   return res.data
 }
@@ -53,8 +62,26 @@ export async function transcribeAudio(
 
 export async function streamQuery(
   question: string,
-  onEvent: (event: QueryStreamEvent) => void
+  onEvent: (event: QueryStreamEvent) => void,
+  history: ConversationHistoryTurn[] = [],
+  options: {
+    signal?: AbortSignal
+    isCancelled?: () => boolean
+  } = {}
 ) {
+  const dispatchSseChunk = (chunk: string) => {
+    if (options.isCancelled?.()) {
+      return
+    }
+    const line = chunk
+      .split('\n')
+      .find((item) => item.startsWith('data: '))
+    if (!line) {
+      return
+    }
+    onEvent(JSON.parse(line.slice(6)) as QueryStreamEvent)
+  }
+
   if (Capacitor.isNativePlatform()) {
     onEvent({
       type: 'progress',
@@ -69,12 +96,17 @@ export async function streamQuery(
       },
       data: {
         question,
+        history,
       },
       responseType: 'json',
     })
 
     if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
       throw new Error(`请求失败：${nativeResponse.status}`)
+    }
+
+    if (options.isCancelled?.()) {
+      return
     }
 
     const data = nativeResponse.data as QueryResponse
@@ -107,9 +139,13 @@ export async function streamQuery(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question }),
+      signal: options.signal,
+      body: JSON.stringify({ question, history }),
     })
   } catch (error) {
+    if ((error as Error)?.name === 'AbortError') {
+      throw error
+    }
     throw new Error(
       `请求失败，无法访问 ${requestUrl}。请检查 App 后端地址、服务器连通性或跨域配置。`
     )
@@ -129,6 +165,10 @@ export async function streamQuery(
       break
     }
 
+    if (options.isCancelled?.()) {
+      return
+    }
+
     buffer += decoder.decode(value, { stream: true })
     // SSE 事件用空行分隔；最后一个不完整片段留到下一次 read 再解析。
     const chunks = buffer.split('\n\n')
@@ -136,13 +176,11 @@ export async function streamQuery(
 
     for (const chunk of chunks) {
       // 当前后端只发送 data 行，解析后交给页面按事件类型更新不同组件。
-      const line = chunk
-        .split('\n')
-        .find((item) => item.startsWith('data: '))
-      if (!line) {
-        continue
-      }
-      onEvent(JSON.parse(line.slice(6)) as QueryStreamEvent)
+      dispatchSseChunk(chunk)
     }
+  }
+
+  if (buffer.trim()) {
+    dispatchSseChunk(buffer)
   }
 }

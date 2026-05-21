@@ -1,5 +1,5 @@
 <template>
-  <el-card shadow="never" class="panel-card result-card">
+  <el-card :shadow="embedded ? 'never' : 'never'" :class="['panel-card', 'result-card', { embedded }]">
     <template #header>
       <div class="panel-header">
         <span>查询结果</span>
@@ -41,6 +41,7 @@ defineProps<{
   columns: string[]
   rows: Record<string, string>[]
   totalRows: number
+  embedded?: boolean
 }>()
 </script>
 
@@ -49,6 +50,11 @@ defineProps<{
   height: 100%;
   border: 1px solid #dfe7f2;
   border-radius: 8px;
+}
+
+.panel-card.embedded {
+  border-color: #e5ecea;
+  background: #fff;
 }
 
 .panel-header {

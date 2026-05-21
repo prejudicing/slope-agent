@@ -1,42 +1,42 @@
-﻿table_name,business_domain,field_name,field_type,business_meaning,comment,comment_source,value_hints,zero_meaning,one_meaning,one_polarity_guess
-geo_dzbjjbxx,地质背景,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqp_jbxx,基本信息,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqp_jbxx,基本信息,emergency_response_status,VARCHAR(10),应急状态 1.非应急 2.应急,应急状态 1.非应急 2.应急,database_schema,1=非应急；2=应急,,非应急,1偏否定/反向
-geo_gqp_jbxx,基本信息,is_complete,INTEGER,是否完整 1完整 2部分完整 3不完整,是否完整 1完整 2部分完整 3不完整,database_schema,1=完整；2=部分完整；3=不完整,,完整,1偏肯定/正向
-geo_gqp_jbxx,基本信息,is_stop,INTEGER,是否停止监测，0停止，1未停止,是否停止监测，0停止，1未停止,database_schema,1=未停止监测；0=已停止监测,已停止监测,未停止监测,1偏否定/反向
-geo_gqp_jbxx,基本信息,sjly,VARCHAR(100),数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断
-geo_gqp_zyjc,专业监测,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqpdcsj,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqpdzdh,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqpfhgccs,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_gqpyxsj,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-geo_qydzzhbj,空间/地质数据,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_dept,系统管理,delete_flag,INTEGER,删除标志 0 删除 1 未删除,删除标志 0 删除 1 未删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_drone_dom,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_gqp_zdhjcsb,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_insar,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_insar_data,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_monthly,报告附件,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_panoramic_data,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_system_notice,未分类,delete_flag,INTEGER,删除标志,,,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_tilt_model,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_tree,图层管理,delete_flag,INTEGER,删除标志 1正常 0删除,删除标志 1正常 0删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_user,系统管理,delete_flag,INTEGER,删除标志 0 删除 1 未删除,删除标志 0 删除 1 未删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-t_warning_report,预警专报,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向
-tb_hcs_monitoring,群测群防,disorderlyPush,INTEGER,坡周乱搭乱堆,坡周乱搭乱堆,database_schema,1=存在坡周乱搭乱堆；0=不存在坡周乱搭乱堆,不存在坡周乱搭乱堆,存在坡周乱搭乱堆,1偏肯定/正向
-tb_hcs_monitoring,群测群防,facilities,INTEGER,监测设施异常,监测设施异常,database_schema,1=监测设施异常；0=监测设施正常,监测设施正常,监测设施异常,1偏肯定/正向
-tb_hcs_monitoring,群测群防,isCrack,INTEGER,裂缝情况,裂缝情况,database_schema,1=存在裂缝；0=无裂缝,无裂缝,存在裂缝,1偏肯定/正向
-tb_hcs_monitoring,群测群防,isPhototOn,INTEGER,是否有拍照时间,是否有拍照时间,database_schema,1=有拍照时间；0=无拍照时间,无拍照时间,有拍照时间,1偏肯定/正向
-tb_hcs_monitoring,群测群防,isRead,INTEGER,是否有裂缝（坡面是否有裂痕）,是否有裂缝（坡面是否有裂痕）,database_schema,1=存在裂缝或裂痕；0=无裂缝或裂痕,无裂缝或裂痕,存在裂缝或裂痕,1偏肯定/正向
-tb_hcs_monitoring,群测群防,overallSituation,INTEGER,总体情况,总体情况,database_schema,1=总体情况异常；0=总体情况正常,总体情况正常,总体情况异常,1偏肯定/正向
-tb_hcs_monitoring,群测群防,pmsfygzfq,INTEGER,坡面是否有鼓涨，反翘(重复字段 暂时不用),坡面是否有鼓涨，反翘(重复字段 暂时不用),database_schema,1=坡面有鼓胀或反翘；0=坡面无鼓胀或反翘,坡面无鼓胀或反翘,坡面有鼓胀或反翘,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfydtqkl,INTEGER,是否有挡土墙开裂(重复字段 暂时不用),是否有挡土墙开裂(重复字段 暂时不用),database_schema,1=有挡土墙开裂；0=无挡土墙开裂,无挡土墙开裂,有挡土墙开裂,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfyls,INTEGER,是否有落石,是否有落石,database_schema,1=有落石；0=无落石,无落石,有落石,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfypdzzgg,INTEGER,是否有坡顶种植灌溉,是否有坡顶种植灌溉,database_schema,1=有坡顶种植灌溉；0=无坡顶种植灌溉,无坡顶种植灌溉,有坡顶种植灌溉,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfypmph,INTEGER,是否有坡面破坏,是否有坡面破坏,database_schema,1=有坡面破坏；0=无坡面破坏,无坡面破坏,有坡面破坏,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfypsgds,INTEGER,是否有排水沟堵塞,是否有排水沟堵塞,database_schema,1=有排水沟堵塞；0=无排水沟堵塞,无排水沟堵塞,有排水沟堵塞,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sfypskds,INTEGER,是否有排水口堵塞,是否有排水口堵塞,database_schema,1=有排水口堵塞；0=无排水口堵塞,无排水口堵塞,有排水口堵塞,1偏肯定/正向
-tb_hcs_monitoring,群测群防,sjly,INTEGER,数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断
-tb_hcs_monitoring,群测群防,slopeFailure,INTEGER,场面异常破坏（坡面是否有鼓涨、反翘）,场面异常破坏（坡面是否有鼓涨、反翘）,database_schema,1=坡面异常破坏；0=无坡面异常破坏,无坡面异常破坏,坡面异常破坏,1偏肯定/正向
-tb_hcs_monitoring,群测群防,wallCracking,INTEGER,道路墙体开裂（挡土墙是否开裂）,道路墙体开裂（挡土墙是否开裂）,database_schema,1=道路或墙体开裂；0=无道路或墙体开裂,无道路或墙体开裂,道路或墙体开裂,需人工判断
-tb_hcs_personnel,群测群防,sjly,INTEGER,数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断
+﻿table_name,business_domain,field_name,field_type,business_meaning,comment,comment_source,value_hints,zero_meaning,one_meaning,one_polarity_guess,total_count,zero_count,one_count,null_count,other_count
+geo_dzbjjbxx,地质背景,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,7,0,7,0,0
+geo_gqp_jbxx,基本信息,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2850,0,2850,0,0
+geo_gqp_jbxx,基本信息,emergency_response_status,VARCHAR(10),应急状态 1.非应急 2.应急,应急状态 1.非应急 2.应急,database_schema,1=非应急；2=应急,,非应急,1偏否定/反向,2850,0,0,2850,0
+geo_gqp_jbxx,基本信息,is_complete,INTEGER,是否完整 1完整 2部分完整 3不完整,是否完整 1完整 2部分完整 3不完整,database_schema,1=完整；2=部分完整；3=不完整,,完整,1偏肯定/正向,2850,0,0,0,2850
+geo_gqp_jbxx,基本信息,is_stop,INTEGER,是否停止监测，0停止，1未停止,是否停止监测，0停止，1未停止,database_schema,1=未停止监测；0=已停止监测,已停止监测,未停止监测,1偏否定/反向,2850,14,2836,0,0
+geo_gqp_jbxx,基本信息,sjly,VARCHAR(100),数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断,2850,0,0,2850,0
+geo_gqp_zyjc,专业监测,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2493,0,2493,0,0
+geo_gqpdcsj,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2,0,2,0,0
+geo_gqpdzdh,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2,0,2,0,0
+geo_gqpfhgccs,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2,0,2,0,0
+geo_gqpyxsj,高切坡业务,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2,0,2,0,0
+geo_qydzzhbj,空间/地质数据,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,2,0,2,0,0
+t_dept,系统管理,delete_flag,INTEGER,删除标志 0 删除 1 未删除,删除标志 0 删除 1 未删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,14,0,14,0,0
+t_drone_dom,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,25,20,5,0,0
+t_gqp_zdhjcsb,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,8,1,7,0,0
+t_insar,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,5,0,5,0,0
+t_insar_data,未分类,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,1763,0,1763,0,0
+t_monthly,报告附件,delete_flag,INTEGER,删除标志1未删除 0已删除,删除标志1未删除 0已删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,134,0,134,0,0
+t_panoramic_data,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,19,14,5,0,0
+t_system_notice,未分类,delete_flag,INTEGER,删除标志,,,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,7,0,7,0,0
+t_tilt_model,空间数据,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,3,0,3,0,0
+t_tree,图层管理,delete_flag,INTEGER,删除标志 1正常 0删除,删除标志 1正常 0删除,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,15,4,11,0,0
+t_user,系统管理,delete_flag,INTEGER,删除标志 0 删除 1 未删除,删除标志 0 删除 1 未删除,document_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,240,0,240,0,0
+t_warning_report,预警专报,delete_flag,INTEGER,删除标志,删除标志,database_schema,1=未删除或正常；0=已删除,已删除,未删除或正常,1偏否定/反向,62,14,48,0,0
+tb_hcs_monitoring,群测群防,disorderlyPush,INTEGER,坡周乱搭乱堆,坡周乱搭乱堆,database_schema,1=存在坡周乱搭乱堆；0=不存在坡周乱搭乱堆,不存在坡周乱搭乱堆,存在坡周乱搭乱堆,1偏肯定/正向,618831,617266,1565,0,0
+tb_hcs_monitoring,群测群防,facilities,INTEGER,监测设施异常,监测设施异常,database_schema,1=监测设施异常；0=监测设施正常,监测设施正常,监测设施异常,1偏肯定/正向,618831,617836,995,0,0
+tb_hcs_monitoring,群测群防,isCrack,INTEGER,裂缝情况,裂缝情况,database_schema,1=存在裂缝；0=无裂缝,无裂缝,存在裂缝,1偏肯定/正向,618831,13698,605133,0,0
+tb_hcs_monitoring,群测群防,isPhototOn,INTEGER,是否有拍照时间,是否有拍照时间,database_schema,1=有拍照时间；0=无拍照时间,无拍照时间,有拍照时间,1偏肯定/正向,618831,2839,67010,548982,0
+tb_hcs_monitoring,群测群防,isRead,INTEGER,是否有裂缝（坡面是否有裂痕）,是否有裂缝（坡面是否有裂痕）,database_schema,1=存在裂缝或裂痕；0=无裂缝或裂痕,无裂缝或裂痕,存在裂缝或裂痕,1偏肯定/正向,618831,594556,24275,0,0
+tb_hcs_monitoring,群测群防,overallSituation,INTEGER,总体情况,总体情况,database_schema,1=总体情况异常；0=总体情况正常,总体情况正常,总体情况异常,1偏肯定/正向,618831,9287,609544,0,0
+tb_hcs_monitoring,群测群防,pmsfygzfq,INTEGER,坡面是否有鼓涨，反翘(重复字段 暂时不用),坡面是否有鼓涨，反翘(重复字段 暂时不用),database_schema,1=坡面有鼓胀或反翘；0=坡面无鼓胀或反翘,坡面无鼓胀或反翘,坡面有鼓胀或反翘,1偏肯定/正向,618831,0,0,618831,0
+tb_hcs_monitoring,群测群防,sfydtqkl,INTEGER,是否有挡土墙开裂(重复字段 暂时不用),是否有挡土墙开裂(重复字段 暂时不用),database_schema,1=有挡土墙开裂；0=无挡土墙开裂,无挡土墙开裂,有挡土墙开裂,1偏肯定/正向,618831,0,0,618831,0
+tb_hcs_monitoring,群测群防,sfyls,INTEGER,是否有落石,是否有落石,database_schema,1=有落石；0=无落石,无落石,有落石,1偏肯定/正向,618831,529,1,618301,0
+tb_hcs_monitoring,群测群防,sfypdzzgg,INTEGER,是否有坡顶种植灌溉,是否有坡顶种植灌溉,database_schema,1=有坡顶种植灌溉；0=无坡顶种植灌溉,无坡顶种植灌溉,有坡顶种植灌溉,1偏肯定/正向,618831,513,17,618301,0
+tb_hcs_monitoring,群测群防,sfypmph,INTEGER,是否有坡面破坏,是否有坡面破坏,database_schema,1=有坡面破坏；0=无坡面破坏,无坡面破坏,有坡面破坏,1偏肯定/正向,618831,0,0,618831,0
+tb_hcs_monitoring,群测群防,sfypsgds,INTEGER,是否有排水沟堵塞,是否有排水沟堵塞,database_schema,1=有排水沟堵塞；0=无排水沟堵塞,无排水沟堵塞,有排水沟堵塞,1偏肯定/正向,618831,529,1,618301,0
+tb_hcs_monitoring,群测群防,sfypskds,INTEGER,是否有排水口堵塞,是否有排水口堵塞,database_schema,1=有排水口堵塞；0=无排水口堵塞,无排水口堵塞,有排水口堵塞,1偏肯定/正向,618831,530,0,618301,0
+tb_hcs_monitoring,群测群防,sjly,INTEGER,数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断,618831,0,0,0,618831
+tb_hcs_monitoring,群测群防,slopeFailure,INTEGER,场面异常破坏（坡面是否有鼓涨、反翘）,场面异常破坏（坡面是否有鼓涨、反翘）,database_schema,1=坡面异常破坏；0=无坡面异常破坏,无坡面异常破坏,坡面异常破坏,1偏肯定/正向,618831,616876,1955,0,0
+tb_hcs_monitoring,群测群防,wallCracking,INTEGER,道路墙体开裂（挡土墙是否开裂）,道路墙体开裂（挡土墙是否开裂）,database_schema,1=道路或墙体开裂；0=无道路或墙体开裂,无道路或墙体开裂,道路或墙体开裂,需人工判断,618831,612911,5920,0,0
+tb_hcs_personnel,群测群防,sjly,INTEGER,数据来源 1源库 2同步,数据来源 1源库 2同步,database_schema,1=源库；2=同步,,源库,需人工判断,1133,0,0,0,1133

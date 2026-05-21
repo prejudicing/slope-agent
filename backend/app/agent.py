@@ -35,6 +35,10 @@ from app.config import (
     REPORT_REASONING_EFFORT,
     REPORT_THINKING_ENABLED,
 )
+from app.conversation_context import (
+    build_effective_question,
+    normalize_history,
+)
 from app.domain import GQP_AGENT_PREFIX
 from app.query_cache import get_cached_sql, save_cached_sql
 from app.question_normalizer import normalize_query_question
@@ -445,7 +449,7 @@ class AgentProgressHandler(BaseCallbackHandler):
             })
 
 
-def run_agent(question: str, progress=None) -> dict:
+def run_agent(question: str, progress=None, history: list[dict] | None = None) -> dict:
     """执行一次完整查询，并返回 SQL、表格数据、总结和日志。"""
     # progress 是给 SSE 用的回调；run_agent 本身仍然保持同步返回，方便网页和 App 共用。
     def emit(payload: dict):
@@ -453,10 +457,20 @@ def run_agent(question: str, progress=None) -> dict:
             progress(payload)
 
     print(">>> high-cut-slope SQL agent loaded")
+    conversation_history = normalize_history(history)
     normalized_question = normalize_query_question(question)
     if normalized_question != question:
         print(f">>> [normalized_question] {question} -> {normalized_question}")
     route_decision = route_question(normalized_question)
+    effective_question = build_effective_question(normalized_question, conversation_history)
+
+    # 当前问题本身如果已经是系统外问题，优先按新问题拒答，避免被旧上下文硬拉回高切坡业务。
+    # 但如果当前问题只是条件不足，则允许模型结合最近几轮上下文自行判断能否补全成可查询问题。
+    if route_decision.status == "clarify" and conversation_history:
+        candidate_route = route_question(effective_question)
+        if candidate_route.status == "query":
+            route_decision = candidate_route
+            print(">>> [conversation_context] using recent turns to resolve contextual query")
     print(
         ">>> [route] "
         f"status={route_decision.status} "
@@ -478,7 +492,7 @@ def run_agent(question: str, progress=None) -> dict:
 
     if route_decision.query_type == "template_query":
         print(">>> [query_path] template_query")
-        deterministic_query = get_deterministic_query(normalized_question)
+        deterministic_query = get_deterministic_query(effective_question)
         if not deterministic_query:
             return {
                 "status": "error",
@@ -544,8 +558,8 @@ def run_agent(question: str, progress=None) -> dict:
             "error": None,
         }
 
-    include_tables = select_include_tables(normalized_question)
-    table_guide = build_schema_guide(normalized_question)
+    include_tables = select_include_tables(effective_question)
+    table_guide = build_schema_guide(effective_question)
     emit({
         "type": "progress",
         "message": "检索真实数据库 schema 知识",
@@ -557,7 +571,11 @@ def run_agent(question: str, progress=None) -> dict:
 
     # 结果分析型问题更依赖“这次问题的聚合口径”，缓存很容易把历史错误 SQL 放大。
     # 因此当前只对普通事实查询复用 SQL 缓存，分析类问题每次重新确定查询口径。
-    cached_sql = get_cached_sql(normalized_question) if route_decision.query_type == "db_query" else ""
+    cached_sql = (
+        get_cached_sql(normalized_question)
+        if route_decision.query_type == "db_query" and not conversation_history
+        else ""
+    )
     if cached_sql:
         print(">>> [query_path] cached_sql")
         # 这里缓存的是“查询口径”而不是结果本身：同一句问题复用已验证 SQL，
@@ -631,7 +649,7 @@ def run_agent(question: str, progress=None) -> dict:
 
     try:
         with redirect_stdout(log_buffer):
-            result = agent.invoke({"input": normalized_question}, config={"callbacks": callbacks})
+            result = agent.invoke({"input": effective_question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
         # 表格数据必须追溯到最后一次真正成功执行的 sql_db_query。
@@ -664,7 +682,7 @@ def run_agent(question: str, progress=None) -> dict:
                 "type": "progress",
                 "message": f"查询结果已同步到表格：总计 {total_rows} 条，当前展示 {len(rows)} 条",
             })
-            if sql:
+            if sql and not conversation_history:
                 save_cached_sql(normalized_question, sql)
             emit({
                 "type": "progress",
@@ -742,7 +760,7 @@ def run_agent(question: str, progress=None) -> dict:
         }
 
 
-def stream_agent_events(question: str):
+def stream_agent_events(question: str, history: list[dict] | None = None):
     """把同步 Agent 调用包装成 SSE 事件流，供前端实时展示思考过程。"""
     event_queue = queue.Queue()
 
@@ -751,7 +769,7 @@ def stream_agent_events(question: str):
 
     def worker():
         try:
-            result = run_agent(question, progress=emit)
+            result = run_agent(question, progress=emit, history=history)
             event_queue.put({"type": "final", "data": result})
         except Exception as exc:
             event_queue.put({"type": "error", "message": str(exc)})
