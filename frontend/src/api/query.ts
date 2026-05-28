@@ -9,7 +9,7 @@ import type {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-function buildApiUrl(path: string): string {
+export function buildApiUrl(path: string): string {
   if (Capacitor.isNativePlatform() && !API_BASE_URL) {
     throw new Error('安卓 App 需要配置 VITE_API_BASE_URL，例如 http://10.61.48.10:8000')
   }

@@ -99,10 +99,16 @@
                     />
 
                     <ResultPanel
-                      v-if="entry.rows.length || entry.totalRows || (!entry.loading && !entry.error)"
+                      v-if="entry.rows.length || entry.totalRows"
                       :columns="entry.columns"
                       :rows="entry.rows"
                       :total-rows="entry.totalRows"
+                      embedded
+                    />
+
+                    <AttachmentPanel
+                      v-if="entry.attachments.length"
+                      :attachments="entry.attachments"
                       embedded
                     />
                   </template>
@@ -134,11 +140,12 @@ import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading, Plus } from '@element-plus/icons-vue'
 import QueryInput from './components/QueryInput.vue'
+import AttachmentPanel from './components/AttachmentPanel.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import SummaryPanel from './components/SummaryPanel.vue'
 import heroImage from './assets/hero.png'
 import { streamQuery } from './api/query'
-import type { ConversationHistoryTurn } from './types/query'
+import type { ConversationHistoryTurn, QueryAttachment } from './types/query'
 
 interface QueryTurn {
   id: number
@@ -151,6 +158,7 @@ interface QueryTurn {
   columns: string[]
   rows: Record<string, string>[]
   totalRows: number
+  attachments: QueryAttachment[]
   error: string
   loading: boolean
 }
@@ -260,6 +268,7 @@ const stopActiveQuery = () => {
     turn.columns = []
     turn.rows = []
     turn.totalRows = 0
+    turn.attachments = []
     turn.error = ''
   }
 
@@ -291,6 +300,7 @@ const handleSubmit = async () => {
     columns: [],
     rows: [],
     totalRows: 0,
+    attachments: [],
     error: '',
     loading: true,
   })
@@ -322,6 +332,7 @@ const handleSubmit = async () => {
           turn.columns = res.columns || []
           turn.rows = res.rows || []
           turn.totalRows = res.total_rows || res.rows?.length || 0
+          turn.attachments = res.attachments || []
           turn.error = res.error || ''
           return
         }

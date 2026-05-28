@@ -1,3 +1,17 @@
+export interface QueryAttachment {
+  type: 'image' | 'video' | string
+  label: string
+  path: string
+  url: string
+  source_url?: string
+  hcs_code?: string
+  hcs_name?: string
+  monitoring_id?: string
+  hcs_id?: string
+  created_on?: string
+  photo_on?: string
+}
+
 // 后端最终返回结构。columns/rows 专供查询结果表格使用，summary 当前用于承载查询报告正文。
 export interface QueryResponse {
   status?: string
@@ -10,6 +24,7 @@ export interface QueryResponse {
   columns: string[]
   rows: Record<string, string>[]
   total_rows?: number
+  attachments?: QueryAttachment[]
   logs: string
   error: string | null
 }

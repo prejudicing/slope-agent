@@ -3,12 +3,13 @@
 提供普通查询接口、流式查询接口，以及移动端录音转文字接口。
 """
 
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from app.agent import run_agent, stream_agent_events
 from app.asr import AsrError, transcribe_base64_audio
+from app.photo_service import download_photo_file
 
 router = APIRouter()
 
@@ -54,6 +55,7 @@ def query(req: QueryRequest):
             "columns": [],
             "rows": [],
             "total_rows": 0,
+            "attachments": [],
             "logs": "",
             "error": str(e),
         }
@@ -87,3 +89,13 @@ def asr(req: AsrRequest):
         return {"text": "", "error": str(e)}
     except Exception as e:
         return {"text": "", "error": f"语音转写失败：{e}"}
+
+
+@router.get("/photo/file")
+def photo_file(path: str = Query(..., min_length=1)):
+    """代理下载现场照片/视频，避免前端直接依赖文件服务器地址。"""
+    try:
+        content, content_type = download_photo_file(path)
+        return Response(content=content, media_type=content_type)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
