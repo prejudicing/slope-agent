@@ -1,35 +1,20 @@
-# 高切坡系统智能查询 Agent
+# 高切坡智能查询系统
 
-一个面向高切坡业务的自然语言查询系统。  
-用户可以直接输入中文问题，系统结合真实数据库 schema、业务解释、问题路由和 SQL Agent，自动查询达梦数据库，并返回：
+面向高切坡业务的自然语言查询系统。用户可以直接输入中文问题，后端会结合问题路由、稳定业务模板、数据库 schema、SQL Agent、业务报告生成和现场照片服务，返回可阅读的业务回答、结果表格、图表/照片附件和查询状态。
 
-- 生成 SQL
-- 查询结果表格
-- 查询报告
-- Agent 查询过程 / 日志
-- 查询结果语音播报
-- 分享与 PDF 导出
+当前 `feature-v3` 分支已经把后端从单层 `app/` 拆成了更清晰的工程结构，并把主业务数据库抽象为 `DB_PROVIDER`，同时保留现场照片 SQL Server 数据源。
 
-## 当前能力
+## 核心能力
 
-- 支持高切坡基础信息、群测群防、专业监测、预警专报、巡查记录、空间资料等业务查询
-- 支持 5 类问题路由：
-  - `db_query`
-  - `template_query`
-  - `result_analysis`
-  - `clarify`
-  - `out_of_scope`
-- 支持高频业务问题的稳定模板 SQL
-- 支持同义词和口语归一化，例如“渝北地区”自动归一为“渝北区”
-- 支持 SQL 口径缓存，减少重复提问时的结果漂移
-- 支持大结果集“总条数 + 样本展示”模式，避免前端直接承载全量结果
-- 支持双阶段模型：
-  - 查询阶段模型：优先保证 SQL 查询稳定
-  - 报告阶段模型：专门生成查询报告
-- 支持中文语音输入
-- 支持结果播报、分享和 PDF 导出
-- 支持基于 Vue 前端封装 Android App
-- 支持正式 Agent 评测目录、批量评测脚本和时间戳结果导出
+- 中文自然语言提问，支持高切坡基础信息、群测群防、专业监测、预警专报、巡查记录、月报资产等业务查询。
+- 五类问题路由：`db_query`、`template_query`、`result_analysis`、`clarify`、`out_of_scope`。
+- 高频问题走确定性 SQL 模板，降低 LLM 自由生成 SQL 带来的漂移。
+- 普通问题走 LangChain SQL Agent，并通过真实 schema 知识限定候选表。
+- 支持 SQL 结果表格、业务摘要、报告文本、位移图表、现场照片附件。
+- 支持大结果集“总条数 + 样本展示”，避免前端一次加载全量数据。
+- 支持中文语音输入、语音播报、分享、PDF 导出。
+- 支持 Vue 前端封装 Android App。
+- 提供工作流图、接口流转图和 Agent 效果评测脚本。
 
 ## 项目结构
 
@@ -37,108 +22,146 @@
 lm-dm8/
 ├─ backend/
 │  ├─ app/
-│  │  ├─ main.py                  # FastAPI 应用入口
-│  │  ├─ api/                     # HTTP 路由层
-│  │  ├─ core/                    # 环境配置、达梦/SQL Server 连接
-│  │  ├─ services/                # Agent 主流程、ASR、照片附件与缓存服务
-│  │  ├─ nlq/                     # 问句路由、归一化、schema 召回、稳定 SQL 模板
+│  │  ├─ main.py                  # FastAPI 应用入口，挂载 /api 和前端 dist
+│  │  ├─ api/                     # HTTP 接口层
+│  │  ├─ core/                    # 配置、主库连接、SQL Server 连接
+│  │  ├─ services/                # Agent 主流程、ASR、照片服务、照片缓存
+│  │  ├─ nlq/                     # 问句路由、归一化、schema 知识、稳定 SQL 模板
 │  │  ├─ dashboards/              # 位移、群测群防、监测规模等看板数据
-│  │  └─ reports/                 # 月报资产、图表生成、高切坡对象索引
-│  ├─ evals/
-│  │  └─ agent_effectiveness/     # 正式评测目录（题集、脚本、结果、报告）
-│  ├─ runtime/
-│  │  └─ query_sql_cache.json     # 运行时 SQL 缓存
-│  ├─ schema_exports/             # 真实库 schema 导出和解释结果
-│  ├─ scripts/                    # schema 导出、解释、画像、枚举校验脚本
+│  │  └─ reports/                 # 月报资产、图表、高切坡对象索引
+│  ├─ evals/agent_effectiveness/  # 评测题集、脚本、结果与说明
+│  ├─ runtime/                    # 运行时缓存，例如 query_sql_cache.json
+│  ├─ schema_exports/             # 数据库 schema、解释结果、表画像
+│  ├─ scripts/                    # 数据导入、schema 分析、评测辅助脚本
 │  └─ requirements.txt
 ├─ frontend/
-│  ├─ android/                    # Capacitor 生成的 Android 原生工程
 │  ├─ src/
-│  │  ├─ api/                     # 前端请求
-│  │  ├─ components/              # Vue 组件（查询输入、查询报告、结果表格等）
-│  │  ├─ types/                   # TS 类型
+│  │  ├─ api/                     # 前端 API 请求
+│  │  ├─ components/              # Vue 业务组件
+│  │  ├─ plugins/                 # 移动端 TTS 等插件封装
+│  │  ├─ types/                   # TypeScript 类型
 │  │  ├─ App.vue
 │  │  └─ main.ts
-│  ├─ scripts/
-│  │  └─ create-dev-cert.mjs      # 本地 HTTPS 证书生成
+│  ├─ android/                    # Capacitor Android 工程
+│  ├─ scripts/                    # 本地 HTTPS 证书、录制等脚本
 │  ├─ package.json
 │  └─ vite.config.ts
-├─ docs/
-│  └─ notes/                      # 其他开发说明与人工校验文档
-└─ 数据库设计文档.docx            # 当前数据库设计文档参考
+└─ docs/
+   └─ diagrams/workflows/         # 后端工作流图和接口流转图
 ```
 
 ## 技术栈
 
-### 后端
+后端：
 
-- FastAPI
-- Uvicorn
+- FastAPI / Uvicorn
 - LangChain / langchain-community / langchain-openai
 - SQLAlchemy
 - dmPython / dmSQLAlchemy
+- python-tds / pyodbc / pymssql
+- faster-whisper
+- Pillow
 
-### 前端
+前端：
 
-- Vue 3
-- TypeScript
-- Vite
-- Capacitor
+- Vue 3 / TypeScript / Vite
 - Element Plus
-- Web Speech API（中文语音输入）
-- SpeechSynthesis（结果播报）
-- html2canvas / jsPDF（导出 PDF）
+- ECharts
+- Capacitor Android
+- Web Speech API / Capacitor 语音插件
+- html2canvas / jsPDF
 
-## 运行前准备
+## 数据库说明
 
-### 1. Python 环境
+`feature-v3` 不再把数据库写死为单一达梦连接，而是通过 `DB_PROVIDER` 决定主业务库。
 
-建议 Python 3.10+。
+主业务库：
 
-安装后端依赖：
+- `DB_PROVIDER=dm`：达梦数据库，连接方式为 `dm+dmPython`。
+- `DB_PROVIDER=sqlserver`：SQL Server，默认连接方式为 `mssql+pytds`，也可以切到 `pyodbc`。
 
-```bash
-cd /home/lzb/projects/lm-dm8/backend
-pip install -r requirements.txt
-```
+现场照片库：
 
-### 2. Node 环境
+- 单独使用 `PHOTO_DB_*` 配置。
+- 当前照片库只支持 SQL Server。
+- 照片文件下载可以通过 `PHOTO_FILE_BASE_URL` 代理，前端访问 `/api/photo/file` 或 `/api/photo-cache`，不直接依赖文件服务器。
 
-建议 Node.js 18+。
+群测群防源库兼容配置：
 
-安装前端依赖：
+- `SQLSERVER_*` 和 `HCS_QMQF_SOURCE` 仍保留，用于兼容群测群防相关历史逻辑。
+- 当前 v3 的主查询优先看 `DB_PROVIDER/DB_*`，照片补充看 `PHOTO_DB_*`。
 
-```bash
-cd /home/lzb/projects/lm-dm8/frontend
-npm install
-```
+## 后端环境变量
 
-### 3. 后端环境变量
+在 `backend/.env` 中配置。`.env` 不提交到 Git，下面只是示例。
 
-在 `backend/.env` 中配置。
-
-#### 达梦数据库
+### 主业务库为达梦
 
 ```env
-DM_USER=你的达梦用户名
-DM_PASSWORD=你的达梦密码
+DB_PROVIDER=dm
+DB_HOST=你的达梦主机
+DB_PORT=5236
+DB_USER=你的用户名
+DB_PASSWORD=你的密码
+DB_SCHEMA=
+```
+
+也兼容旧字段：
+
+```env
 DM_HOST=你的达梦主机
 DM_PORT=5236
+DM_USER=你的用户名
+DM_PASSWORD=你的密码
 ```
 
-#### 通用默认模型
-
-如果不单独拆查询/报告模型，会回退到这一组：
+### 主业务库为 SQL Server
 
 ```env
-OPENAI_API_KEY=你的默认模型接口Key
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_BASE_URL=你的模型接口Base URL
+DB_PROVIDER=sqlserver
+DB_HOST=你的SQLServer主机
+DB_PORT=1433
+DB_NAME=你的数据库名
+DB_USER=你的用户名
+DB_PASSWORD=你的密码
+DB_SQLSERVER_TRANSPORT=pytds
+DB_SCHEMA=
+DB_TRUST_CERT=true
+DB_ENCRYPT=false
 ```
 
-#### 查询阶段模型
+如果需要走 ODBC：
 
-查询阶段更强调 SQL 生成稳定性，通常建议关闭 thinking：
+```env
+DB_SQLSERVER_TRANSPORT=pyodbc
+DB_DRIVER=ODBC Driver 18 for SQL Server
+```
+
+### 现场照片库
+
+```env
+PHOTO_DB_PROVIDER=sqlserver
+PHOTO_DB_HOST=照片库SQLServer主机
+PHOTO_DB_PORT=1433
+PHOTO_DB_NAME=照片库数据库名
+PHOTO_DB_USER=你的用户名
+PHOTO_DB_PASSWORD=你的密码
+PHOTO_DB_SQLSERVER_TRANSPORT=pytds
+PHOTO_FILE_BASE_URL=http://文件服务器地址
+PHOTO_DOWNLOAD_TIMEOUT=12
+```
+
+### 模型配置
+
+通用模型配置：
+
+```env
+OPENAI_API_KEY=你的模型Key
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=你的OpenAI兼容接口地址
+```
+
+查询阶段模型：
 
 ```env
 QUERY_PROVIDER=openai
@@ -148,9 +171,7 @@ QUERY_BASE_URL=你的查询模型Base URL
 QUERY_THINKING_ENABLED=false
 ```
 
-#### 报告阶段模型
-
-报告阶段可以和查询阶段使用不同模型：
+报告阶段模型：
 
 ```env
 REPORT_PROVIDER=deepseek
@@ -161,7 +182,7 @@ REPORT_THINKING_ENABLED=true
 REPORT_REASONING_EFFORT=high
 ```
 
-#### 语音转写
+### 语音转写
 
 ```env
 ASR_MODEL=small
@@ -169,170 +190,141 @@ ASR_DEVICE=cpu
 ASR_COMPUTE_TYPE=int8
 ```
 
-#### 可选：调试用业务表覆盖
+### 调试表范围
 
 ```env
 HCS_INCLUDE_TABLES=tb_hcs_monitoring,geo_gqp_jbxx
 ```
 
-如果不配置 `HCS_INCLUDE_TABLES`，系统会根据问题和 schema 知识自动选择候选表。
+不配置时，系统会根据问题和 schema 知识自动选择候选表。
 
 ## 启动方式
 
-### 方式一：本地开发推荐
+### 1. 后端
 
-启动后端：
+建议使用已有的 `dm` Conda 环境：
 
 ```bash
+conda activate dm
 cd /home/lzb/projects/lm-dm8/backend
+pip install -r requirements.txt
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-启动前端 HTTPS 开发服务：
-
-```bash
-cd /home/lzb/projects/lm-dm8/frontend
-npm run dev:https
-```
-
-访问地址：
+健康检查：
 
 ```text
-https://localhost:5173/
+http://127.0.0.1:8000/api/health
 ```
 
-说明：
+FastAPI 文档：
 
-- `dev:https` 首次运行会自动生成本地自签名证书
-- 浏览器第一次访问时会提示证书不安全，开发环境下手动继续访问即可
-- 前端会把 `/api` 代理到 `http://127.0.0.1:8000`
+```text
+http://127.0.0.1:8000/docs
+```
 
-### 方式二：仅前端 HTTP 开发
+注意：如果前端运行在 `https://10.61.48.10:5173`，那是 Vite 前端地址，不是 FastAPI 地址。接口文档要访问后端端口 `8000`。
 
-如果你暂时不需要语音输入，也可以使用普通 HTTP：
+### 2. 前端
 
 ```bash
 cd /home/lzb/projects/lm-dm8/frontend
-npm run dev
+npm install
+npm run dev:https
 ```
 
 访问：
 
 ```text
-http://localhost:5173/
+https://localhost:5173/
 ```
 
-注意：中文语音输入通常要求 `HTTPS` 或 `localhost` 安全上下文。
+局域网手机访问时，用开发机 IP：
 
-### 方式三：Android App
-
-先准备 Android App 请求的后端地址：
-
-```bash
-cd /home/lzb/projects/lm-dm8/frontend
-cp .env.example .env.local
+```text
+https://10.61.48.10:5173/
 ```
 
-然后把 `.env.local` 里的地址改成你的后端地址，例如：
+前端开发服务会把 `/api` 代理到后端。如果是 Android App 或需要指定后端地址，配置 `frontend/.env.local`：
 
 ```env
 VITE_API_BASE_URL=http://10.61.48.10:8000
 ```
 
-构建并同步到 Android 工程：
+### 3. Android App
 
 ```bash
 cd /home/lzb/projects/lm-dm8/frontend
 npm run android:sync
-```
-
-用 Android Studio 打开：
-
-```bash
-cd /home/lzb/projects/lm-dm8/frontend
 npm run android:open
 ```
 
-说明：
-
-- 当前安卓工程默认允许访问 HTTP 后端，便于局域网联调
-- 如果更换后端地址，需要重新执行 `npm run android:sync`
-
-## 前端常用命令
+生成 debug APK：
 
 ```bash
-cd /home/lzb/projects/lm-dm8/frontend
+cd /home/lzb/projects/lm-dm8/frontend/android
+./gradlew assembleDebug
 ```
 
-生成 HTTPS 开发证书：
+输出位置：
 
-```bash
-npm run cert
-```
-
-启动 HTTPS 开发服务：
-
-```bash
-npm run dev:https
-```
-
-构建前端：
-
-```bash
-npm run build
-```
-
-同步 Android 工程：
-
-```bash
-npm run android:sync
-```
-
-打开 Android Studio：
-
-```bash
-npm run android:open
-```
-
-## 后端常用命令
-
-```bash
-cd /home/lzb/projects/lm-dm8/backend
-```
-
-开发启动：
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```text
+frontend/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## 关键接口
 
-健康检查：
+所有业务接口都挂在 `/api` 下。
 
 ```text
-GET /api/health
+GET  /api/health                       健康检查
+POST /api/query                        非流式自然语言查询
+POST /api/query/stream                 SSE 流式自然语言查询，前端主要使用
+POST /api/asr                          移动端录音转文字
+GET  /api/displacement/recent-large    近期专业监测位移看板
+GET  /api/qmqf/abnormal-dashboard      群测群防异常看板
+GET  /api/report/asset-inventory       月报内容资产清单
+GET  /api/report/stability-assets      月报稳定性评价和现场照片资产
+GET  /api/photo/file                   现场照片/视频代理下载
+GET  /api/photo-cache                  现场照片缓存与缩略图
 ```
 
-普通查询：
+## 查询工作流
+
+用户提问进入后端后的主链路：
 
 ```text
-POST /api/query
+前端输入
+  -> POST /api/query/stream
+  -> normalize_query_text()
+  -> stream_agent_events()
+  -> route_question()
+  -> 根据路由选择处理路径
+     -> clarify/out_of_scope：直接返回澄清或拒答
+     -> template_query：执行稳定 SQL 模板或业务看板函数
+     -> db_query/result_analysis：选择候选表，调用 LangChain SQL Agent
+  -> 查询主业务库
+  -> 按需补充现场照片附件
+  -> 生成业务摘要/报告
+  -> SSE 分段返回给前端
 ```
 
-流式查询：
+更完整的工作流图在：
 
-```text
-POST /api/query/stream
-```
+[docs/diagrams/workflows/README.md](/home/lzb/projects/lm-dm8/docs/diagrams/workflows/README.md)
 
-当前前端页面主要使用流式查询接口。
+包含：
+
+- `backend-overall-workflow.svg`：用户提问后的后端整体链路。
+- `backend-routing-functions.svg`：路由判断阶段函数关系。
+- `backend-api-interface-flow.svg`：后端 API 接口流动关系。
+- `backend-api-interface-flow.md`：后端接口职责说明表。
 
 ## schema 知识文件
 
-系统当前以真实数据库导出的 schema 作为主要依据，设计文档仅作为参考。
+系统以真实数据库导出的 schema 作为主要依据，设计文档仅作为参考。
 
-核心文件位于：
+核心文件：
 
 ```text
 backend/schema_exports/database_schema.json
@@ -346,103 +338,23 @@ backend/schema_exports/business_starter_pack.json
 backend/schema_exports/enum_fields_01_review.csv
 ```
 
-用途概览：
-
-- `database_schema.json`：真实数据库表结构
-- `document_schema.json`：Word 文档提取结果
-- `schema_comparison.json`：设计文档与真实数据库差异
-- `database_schema_explained.json`：带中文业务解释的 schema
-- `schema_chunks.jsonl`：schema 检索块
-- `table_profile.json`：真实表画像
-- `core_table_candidates.json`：核心表候选
-- `business_starter_pack.json`：Agent 初始业务知识包
-- `enum_fields_01_review.csv`：`0/1` 枚举字段人工校验清单
-
-## schema 脚本
-
-导出真实数据库 schema 并与 Word 文档对比：
+常用脚本：
 
 ```bash
 cd /home/lzb/projects/lm-dm8/backend
 python scripts/export_and_compare_schema.py
-```
-
-生成带业务解释的 schema：
-
-```bash
 python scripts/generate_explained_schema.py
-```
-
-生成表画像、核心表候选和 starter pack：
-
-```bash
 python scripts/profile_business_schema.py
-```
-
-导出 `0/1` 枚举字段人工校验清单：
-
-```bash
 python scripts/export_enum_review.py
 ```
 
-## 当前系统行为说明
-
-### 1. 查询结果和查询报告分离
-
-- 查询结果表格来自真实 SQL 查询返回的 `columns` 和 `rows`
-- 查询报告来自报告阶段模型，基于真实结果表生成
-
-### 2. 五类问题路由
-
-系统会先进行问题路由，再决定执行路径：
-
-- `db_query`：普通数据库查询
-- `template_query`：命中稳定业务模板
-- `result_analysis`：先查库，再生成分析型报告
-- `clarify`：问题过于模糊，要求补充条件
-- `out_of_scope`：越界或敏感问题，直接拒答
-
-### 3. 稳定 SQL 缓存
-
-系统会把“相同自然语言问题 -> 已验证 SQL”保存到：
-
-```text
-backend/runtime/query_sql_cache.json
-```
-
-这样重复提问时，可以复用稳定查询口径，减少结果漂移。
-
-如需清空缓存：
-
-```bash
-rm /home/lzb/projects/lm-dm8/backend/runtime/query_sql_cache.json
-```
-
-### 4. 高频稳定业务模板
-
-对部分关键问题，系统不会交给 LLM 自由发挥，而是走确定性 SQL 模板。例如：
-
-- 异常状态 + 异常类型
-- 各区县异常高切坡数量对比
-
-### 5. 大结果集展示
-
-当前系统对大结果集采用：
-
-- 后端单独统计 `total_rows`
-- 前端只展示前若干条样本
-
-这样可以避免一次把几十万行结果直接压给前端。
-
 ## Agent 效果测试
 
-正式评测材料已经集中到：
+评测说明：
 
 [backend/evals/agent_effectiveness/README.md](/home/lzb/projects/lm-dm8/backend/evals/agent_effectiveness/README.md)
 
-常用命令：
-
-完整 100 题正式评测：
+完整评测：
 
 ```bash
 conda run -n dm python backend/evals/agent_effectiveness/scripts/run_agent_effectiveness_eval.py
@@ -460,58 +372,32 @@ conda run -n dm python backend/evals/agent_effectiveness/scripts/run_agent_effec
 conda run -n dm python backend/evals/agent_effectiveness/scripts/run_query_eval.py
 ```
 
-题集人工阅读版：
-
-[agent_eval_5routes_20each.md](/home/lzb/projects/lm-dm8/backend/evals/agent_effectiveness/docs/agent_eval_5routes_20each.md)
-
-## 语音功能说明
-
-### 中文语音输入
-
-- 入口：查询输入框右侧“中文语音输入”
-- 浏览器要求：通常需要 `HTTPS` 或 `localhost`
-- 推荐浏览器：Chrome / Edge
-- 手机访问时需要连接同一局域网
-- 安卓 App 场景下，前端请求地址必须通过 `VITE_API_BASE_URL` 指向真实后端，不能依赖相对路径 `/api`
-
-### 查询结果播报
-
-- 支持开始播报 / 暂停 / 继续 / 停止
-- 播报内容包括查询报告和前几条表格结果
-- 使用浏览器内置 `speechSynthesis`
-
 ## 常见问题
 
-### 1. 为什么手机上语音输入没反应？
+### 为什么访问 `https://10.61.48.10:5173/docs` 进不了接口文档？
 
-优先检查：
+`5173` 是前端 Vite 端口，FastAPI 文档在后端端口。请访问：
 
-- 是否使用了 HTTPS 地址
-- 是否点击了继续访问自签名证书页面
-- 是否已授权麦克风
-- 是否和开发机在同一局域网
-
-### 2. 为什么同一个问题有时结果不一样？
-
-当前系统已经增加：
-
-- 问题归一化
-- 稳定 SQL 缓存
-- 高频问题稳定模板
-- 五类问题路由
-
-如果需要重新生成 SQL，可以删除：
-
-```bash
-rm /home/lzb/projects/lm-dm8/backend/runtime/query_sql_cache.json
+```text
+http://10.61.48.10:8000/docs
 ```
 
-### 3. 为什么设计文档中的表在数据库里找不到？
+如果后端没有启 HTTPS，不要用 `https://10.61.48.10:8000/docs`。
 
-因为当前项目已经验证过：数据库设计文档和真实达梦数据库并不完全一致。  
-系统现在以真实数据库导出的 schema 为准，设计文档仅作辅助参考。
+### 为什么同一个问题有时结果不一样？
 
-### 4. 为什么 `.gitignore` 写了 `.vscode/`、`.codex/`，仓库里还有这些文件？
+系统已经加入问题归一化、稳定 SQL 模板、SQL 缓存和问题路由，但普通 Agent 查询仍可能受模型输出影响。高频业务问题建议继续沉淀到 `backend/app/nlq/business_queries.py` 的确定性模板里。
 
-因为 `.gitignore` 只对**尚未被 Git 跟踪的文件**生效。  
-如果文件早就被提交过，需要先把它从 Git 索引里移除，后续 ignore 规则才会真正接管。
+缓存文件：
+
+```text
+backend/runtime/query_sql_cache.json
+```
+
+### 为什么现场照片有些 404？
+
+照片记录来自数据库，真实文件需要能从 `PHOTO_FILE_BASE_URL` 或文件服务器访问。如果数据库中存在路径但文件服务器没有对应文件，后端会返回 404；这是数据源和文件存储不一致问题，不是前端渲染问题。
+
+### 这个项目算多 Agent 吗？
+
+当前更准确的定位是“单 Agent + 业务路由 + 稳定模板 + 多数据服务”的智能查询系统。它体现了 Agentic workflow，但还不是严格意义上的多 Agent 协作系统。
