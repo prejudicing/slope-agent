@@ -16,9 +16,9 @@ BACKEND_DIR = ROOT_DIR / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.agent import run_agent
-from app.query_router import route_question
-from app.question_normalizer import normalize_query_question
+from app.services.agent import run_agent
+from app.nlq.query_router import route_question
+from app.nlq.question_normalizer import normalize_query_question
 
 EVAL_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_DATASET = EVAL_DIR / "datasets" / "agent_eval_5routes_20each.json"

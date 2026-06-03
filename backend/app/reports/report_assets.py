@@ -6,8 +6,8 @@ from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine, text
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
-from app.slope_object_index import build_slope_object_index, enrich_slope_cards, normalize_code
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
+from app.reports.slope_object_index import build_slope_object_index, enrich_slope_cards, normalize_code
 
 
 SLOPE_CODE_RE = re.compile(r"(?:E?XS|E?ZG|ZG|BD|YL|FJ)\s*[0-9A-Z]{3,}(?:\s*0A\d{3})?\*?", re.IGNORECASE)

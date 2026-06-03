@@ -16,7 +16,7 @@ from typing import Optional
 
 from faster_whisper import WhisperModel
 
-from app.config import ASR_COMPUTE_TYPE, ASR_DEVICE, ASR_MODEL
+from app.core.config import ASR_COMPUTE_TYPE, ASR_DEVICE, ASR_MODEL
 
 
 class AsrError(RuntimeError):

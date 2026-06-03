@@ -29,7 +29,7 @@ from PIL import Image, ImageOps  # noqa: E402
 from pypdf import PdfReader  # noqa: E402
 from sqlalchemy import create_engine, text  # noqa: E402
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
 
 
 PHOTO_WORDS = ("照片", "现场照片", "巡视照片", "巡查照片", "现场图片", "影像", "图片", "全景")

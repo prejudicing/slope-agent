@@ -25,7 +25,7 @@ if BUNDLED_SITE_PACKAGES.exists() and str(BUNDLED_SITE_PACKAGES) not in sys.path
 
 from sqlalchemy import create_engine, text  # noqa: E402
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
 
 
 SLOPE_CODE_RE = re.compile(r"\b(?:XS|EXS|YL|EYL|BD|EBD|ZG|EZG|420)\d+[A-Z0-9*\-]*\b", re.IGNORECASE)

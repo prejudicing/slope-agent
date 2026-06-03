@@ -25,7 +25,7 @@ from sqlalchemy import create_engine, text  # noqa: E402
 from PIL import Image, ImageEnhance, ImageFilter  # noqa: E402
 from pypdf import PdfReader  # noqa: E402
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
 from scripts.digitize_report_curve import digitize_chart, write_echarts_html  # noqa: E402
 
 

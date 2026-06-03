@@ -13,7 +13,7 @@ SAMPLE_DIR = BACKEND_DIR / "report_extract_sample"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
 
 
 TABLES = (

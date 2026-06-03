@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine, text
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
 
 
 def _engine():

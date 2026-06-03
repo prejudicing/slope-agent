@@ -10,9 +10,9 @@ from urllib.parse import quote_plus
 import numpy as np
 from sqlalchemy import create_engine, text
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
-from app.slope_object_index import clean_card_text, enrich_slope_cards
-from app.sqlserver_db import query_sqlserver_for_display
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
+from app.reports.slope_object_index import clean_card_text, enrich_slope_cards
+from app.core.sqlserver_db import query_sqlserver_for_display
 
 
 ASSET_ROOT = Path(__file__).resolve().parents[1] / "generated" / "displacement_dashboard"

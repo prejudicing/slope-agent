@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1120" viewBox="0 0 1280 1120">
+  <defs>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .box { fill: #ffffff; stroke: #c8d3e3; stroke-width: 1.5; rx: 8; }
+      .fn { fill: #eef7ff; stroke: #7aa8d8; stroke-width: 1.5; rx: 8; }
+      .decision { fill: #fff9e8; stroke: #d8b75f; stroke-width: 1.5; }
+      .result { fill: #eefaf2; stroke: #73b484; stroke-width: 1.5; rx: 8; }
+      .text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif; fill: #1f2937; font-size: 16px; }
+      .small { font-size: 12px; fill: #526071; }
+      .title { font-size: 28px; font-weight: 700; fill: #111827; }
+      .arrow { stroke: #65758b; stroke-width: 1.8; fill: none; marker-end: url(#arrow); }
+      .label { font-size: 13px; fill: #42526b; font-family: "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#65758b"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1280" height="1120"/>
+  <text x="640" y="52" text-anchor="middle" class="title">后端路由判断函数调用工作流</text>
+
+  <rect x="460" y="90" width="360" height="58" class="box"/>
+  <text x="640" y="126" text-anchor="middle" class="text">run_agent(question)</text>
+
+  <rect x="460" y="188" width="360" height="66" class="fn"/>
+  <text x="640" y="216" text-anchor="middle" class="text">normalize_query_question</text>
+  <text x="640" y="238" text-anchor="middle" class="small">问题归一化</text>
+
+  <rect x="460" y="294" width="360" height="66" class="fn"/>
+  <text x="640" y="322" text-anchor="middle" class="text">normalize_history</text>
+  <text x="640" y="344" text-anchor="middle" class="small">整理最近会话历史</text>
+
+  <rect x="460" y="400" width="360" height="66" class="fn"/>
+  <text x="640" y="428" text-anchor="middle" class="text">route_question</text>
+  <text x="640" y="450" text-anchor="middle" class="small">路由判断总入口</text>
+
+  <rect x="460" y="506" width="360" height="66" class="fn"/>
+  <text x="640" y="534" text-anchor="middle" class="text">_safety_route_question</text>
+  <text x="640" y="556" text-anchor="middle" class="small">空问题、过短、身份、敏感凭据拦截</text>
+
+  <polygon points="640,620 805,690 640,760 475,690" class="decision"/>
+  <text x="640" y="682" text-anchor="middle" class="text">安全规则命中？</text>
+  <text x="640" y="704" text-anchor="middle" class="small">clarify / chat / out_of_scope</text>
+
+  <rect x="80" y="650" width="280" height="82" class="result"/>
+  <text x="220" y="684" text-anchor="middle" class="text">_build_decision</text>
+  <text x="220" y="708" text-anchor="middle" class="small">直接生成 QueryRouteDecision</text>
+
+  <polygon points="640,800 805,870 640,940 475,870" class="decision"/>
+  <text x="640" y="862" text-anchor="middle" class="text">是否有 LLM?</text>
+  <text x="640" y="884" text-anchor="middle" class="small">llm 或 llm_factory</text>
+
+  <rect x="900" y="780" width="300" height="66" class="fn"/>
+  <text x="1050" y="808" text-anchor="middle" class="text">build_query_llm</text>
+  <text x="1050" y="830" text-anchor="middle" class="small">创建路由用模型</text>
+
+  <rect x="900" y="890" width="300" height="66" class="fn"/>
+  <text x="1050" y="918" text-anchor="middle" class="text">_invoke_router_llm</text>
+  <text x="1050" y="940" text-anchor="middle" class="small">构造 prompt 并调用模型</text>
+
+  <rect x="900" y="1000" width="300" height="66" class="fn"/>
+  <text x="1050" y="1028" text-anchor="middle" class="text">_decision_from_llm_payload</text>
+  <text x="1050" y="1050" text-anchor="middle" class="small">JSON 转 QueryRouteDecision</text>
+
+  <rect x="80" y="835" width="300" height="66" class="fn"/>
+  <text x="230" y="863" text-anchor="middle" class="text">_fallback_route_question</text>
+  <text x="230" y="885" text-anchor="middle" class="small">规则兜底路由</text>
+
+  <rect x="80" y="960" width="300" height="66" class="fn"/>
+  <text x="230" y="988" text-anchor="middle" class="text">get_deterministic_query</text>
+  <text x="230" y="1010" text-anchor="middle" class="small">判断稳定模板 SQL</text>
+
+  <rect x="460" y="1010" width="360" height="66" class="result"/>
+  <text x="640" y="1038" text-anchor="middle" class="text">resolve_effective_question</text>
+  <text x="640" y="1060" text-anchor="middle" class="small">确定最终交给查询链路的问题</text>
+
+  <path class="arrow" d="M640 148 L640 188"/>
+  <path class="arrow" d="M640 254 L640 294"/>
+  <path class="arrow" d="M640 360 L640 400"/>
+  <path class="arrow" d="M640 466 L640 506"/>
+  <path class="arrow" d="M640 572 L640 620"/>
+
+  <path class="arrow" d="M475 690 L360 690"/>
+  <text x="390" y="670" class="label">是</text>
+  <path class="arrow" d="M640 760 L640 800"/>
+  <text x="655" y="785" class="label">否</text>
+
+  <path class="arrow" d="M805 870 C850 830 870 813 900 813"/>
+  <text x="835" y="835" class="label">有</text>
+  <path class="arrow" d="M1050 846 L1050 890"/>
+  <path class="arrow" d="M1050 956 L1050 1000"/>
+  <path class="arrow" d="M900 1033 C825 1040 800 1042 820 1043"/>
+  <path class="arrow" d="M1050 1066 C940 1092 785 1090 735 1076"/>
+
+  <path class="arrow" d="M475 870 L380 868"/>
+  <text x="420" y="850" class="label">无或 LLM 失败</text>
+  <path class="arrow" d="M230 901 L230 960"/>
+  <path class="arrow" d="M380 993 C430 1018 445 1038 460 1043"/>
+
+  <path class="arrow" d="M220 732 C235 1035 430 1080 520 1076"/>
+</svg>

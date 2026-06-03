@@ -37,17 +37,13 @@
 lm-dm8/
 ├─ backend/
 │  ├─ app/
-│  │  ├─ agent.py                 # Agent 主流程、流式事件、查询结果回查、报告生成
-│  │  ├─ api.py                   # FastAPI 查询接口
-│  │  ├─ business_queries.py      # 高频问题确定性 SQL 模板
-│  │  ├─ config.py                # 环境变量配置（支持查询/报告双模型）
-│  │  ├─ db.py                    # 达梦数据库连接
-│  │  ├─ domain.py                # Agent Prompt 和业务边界
 │  │  ├─ main.py                  # FastAPI 应用入口
-│  │  ├─ query_cache.py           # 问题 -> SQL 稳定缓存
-│  │  ├─ query_router.py          # 五类问题路由
-│  │  ├─ question_normalizer.py   # 口语/区县同义词归一化
-│  │  └─ schema_knowledge.py      # schema 知识召回和候选表选择
+│  │  ├─ api/                     # HTTP 路由层
+│  │  ├─ core/                    # 环境配置、达梦/SQL Server 连接
+│  │  ├─ services/                # Agent 主流程、ASR、照片附件与缓存服务
+│  │  ├─ nlq/                     # 问句路由、归一化、schema 召回、稳定 SQL 模板
+│  │  ├─ dashboards/              # 位移、群测群防、监测规模等看板数据
+│  │  └─ reports/                 # 月报资产、图表生成、高切坡对象索引
 │  ├─ evals/
 │  │  └─ agent_effectiveness/     # 正式评测目录（题集、脚本、结果、报告）
 │  ├─ runtime/

@@ -15,7 +15,7 @@ BACKEND_DIR = ROOT_DIR / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.db import build_db_uri, get_db_provider
+from app.core.db import build_db_uri, get_db_provider
 
 SCHEMA_DIR = ROOT_DIR / "backend" / "schema_exports"
 DEFAULT_SCHEMA = SCHEMA_DIR / "database_schema_explained.json"

@@ -7,15 +7,15 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-from app.agent import run_agent, sanitize_query_result, stream_agent_events, user_friendly_error_message
-from app.asr import AsrError, transcribe_base64_audio
-from app.displacement_dashboard import get_recent_displacement_dashboard
-from app.photo_cache import get_cached_photo_response
-from app.photo_service import download_photo_file
-from app.qmqf_dashboard import get_qmqf_abnormal_dashboard
-from app.report_assets import get_recent_report_stability_assets
-from app.report_inventory import get_report_asset_inventory
-from app.text_normalizer import normalize_query_text
+from app.services.agent import run_agent, sanitize_query_result, stream_agent_events, user_friendly_error_message
+from app.services.asr import AsrError, transcribe_base64_audio
+from app.dashboards.displacement_dashboard import get_recent_displacement_dashboard
+from app.services.photo_cache import get_cached_photo_response
+from app.services.photo_service import download_photo_file
+from app.dashboards.qmqf_dashboard import get_qmqf_abnormal_dashboard
+from app.reports.report_assets import get_recent_report_stability_assets
+from app.reports.report_inventory import get_report_asset_inventory
+from app.nlq.text_normalizer import normalize_query_text
 
 router = APIRouter()
 

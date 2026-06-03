@@ -4,7 +4,7 @@ import json
 import re
 from typing import Any
 
-from app.report_charts import generate_displacement_chart
+from app.reports.report_charts import generate_displacement_chart
 
 
 ABNORMAL_TYPE_FIELDS = [
@@ -896,7 +896,7 @@ def _has_crack_measure(row: dict) -> bool:
 
 def _enrich_recent_large_displacement_rows(columns: list[str], rows: list[dict]) -> tuple[list[str], list[dict]]:
     try:
-        from app.displacement_dashboard import get_recent_displacement_dashboard
+        from app.dashboards.displacement_dashboard import get_recent_displacement_dashboard
 
         get_recent_displacement_dashboard()
     except Exception as exc:

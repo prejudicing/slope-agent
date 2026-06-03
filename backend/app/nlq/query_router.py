@@ -5,8 +5,8 @@ import json
 import re
 from typing import Any
 
-from app.business_queries import get_deterministic_query
-from app.conversation_context import ConversationTurn, build_routing_context
+from app.nlq.business_queries import get_deterministic_query
+from app.nlq.conversation_context import ConversationTurn, build_routing_context
 
 
 BUSINESS_KEYWORDS = {

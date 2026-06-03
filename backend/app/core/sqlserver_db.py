@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.config import (
+from app.core.config import (
     SQLSERVER_DATABASE,
     SQLSERVER_DRIVER,
     SQLSERVER_HOST,

@@ -20,7 +20,7 @@ BACKEND_DIR = ROOT_DIR / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.db import build_db_uri, get_default_schema
+from app.core.db import build_db_uri, get_default_schema
 
 
 DEFAULT_DOCX = ROOT_DIR / "高切坡数据库设计文档.docx"

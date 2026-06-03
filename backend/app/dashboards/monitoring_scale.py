@@ -5,8 +5,8 @@ from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine, text
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
-from app.sqlserver_db import query_sqlserver_for_display
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
+from app.core.sqlserver_db import query_sqlserver_for_display
 
 
 HUBEI_COUNTIES = ("兴山县", "巴东县", "秭归县", "夷陵区")

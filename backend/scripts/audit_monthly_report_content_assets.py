@@ -24,7 +24,7 @@ if BUNDLED_SITE_PACKAGES.exists() and str(BUNDLED_SITE_PACKAGES) not in sys.path
 
 from sqlalchemy import create_engine, text  # noqa: E402
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
+from app.core.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER  # noqa: E402
 
 
 COUNTIES = ("巴东县", "兴山县", "夷陵区", "秭归县")

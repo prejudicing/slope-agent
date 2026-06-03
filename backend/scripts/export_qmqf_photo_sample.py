@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.qmqf_dashboard import get_qmqf_abnormal_dashboard
+from app.dashboards.qmqf_dashboard import get_qmqf_abnormal_dashboard
 
 
 def main() -> None:

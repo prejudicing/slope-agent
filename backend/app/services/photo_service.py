@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from functools import lru_cache
 import re
 from typing import Iterable
 from urllib.parse import quote, urljoin
@@ -14,8 +15,8 @@ from urllib.request import Request, urlopen
 
 from sqlalchemy import bindparam, text
 
-from app.config import PHOTO_DOWNLOAD_TIMEOUT, PHOTO_FILE_BASE_URL
-from app.db import get_photo_sqlalchemy_engine
+from app.core.config import PHOTO_DOWNLOAD_TIMEOUT, PHOTO_FILE_BASE_URL
+from app.core.db import get_photo_sqlalchemy_engine
 
 
 PHOTO_INTENT_KEYWORDS = (
@@ -108,6 +109,35 @@ def _build_source_url(path: str) -> str:
     return urljoin(f"{PHOTO_FILE_BASE_URL}/", path.lstrip("/"))
 
 
+@lru_cache(maxsize=1024)
+def _is_source_file_available(path: str) -> bool:
+    """轻量探测文件服务器是否能访问该路径，避免前端批量触发 404。"""
+    if not PHOTO_FILE_BASE_URL:
+        return False
+    if not path or "://" in path or path.startswith("//") or ".." in path:
+        return False
+
+    source_url = _build_source_url(path)
+    headers = {"User-Agent": "hcs-agent/1.0"}
+    try:
+        request = Request(source_url, headers=headers, method="HEAD")
+        with urlopen(request, timeout=PHOTO_DOWNLOAD_TIMEOUT):
+            return True
+    except Exception:
+        pass
+
+    try:
+        request = Request(
+            source_url,
+            headers={**headers, "Range": "bytes=0-0"},
+            method="GET",
+        )
+        with urlopen(request, timeout=PHOTO_DOWNLOAD_TIMEOUT):
+            return True
+    except Exception:
+        return False
+
+
 def _serialize_dt(value) -> str:
     if isinstance(value, datetime):
         return value.isoformat(sep=" ", timespec="seconds")
@@ -118,6 +148,8 @@ def _iter_photo_attachments(row) -> Iterable[dict]:
     for field_name, label, media_type in PHOTO_FIELDS:
         path = _stringify(getattr(row, field_name))
         if not path:
+            continue
+        if not _is_source_file_available(path):
             continue
         yield {
             "type": media_type,

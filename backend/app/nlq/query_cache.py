@@ -11,7 +11,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-from app.question_normalizer import normalize_query_question
+from app.nlq.question_normalizer import normalize_query_question
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]

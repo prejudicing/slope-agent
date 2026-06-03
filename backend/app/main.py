@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.api import router
+from app.api.routes import router
 
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 GENERATED_ASSETS = Path(__file__).resolve().parents[1] / "generated"

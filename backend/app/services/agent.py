@@ -22,12 +22,12 @@ try:
 except Exception:
     BaseCallbackHandler = object
 
-from app.db import get_db
-from app.business_queries import enrich_rows, get_deterministic_query
-from app.monitoring_scale import get_county_monitoring_scale
-from app.report_inventory import get_report_asset_inventory
-from app.sqlserver_db import query_sqlserver_for_display
-from app.config import (
+from app.core.db import get_db
+from app.nlq.business_queries import enrich_rows, get_deterministic_query
+from app.dashboards.monitoring_scale import get_county_monitoring_scale
+from app.reports.report_inventory import get_report_asset_inventory
+from app.core.sqlserver_db import query_sqlserver_for_display
+from app.core.config import (
     QUERY_API_KEY,
     QUERY_BASE_URL,
     QUERY_MODEL,
@@ -45,17 +45,17 @@ from app.config import (
     DM_PORT,
     DM_USER,
 )
-from app.conversation_context import (
+from app.nlq.conversation_context import (
     normalize_history,
     resolve_effective_question,
 )
-from app.domain import GQP_AGENT_PREFIX
-from app.query_cache import get_cached_sql, save_cached_sql
-from app.photo_service import find_photo_attachments
-from app.photo_service import build_photo_summary, has_photo_intent, search_photo_records
-from app.question_normalizer import normalize_query_question
-from app.query_router import QueryRouteDecision, route_question
-from app.schema_knowledge import build_schema_guide, select_include_tables
+from app.nlq.domain import GQP_AGENT_PREFIX
+from app.nlq.query_cache import get_cached_sql, save_cached_sql
+from app.services.photo_service import find_photo_attachments
+from app.services.photo_service import build_photo_summary, has_photo_intent, search_photo_records
+from app.nlq.question_normalizer import normalize_query_question
+from app.nlq.query_router import QueryRouteDecision, route_question
+from app.nlq.schema_knowledge import build_schema_guide, select_include_tables
 
 
 # 只允许只读查询。这里用黑名单拦截常见写操作，真正执行前还会再次检查。
@@ -536,7 +536,7 @@ def build_template_summary(query_name: str, summary: str, rows: list[dict], tota
 
 def _build_qmqf_risk_context() -> dict:
     try:
-        from app.qmqf_dashboard import get_qmqf_abnormal_dashboard
+        from app.dashboards.qmqf_dashboard import get_qmqf_abnormal_dashboard
 
         dashboard = get_qmqf_abnormal_dashboard(20)
         items = dashboard.get("items") or []
@@ -565,7 +565,7 @@ def _build_qmqf_risk_context() -> dict:
 
 def _build_professional_monitor_context() -> str:
     try:
-        from app.displacement_dashboard import get_recent_displacement_dashboard
+        from app.dashboards.displacement_dashboard import get_recent_displacement_dashboard
 
         dashboard = get_recent_displacement_dashboard(4)
         items = dashboard.get("items") or []
@@ -596,7 +596,7 @@ def _build_professional_monitor_context() -> str:
 
 def _build_report_stability_context() -> str:
     try:
-        from app.report_assets import get_recent_report_stability_assets
+        from app.reports.report_assets import get_recent_report_stability_assets
 
         payload = get_recent_report_stability_assets(limit=6, only_with_photos=True)
         items = payload.get("items") or []

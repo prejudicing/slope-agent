@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.slope_object_index import enrich_slope_cards
-from app.sqlserver_db import query_sqlserver_for_display
+from app.reports.slope_object_index import enrich_slope_cards
+from app.core.sqlserver_db import query_sqlserver_for_display
 
 
 ABNORMAL_FIELDS = [

@@ -13,7 +13,7 @@ from langchain_community.utilities import SQLDatabase
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.engine import Engine
 
-from app.config import (
+from app.core.config import (
     DB_DRIVER,
     DB_ENCRYPT,
     DB_EXTRA_PARAMS,
@@ -39,8 +39,8 @@ from app.config import (
     PHOTO_DB_TRUST_CERT,
     PHOTO_DB_USER,
 )
-from app.domain import GQP_INCLUDE_TABLES
-from app.schema_knowledge import get_default_core_tables
+from app.nlq.domain import GQP_INCLUDE_TABLES
+from app.nlq.schema_knowledge import get_default_core_tables
 
 SUPPORTED_DB_PROVIDERS = {"dm", "sqlserver"}
 

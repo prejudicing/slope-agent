@@ -1,7 +1,7 @@
 """LangChain SQLDatabase SQL Server smoke test.
 
 Reads backend/.env and exercises the same database layer used by the NL2SQL
-agent: app.db -> SQLAlchemy engine -> LangChain SQLDatabase.
+agent: app.core.db -> SQLAlchemy engine -> LangChain SQLDatabase.
 
 Run from repo root:
     conda run -n dm python backend/scripts/test_langchain_sqlserver_connection.py
@@ -22,7 +22,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 from langchain_community.utilities import SQLDatabase
 
-from app.db import build_photo_db_uri, get_photo_sqlalchemy_engine
+from app.core.db import build_photo_db_uri, get_photo_sqlalchemy_engine
 
 
 def _mask_uri(uri: str) -> str:

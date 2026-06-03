@@ -24,7 +24,7 @@ BACKEND_DIR = ROOT_DIR / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.agent import run_agent
+from app.services.agent import run_agent
 
 EVAL_DIR = Path(__file__).resolve().parents[1]
 RESULTS_DIR = EVAL_DIR / "results"

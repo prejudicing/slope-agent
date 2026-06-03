@@ -9,8 +9,8 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.business_queries import get_deterministic_query  # noqa: E402
-from app.query_router import route_question  # noqa: E402
+from app.nlq.business_queries import get_deterministic_query  # noqa: E402
+from app.nlq.query_router import route_question  # noqa: E402
 
 
 QUESTIONS = [
