@@ -9,3 +9,5 @@ langchain-openai
 sqlalchemy
 dmPython
 dmSQLAlchemy
+python-tds
+pyodbc

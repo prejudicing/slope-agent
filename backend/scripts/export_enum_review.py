@@ -19,7 +19,6 @@ import csv
 import json
 import sys
 from pathlib import Path
-from urllib.parse import quote_plus
 
 from sqlalchemy import create_engine, text
 
@@ -28,7 +27,7 @@ BACKEND_DIR = ROOT_DIR / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
-from app.config import DM_HOST, DM_PASSWORD, DM_PORT, DM_USER
+from app.db import build_db_uri
 
 SCHEMA_PATH = ROOT_DIR / "backend" / "schema_exports" / "database_schema_explained.json"
 CSV_OUTPUT = ROOT_DIR / "backend" / "schema_exports" / "enum_fields_01_review.csv"
@@ -54,26 +53,9 @@ def guess_polarity(value: str) -> str:
     return "需人工判断"
 
 
-def _build_dm_uri() -> str:
-    if not all([DM_USER, DM_PASSWORD, DM_HOST, DM_PORT]):
-        missing = [
-            name
-            for name, value in {
-                "DM_USER": DM_USER,
-                "DM_PASSWORD": DM_PASSWORD,
-                "DM_HOST": DM_HOST,
-                "DM_PORT": DM_PORT,
-            }.items()
-            if not value
-        ]
-        raise RuntimeError(f"缺少达梦数据库配置: {', '.join(missing)}")
-    password = quote_plus(DM_PASSWORD)
-    return f"dm+dmPython://{DM_USER}:{password}@{DM_HOST}:{DM_PORT}/"
-
-
 def fetch_value_counts(table_name: str, field_name: str) -> dict[str, int]:
     """直接通过 SQL 统计字段中 0/1/空值/其他值 的记录数。"""
-    uri = _build_dm_uri()
+    uri = build_db_uri()
     engine = create_engine(uri)
     try:
         sql = text(

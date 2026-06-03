@@ -2,16 +2,21 @@
 
 import argparse
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.db import build_db_uri, get_db_provider
+
 SCHEMA_DIR = ROOT_DIR / "backend" / "schema_exports"
 DEFAULT_SCHEMA = SCHEMA_DIR / "database_schema_explained.json"
 DEFAULT_PROFILE = SCHEMA_DIR / "table_profile.json"
@@ -72,30 +77,20 @@ def normalize(value: str) -> str:
 
 
 def quote_identifier(name: str) -> str:
-    """达梦字段和表名保留原大小写，用双引号避免大小写或关键字问题。"""
+    """保留原大小写，用双引号避免大小写或关键字问题。"""
     return '"' + name.replace('"', '""') + '"'
 
 
-def load_dm_config() -> dict[str, str]:
-    """从 backend/.env 加载达梦数据库连接配置。"""
+def load_db_env() -> None:
+    """从 backend/.env 加载数据库连接配置。"""
     load_dotenv(ROOT_DIR / "backend" / ".env")
-    import os
-
-    config = {
-        "user": os.getenv("DM_USER", ""),
-        "password": os.getenv("DM_PASSWORD", ""),
-        "host": os.getenv("DM_HOST", ""),
-        "port": os.getenv("DM_PORT", ""),
-    }
-    missing = [key for key, value in config.items() if not value]
-    if missing:
-        raise RuntimeError(f"缺少达梦数据库配置: {', '.join(missing)}")
-    return config
 
 
-def build_dm_uri(config: dict[str, str]) -> str:
-    """构造 SQLAlchemy 达梦连接串。"""
-    return f"dm+dmPython://{config['user']}:{quote_plus(config['password'])}@{config['host']}:{config['port']}/"
+def example_limit_sql(select_clause: str, body_clause: str, limit: int = 20) -> str:
+    """按当前数据库方言生成带样本限制的示例 SQL。"""
+    if get_db_provider() == "sqlserver":
+        return f"SELECT TOP {limit} {select_clause} {body_clause}"
+    return f"SELECT {select_clause} {body_clause} LIMIT {limit}"
 
 
 def is_numeric_or_text(column_type: str) -> bool:
@@ -175,8 +170,16 @@ def profile_table(conn, table: dict[str, Any], sample_limit: int) -> dict[str, A
 
         if row_count and is_enum_candidate(column):
             try:
-                enum_rows = conn.execute(
-                    text(
+                if get_db_provider() == "sqlserver":
+                    enum_sql = (
+                        f"SELECT TOP {sample_limit} {quoted_column} AS value, COUNT(*) AS cnt "
+                        f"FROM {quoted_table} "
+                        f"WHERE {quoted_column} IS NOT NULL "
+                        f"GROUP BY {quoted_column} "
+                        f"ORDER BY cnt DESC"
+                    )
+                else:
+                    enum_sql = (
                         f"SELECT {quoted_column} AS value, COUNT(*) AS cnt "
                         f"FROM {quoted_table} "
                         f"WHERE {quoted_column} IS NOT NULL "
@@ -184,6 +187,8 @@ def profile_table(conn, table: dict[str, Any], sample_limit: int) -> dict[str, A
                         f"ORDER BY cnt DESC "
                         f"LIMIT {sample_limit}"
                     )
+                enum_rows = conn.execute(
+                    text(enum_sql)
                 ).mappings().all()
                 profile["distinct_sample"] = [
                     {"value": safe_scalar(row["value"]), "count": int(row["cnt"])}
@@ -401,22 +406,34 @@ def generate_business_starter_pack(core_candidates: dict[str, Any]) -> dict[str,
             },
             {
                 "question": "查询最近存在裂缝或落石的高切坡",
-                "sql": "SELECT gqpbh, isCrack, sfyls, createdOn FROM tb_hcs_monitoring WHERE isCrack = 1 OR sfyls = 1 ORDER BY createdOn DESC LIMIT 20",
+                "sql": example_limit_sql(
+                    "gqpbh, isCrack, sfyls, createdOn",
+                    "FROM tb_hcs_monitoring WHERE isCrack = 1 OR sfyls = 1 ORDER BY createdOn DESC",
+                ),
                 "tables": ["tb_hcs_monitoring"],
             },
             {
                 "question": "查询某个区县存在异常状态的高切坡",
-                "sql": "SELECT gqpbh, gqpmc, ssqx, gqpzt, sfzyjcyc, sfsssjyc FROM geo_gqp_jbxx WHERE ssqx LIKE '%区县名称%' AND (gqpzt IN ('不良', '较差') OR sfzyjcyc IS NOT NULL OR sfsssjyc IS NOT NULL) LIMIT 20",
+                "sql": example_limit_sql(
+                    "gqpbh, gqpmc, ssqx, gqpzt, sfzyjcyc, sfsssjyc",
+                    "FROM geo_gqp_jbxx WHERE ssqx LIKE '%区县名称%' AND (gqpzt IN ('不良', '较差') OR sfzyjcyc IS NOT NULL OR sfsssjyc IS NOT NULL)",
+                ),
                 "tables": ["geo_gqp_jbxx"],
             },
             {
                 "question": "查询最近的预警专报内容",
-                "sql": "SELECT title, ssqx, xmmc, xmbh, jclx, scyjsj, sfjcyj, create_time FROM t_warning_report_content ORDER BY create_time DESC LIMIT 20",
+                "sql": example_limit_sql(
+                    "title, ssqx, xmmc, xmbh, jclx, scyjsj, sfjcyj, create_time",
+                    "FROM t_warning_report_content ORDER BY create_time DESC",
+                ),
                 "tables": ["t_warning_report_content"],
             },
             {
                 "question": "查询某个高切坡的地质背景资料",
-                "sql": "SELECT gqpbh, gqpmc, qplx, aqdj, yxmc, fhzt, dzmc, dzms FROM geo_dzbjjbxx WHERE gqpbh = '高切坡编号' LIMIT 20",
+                "sql": example_limit_sql(
+                    "gqpbh, gqpmc, qplx, aqdj, yxmc, fhzt, dzmc, dzms",
+                    "FROM geo_dzbjjbxx WHERE gqpbh = '高切坡编号'",
+                ),
                 "tables": ["geo_dzbjjbxx"],
             },
         ],
@@ -446,7 +463,8 @@ def main() -> None:
     args = parser.parse_args()
 
     explained_schema = json.loads(args.schema.read_text(encoding="utf-8"))
-    engine = create_engine(build_dm_uri(load_dm_config()))
+    load_db_env()
+    engine = create_engine(build_db_uri())
     profiles = []
     try:
         with engine.connect() as conn:
