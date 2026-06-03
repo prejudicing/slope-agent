@@ -1,705 +1,1051 @@
 <template>
-  <div class="chat-page">
-    <header class="chat-topbar">
-      <h1>高切坡系统智能体</h1>
-      <button
-        type="button"
-        class="topbar-action"
-        title="重置页面"
-        @click="resetPage"
-      >
-        <el-icon><Plus /></el-icon>
-      </button>
-    </header>
+  <div class="assistant-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">高</div>
+        <div>
+          <h1>高切坡智能助手</h1>
+          <p>业务数据查询与研判</p>
+        </div>
+      </div>
+
+      <el-button class="new-chat" type="primary" @click="startNewChat">新建会话</el-button>
+
+      <section class="side-section">
+        <div class="side-title">常用场景</div>
+        <button
+          v-for="item in quickPrompts"
+          :key="item"
+          class="prompt-item"
+          type="button"
+          @click="submitPreset(item)"
+        >
+          {{ item }}
+        </button>
+      </section>
+
+      <section class="side-section">
+        <div class="side-title">历史会话</div>
+        <button
+          v-for="item in conversations"
+          :key="item.id"
+          class="history-item"
+          :class="{ active: item.id === activeConversationId }"
+          type="button"
+          @click="activeConversationId = item.id"
+        >
+          <span class="history-title">{{ item.title }}</span>
+          <small>{{ item.time }}</small>
+          <i
+            class="history-delete"
+            role="button"
+            tabindex="0"
+            aria-label="删除会话"
+            title="删除会话"
+            @click.stop="deleteConversation(item.id)"
+            @keydown.enter.stop.prevent="deleteConversation(item.id)"
+            @keydown.space.stop.prevent="deleteConversation(item.id)"
+          ></i>
+        </button>
+      </section>
+    </aside>
 
     <main class="chat-main">
-      <section class="agent-banner">
-        <div class="banner-brand">
-          <img :src="heroImage" alt="高切坡AI助手" class="brand-icon" />
-          <h2>高切坡AI助手</h2>
+      <header class="chat-header">
+        <div>
+          <h2>高切坡业务问答</h2>
+          <p>连接达梦数据库、监测记录、预警专报与现场照片资源</p>
         </div>
-      </section>
-
-      <section v-if="!hasTurns" class="welcome-panel">
-        <div class="welcome-bubble">你好，我是高切坡AI助手，请问有什么可以帮你！</div>
-        <div class="starter-list">
-          <button
-            v-for="item in starterQuestions"
-            :key="item"
-            type="button"
-            class="starter-chip"
-            @click="useStarter(item)"
-          >
-            {{ item }}
-          </button>
-        </div>
-      </section>
-
-      <section class="conversation-list">
-        <template v-for="entry in feedItems" :key="entry.id">
-          <div v-if="entry.kind === 'marker'" class="context-divider">
-            <span>{{ entry.text }}</span>
+        <div class="header-actions">
+          <button type="button" class="header-new-chat" @click="startNewChat">新会话</button>
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            数据服务就绪
           </div>
+        </div>
+      </header>
 
-          <template v-else>
-            <div class="message-row user-row">
-              <div class="message-body user-body">
-                <div class="speaker-name">{{ isLatestTurn(entry.id) ? '当前提问' : '用户提问' }}</div>
-                <div class="message-bubble user-bubble">{{ entry.question }}</div>
-              </div>
-              <div class="message-avatar user-avatar">我</div>
+      <section ref="messageListRef" class="message-list">
+        <div v-if="!activeMessages.length" class="welcome">
+          <div class="welcome-badge">GQP Agent</div>
+          <h3>今天想查看哪类高切坡业务情况？</h3>
+          <p>你可以像使用千问或元宝一样提问，系统会返回报告、表格和可核验的业务数据。</p>
+          <div class="welcome-grid">
+            <button
+              v-for="item in quickPrompts"
+              :key="item"
+              type="button"
+              @click="submitPreset(item)"
+            >
+              {{ item }}
+            </button>
+          </div>
+        </div>
+
+        <article
+          v-for="message in activeMessages"
+          :key="message.id"
+          class="message-row"
+          :class="message.role"
+        >
+          <div class="avatar">{{ message.role === 'user' ? '我' : '坡' }}</div>
+          <div class="message-body">
+            <div class="message-meta">
+              {{ message.role === 'user' ? '你' : '高切坡智能助手' }}
+              <span>{{ message.time }}</span>
             </div>
+            <div class="bubble">
+              <pre>{{ message.content }}</pre>
 
-            <div class="message-row assistant-row">
-              <img :src="heroImage" alt="高切坡智能体" class="message-avatar assistant-avatar" />
-              <div class="message-body assistant-stack">
-                <div class="speaker-name">高切坡AI助手</div>
-                <div class="assistant-response-frame">
-                  <div v-if="entry.loading" class="loading-bubble">
-                    <el-icon class="loading-icon is-loading"><Loading /></el-icon>
-                    <span class="loading-text">思考中...</span>
-                  </div>
-                  <button
-                    v-if="entry.loading && activeTurnId === entry.id"
-                    type="button"
-                    class="stop-response-button"
-                    @click="stopActiveQuery"
-                  >
-                    停止响应
-                  </button>
-
-                  <el-alert
-                    v-if="entry.error"
-                    :title="entry.error"
-                    type="error"
-                    show-icon
-                    class="turn-error"
-                  />
-
-                  <template v-if="!entry.loading && !entry.error && !isCardResponse(entry)">
-                    <div class="message-bubble assistant-bubble assistant-reply-bubble">
-                      <div class="assistant-reply-text">
-                        {{ entry.summary || '暂时没有可返回的内容。' }}
-                      </div>
-                      <div v-if="entry.suggestion" class="assistant-suggestion">
-                        {{ entry.suggestion }}
-                      </div>
-                    </div>
-                  </template>
-
-                  <template v-else>
-                    <SummaryPanel
-                      v-if="entry.summary.trim() || (!entry.loading && !entry.error)"
-                      :question="entry.question"
-                      :summary="entry.summary"
-                      :columns="entry.columns"
-                      :rows="entry.rows"
-                      :total-rows="entry.totalRows"
-                      embedded
-                    />
-
-                    <ResultPanel
-                      v-if="entry.rows.length || entry.totalRows || (!entry.loading && !entry.error)"
-                      :columns="entry.columns"
-                      :rows="entry.rows"
-                      :total-rows="entry.totalRows"
-                      embedded
-                    />
-                  </template>
-                </div>
+              <ResultPanel
+                v-if="!message.dashboard && !message.qmqfDashboard && !message.recentBrief && (message.columns?.length || message.rows?.length)"
+                :columns="message.columns || []"
+                :rows="message.rows || []"
+                :total-rows="message.totalRows || 0"
+              />
+              <DisplacementDashboard
+                v-if="message.dashboard"
+                class="message-dashboard"
+              />
+              <QmqfAbnormalDashboard
+                v-if="message.qmqfDashboard"
+                class="message-dashboard"
+              />
+              <RecentSlopeBrief
+                v-if="message.recentBrief"
+                class="message-dashboard"
+              />
+              <div v-if="message.followupText" class="followup-panel">
+                <span>{{ message.followupText }}</span>
+                <button type="button" @click="submitPreset(message.followupPrompt || message.followupText)">
+                  继续生成
+                </button>
               </div>
             </div>
-          </template>
-        </template>
+          </div>
+        </article>
+
+        <article v-if="loading" class="message-row assistant">
+          <div class="avatar">坡</div>
+          <div class="message-body">
+            <div class="message-meta">高切坡智能助手 <span>正在处理</span></div>
+            <div class="bubble loading-bubble">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span>{{ progressText }}</span>
+            </div>
+          </div>
+        </article>
       </section>
-    </main>
 
-    <footer class="composer-wrap">
-      <div class="composer-shell">
+      <footer class="composer">
         <QueryInput
-          v-model:question="composerQuestion"
+          v-model:question="question"
           :loading="loading"
-          placeholder="发送消息"
-          @clear="clearConversation"
           @submit="handleSubmit"
         />
-      </div>
-      <div class="footer-copy">高切坡智能查询</div>
-    </footer>
+      </footer>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Loading, Plus } from '@element-plus/icons-vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { Loading } from '@element-plus/icons-vue'
+import DisplacementDashboard from './components/DisplacementDashboard.vue'
 import QueryInput from './components/QueryInput.vue'
+import QmqfAbnormalDashboard from './components/QmqfAbnormalDashboard.vue'
+import RecentSlopeBrief from './components/RecentSlopeBrief.vue'
 import ResultPanel from './components/ResultPanel.vue'
-import SummaryPanel from './components/SummaryPanel.vue'
-import heroImage from './assets/hero.png'
 import { streamQuery } from './api/query'
-import type { ConversationHistoryTurn } from './types/query'
 
-interface QueryTurn {
+type ChatMessage = {
   id: number
-  kind: 'turn'
-  question: string
-  status: string
-  queryType: string
-  summary: string
-  suggestion: string
-  columns: string[]
-  rows: Record<string, string>[]
-  totalRows: number
-  error: string
-  loading: boolean
+  role: 'user' | 'assistant'
+  content: string
+  time: string
+  sql?: string
+  columns?: string[]
+  rows?: Record<string, string>[]
+  totalRows?: number
+  dashboard?: boolean
+  qmqfDashboard?: boolean
+  recentBrief?: boolean
+  followupText?: string
+  followupPrompt?: string
 }
 
-interface ContextMarker {
+type Conversation = {
   id: number
-  kind: 'marker'
-  text: string
+  title: string
+  time: string
+  messages: ChatMessage[]
 }
 
-type FeedItem = QueryTurn | ContextMarker
-
-const composerQuestion = ref('')
-const feedItems = ref<FeedItem[]>([])
-const activeAbortController = ref<AbortController | null>(null)
-const activeTurnId = ref<number | null>(null)
-const cancelledTurnIds = ref<Set<number>>(new Set())
-
-const starterQuestions = [
-  '对比一下各区县高切坡异常数量',
-  '查询渝北区高切坡基本信息',
-  '我想知道哪些高切坡处于异常状态，并告诉我属于哪一种异常类型',
-  '帮我分析 2024 年预警高切坡的分布情况',
-  '查询最近30天的预警专报记录',
+const quickPrompts = [
+  '生成近期高切坡业务情况简报',
+  '近期群测群防监测情况',
+  '近期专业监测情况',
+  '典型破坏状态下的高切坡现状照片',
 ]
 
-const loading = computed(() =>
-  feedItems.value.some((item) => item.kind === 'turn' && item.loading)
-)
+const STORAGE_KEY = 'gqp-business-chat-history-v1'
+const MAX_STORED_CONVERSATIONS = 12
+const MAX_STORED_MESSAGES = 24
+const MAX_STORED_ROWS = 20
+const MAX_STORED_COLUMNS = 12
 
-const hasTurns = computed(() =>
-  feedItems.value.some((item) => item.kind === 'turn')
-)
+const conversations = ref<Conversation[]>([
+  {
+    id: 1,
+    title: '高切坡业务问答',
+    time: '当前',
+    messages: [],
+  },
+])
+const activeConversationId = ref(1)
+const question = ref('')
+const loading = ref(false)
+const progressText = ref('正在理解问题并检索业务数据')
+const messageListRef = ref<HTMLElement | null>(null)
+let messageId = 1
 
-const isCardResponse = (entry: QueryTurn) =>
-  ['db_query', 'template_query', 'result_analysis'].includes(entry.queryType)
+const activeConversation = computed(() => {
+  return conversations.value.find((item) => item.id === activeConversationId.value) || conversations.value[0]
+})
 
-const isLatestTurn = (id: number) => {
-  const turns = feedItems.value.filter((item): item is QueryTurn => item.kind === 'turn')
-  if (!turns.length) {
-    return false
+const activeMessages = computed(() => activeConversation.value.messages)
+
+const normalizeConversation = (conversation: Conversation): Conversation => ({
+  id: Number(conversation.id) || Date.now(),
+  title: String(conversation.title || '高切坡业务问答').slice(0, 30),
+  time: String(conversation.time || ''),
+  messages: (conversation.messages || []).slice(-MAX_STORED_MESSAGES).map((message) => ({
+    id: Number(message.id) || Date.now(),
+    role: message.role === 'assistant' ? 'assistant' : 'user',
+    content: String(message.content || ''),
+    time: String(message.time || ''),
+    columns: (message.columns || []).slice(0, MAX_STORED_COLUMNS),
+    rows: (message.rows || []).slice(0, MAX_STORED_ROWS),
+    totalRows: Number(message.totalRows || 0),
+    dashboard: Boolean(message.dashboard),
+    qmqfDashboard: Boolean(message.qmqfDashboard),
+    recentBrief: Boolean(message.recentBrief),
+    followupText: message.followupText || '',
+    followupPrompt: message.followupPrompt || '',
+  })),
+})
+
+const trimConversations = (items: Conversation[]) => {
+  const meaningful = items
+    .map(normalizeConversation)
+    .filter((item, index) => index === 0 || item.messages.length || item.title !== '新的业务会话')
+  return meaningful.slice(0, MAX_STORED_CONVERSATIONS)
+}
+
+const saveConversations = () => {
+  try {
+    const payload = {
+      activeConversationId: activeConversationId.value,
+      conversations: trimConversations(conversations.value),
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  } catch {
+    // 本地存储容量不足时不影响当前会话使用。
   }
-  return turns[turns.length - 1].id === id
 }
 
-const getConversationHistory = (): ConversationHistoryTurn[] => {
-  return feedItems.value
-    .filter((item): item is QueryTurn => item.kind === 'turn')
-    .slice(-4)
-    .map((item) => ({
-      question: item.question,
-      summary: item.summary,
-      total_rows: item.totalRows,
-    }))
+const loadConversations = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) {
+      return
+    }
+    const payload = JSON.parse(raw)
+    const stored = trimConversations(payload?.conversations || [])
+    if (!stored.length) {
+      return
+    }
+    conversations.value = stored
+    const activeId = Number(payload?.activeConversationId)
+    activeConversationId.value = stored.some((item) => item.id === activeId) ? activeId : stored[0].id
+    const maxMessageId = stored.flatMap((item) => item.messages).reduce((max, message) => Math.max(max, message.id), 0)
+    messageId = Math.max(messageId, maxMessageId + 1)
+  } catch {
+    localStorage.removeItem(STORAGE_KEY)
+  }
 }
 
-const useStarter = (question: string) => {
-  if (loading.value) {
+const nowTime = () => {
+  const now = new Date()
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+}
+
+const scrollToBottom = async () => {
+  await nextTick()
+  if (messageListRef.value) {
+    messageListRef.value.scrollTop = messageListRef.value.scrollHeight
+  }
+}
+
+const scrollToLatestAssistantStart = async () => {
+  await nextTick()
+  const list = messageListRef.value
+  if (!list) {
     return
   }
-  composerQuestion.value = question
+  const rows = list.querySelectorAll<HTMLElement>('.message-row.assistant')
+  const latest = rows[rows.length - 1]
+  if (!latest) {
+    list.scrollTop = list.scrollHeight
+    return
+  }
+  list.scrollTo({
+    top: Math.max(0, latest.offsetTop - 12),
+    behavior: 'smooth',
+  })
+}
+
+const startNewChat = () => {
+  const id = Date.now()
+  conversations.value.unshift({
+    id,
+    title: '新的业务会话',
+    time: '刚刚',
+    messages: [],
+  })
+  activeConversationId.value = id
+  question.value = ''
+  saveConversations()
+}
+
+const deleteConversation = (id: number) => {
+  const next = conversations.value.filter((item) => item.id !== id)
+  if (!next.length) {
+    const newId = Date.now()
+    conversations.value = [
+      {
+        id: newId,
+        title: '新的业务会话',
+        time: '刚刚',
+        messages: [],
+      },
+    ]
+    activeConversationId.value = newId
+    question.value = ''
+    saveConversations()
+    return
+  }
+  conversations.value = next
+  if (activeConversationId.value === id) {
+    activeConversationId.value = next[0].id
+  }
+  saveConversations()
+}
+
+const submitPreset = (value: string) => {
+  question.value = value
   void handleSubmit()
 }
 
-const clearConversation = () => {
-  if (!feedItems.value.length || loading.value) {
-    return
-  }
+const setConversationTitle = (text: string) => {
+  const title = text.length > 18 ? `${text.slice(0, 18)}...` : text
+  activeConversation.value.title = title
+  activeConversation.value.time = nowTime()
+}
 
-  feedItems.value = [
-    {
-      id: Date.now(),
-      kind: 'marker',
-      text: '上下文已清除，重新开始对话',
-    },
+const splitFollowup = (value: string) => {
+  const text = String(value || '').trim()
+  const patterns = [
+    /\n\n(需要我继续[^？?]*[？?])\s*$/u,
+    /\n\n(需要我给出[^？?]*[？?])\s*$/u,
+    /\n\n(是否需要我[^？?]*[？?])\s*$/u,
   ]
-  composerQuestion.value = ''
-  ElMessage.success('上下文已清除')
+  for (const pattern of patterns) {
+    const match = text.match(pattern)
+    if (match) {
+      const followupText = match[1].trim()
+      return {
+        content: text.slice(0, match.index).trim(),
+        followupText,
+        followupPrompt: buildFollowupPrompt(followupText),
+      }
+    }
+  }
+  return { content: text, followupText: '', followupPrompt: '' }
 }
 
-const resetPage = () => {
-  if (loading.value) {
-    return
-  }
-  feedItems.value = []
-  composerQuestion.value = ''
-  ElMessage.success('页面已重置')
+const buildFollowupPrompt = (value: string) => {
+  return value
+    .replace(/^需要我继续/, '请继续')
+    .replace(/^需要我给出/, '请给出')
+    .replace(/^是否需要我/, '请')
+    .replace(/[？?]\s*$/, '')
 }
 
-const stopActiveQuery = () => {
-  if (activeTurnId.value == null) {
+const applyAssistantContent = (message: ChatMessage, value: string) => {
+  const parsed = splitFollowup(value)
+  message.content = parsed.content || value
+  message.followupText = parsed.followupText
+  message.followupPrompt = parsed.followupPrompt
+}
+
+const setFollowup = (message: ChatMessage, text: string) => {
+  if (message.followupText || !text) {
     return
   }
+  message.followupText = text
+  message.followupPrompt = buildFollowupPrompt(text)
+}
 
-  cancelledTurnIds.value.add(activeTurnId.value)
-  activeAbortController.value?.abort()
-
-  const turn = feedItems.value.find(
-    (item): item is QueryTurn => item.kind === 'turn' && item.id === activeTurnId.value
-  )
-  if (turn) {
-    turn.loading = false
-    turn.status = 'cancelled'
-    turn.queryType = ''
-    turn.summary = '已停止响应。'
-    turn.suggestion = ''
-    turn.columns = []
-    turn.rows = []
-    turn.totalRows = 0
-    turn.error = ''
+const ensureBusinessFollowup = (message: ChatMessage, suggestion?: string | null) => {
+  if (message.followupText) {
+    return
   }
-
-  activeAbortController.value = null
-  activeTurnId.value = null
-  ElMessage.info('已停止当前响应')
+  const content = message.content || ''
+  if (/^抱歉|暂时只能|不属于/.test(content)) {
+    if (suggestion) {
+      setFollowup(message, `需要我继续按高切坡业务范围重新组织问题吗？`)
+    }
+    return
+  }
+  if (message.recentBrief) {
+    setFollowup(message, '需要我继续生成按区县展开的明细清单、现场复核对象或可下载的业务简报吗？')
+    return
+  }
+  if (message.dashboard) {
+    setFollowup(message, '需要我继续给出具体高切坡的监测点年度位移曲线、月度变化表或稳定性评价吗？')
+    return
+  }
+  if (message.qmqfDashboard) {
+    setFollowup(message, '需要我继续生成近期群测群防异常复核清单吗？')
+    return
+  }
+  if (message.rows?.length || message.columns?.length) {
+    setFollowup(message, '需要我继续按区县、编号、监测类型或时间范围进一步展开明细吗？')
+    return
+  }
+  if (content.includes('风险') || content.includes('异常') || content.includes('预警')) {
+    setFollowup(message, '需要我继续给出风险对象清单、区县排序或处置建议吗？')
+    return
+  }
+  if (content.includes('专业监测') || content.includes('位移') || content.includes('曲线')) {
+    setFollowup(message, '需要我继续给出监测点曲线、年度位移变化表或稳定性评价吗？')
+    return
+  }
+  if (content.includes('群测群防') || content.includes('现场照片')) {
+    setFollowup(message, '需要我继续给出现场异常照片、细项异常记录或复核建议清单吗？')
+    return
+  }
+  if (content.includes('高切坡')) {
+    setFollowup(message, '需要我继续给出高切坡明细、监测情况或现场复核对象吗？')
+  }
 }
 
 const handleSubmit = async () => {
-  if (loading.value) {
+  const text = question.value.trim()
+  if (!text || loading.value) {
     return
   }
 
-  const trimmedQuestion = composerQuestion.value.trim()
-  if (!trimmedQuestion) {
-    return
+  const userMessage: ChatMessage = {
+    id: messageId++,
+    role: 'user',
+    content: text,
+    time: nowTime(),
   }
+  activeConversation.value.messages.push(userMessage)
+  setConversationTitle(text)
+  question.value = ''
+  loading.value = true
+  progressText.value = '正在理解问题并检索业务数据'
+  await scrollToBottom()
 
-  const history = getConversationHistory()
-  const abortController = new AbortController()
-  const turn = reactive<QueryTurn>({
-    id: Date.now(),
-    kind: 'turn',
-    question: trimmedQuestion,
-    status: 'loading',
-    queryType: '',
-    summary: '',
-    suggestion: '',
+  const assistantMessage: ChatMessage = {
+    id: messageId++,
+    role: 'assistant',
+    content: '已收到问题，正在生成查询报告...',
+    time: nowTime(),
     columns: [],
     rows: [],
     totalRows: 0,
-    error: '',
-    loading: true,
-  })
-
-  feedItems.value.push(turn)
-  composerQuestion.value = ''
-  activeAbortController.value = abortController
-  activeTurnId.value = turn.id
+  }
 
   try {
-    await streamQuery(
-      trimmedQuestion,
-      (event) => {
-        if (cancelledTurnIds.value.has(turn.id)) {
-          return
-        }
-
-        if (event.type === 'summary') {
-          turn.summary = event.summary || ''
-          return
-        }
-
-        if (event.type === 'final') {
-          const res = event.data
-          turn.status = res.status || 'success'
-          turn.queryType = res.query_type || ''
-          turn.summary = res.summary || res.result || turn.summary
-          turn.suggestion = res.suggestion || ''
-          turn.columns = res.columns || []
-          turn.rows = res.rows || []
-          turn.totalRows = res.total_rows || res.rows?.length || 0
-          turn.error = res.error || ''
-          return
-        }
-
-        if (event.type === 'error') {
-          turn.error = event.message
-        }
-      },
-      history,
-      {
-        signal: abortController.signal,
-        isCancelled: () => cancelledTurnIds.value.has(turn.id),
+    await streamQuery(text, (event) => {
+      if (event.type === 'progress') {
+        progressText.value = event.message || '正在处理'
+        return
       }
-    )
+
+      if (event.type === 'sql') {
+        return
+      }
+
+      if (event.type === 'summary') {
+        applyAssistantContent(assistantMessage, event.summary || assistantMessage.content)
+        return
+      }
+
+      if (event.type === 'final') {
+        const res = event.data
+        applyAssistantContent(assistantMessage, res.summary || res.result || '本次查询已完成，但没有生成文字报告。')
+        assistantMessage.columns = res.columns || []
+        assistantMessage.rows = res.rows || []
+        assistantMessage.totalRows = res.total_rows || res.rows?.length || 0
+        assistantMessage.dashboard = Boolean(
+          res.columns?.includes('displacement_chart_url') || res.columns?.includes('displacement_dashboard_marker')
+        )
+        assistantMessage.qmqfDashboard = Boolean(res.columns?.includes('qmqf_dashboard_marker'))
+        assistantMessage.recentBrief = Boolean(res.columns?.includes('recent_slope_brief_marker'))
+        ensureBusinessFollowup(assistantMessage, res.suggestion)
+        if (res.error) {
+          assistantMessage.content = `${assistantMessage.content}\n\n提示：${res.error}`
+        }
+        return
+      }
+
+      if (event.type === 'error') {
+        assistantMessage.content = `查询失败：${event.message}`
+      }
+    })
   } catch (err: any) {
-    if (cancelledTurnIds.value.has(turn.id) || err?.name === 'AbortError') {
-      turn.summary = turn.summary || '已停止响应。'
-      turn.error = ''
-    } else {
-      turn.error = err?.message || '请求失败'
-    }
+    assistantMessage.content = err?.message || '请求失败，请检查后端服务是否启动。'
   } finally {
-    turn.loading = false
-    if (activeTurnId.value === turn.id) {
-      activeAbortController.value = null
-      activeTurnId.value = null
-    }
+    activeConversation.value.messages.push(assistantMessage)
+    loading.value = false
+    saveConversations()
+    await scrollToLatestAssistantStart()
   }
 }
+
+onMounted(() => {
+  loadConversations()
+})
+
+watch(
+  conversations,
+  () => {
+    saveConversations()
+  },
+  { deep: true },
+)
+
+watch(activeConversationId, () => {
+  saveConversations()
+})
 </script>
 
 <style scoped>
-.chat-page {
-  min-height: 100vh;
-  padding: 16px 16px 150px;
-  background: #fff;
+.assistant-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  min-height: 620px;
+  background: #f6f7fb;
+  color: #1f2937;
 }
 
-.chat-topbar {
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 18px;
+  border-right: 1px solid #e4e8ef;
+  background: #ffffff;
+}
+
+.brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  max-width: 1280px;
-  margin: 0 auto 18px;
+  gap: 12px;
 }
 
-.chat-topbar h1 {
+.brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  background: #1b5cff;
+  color: #fff;
+  font-weight: 800;
+}
+
+.brand h1 {
   margin: 0;
-  color: #161616;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 18px;
+}
+
+.brand p,
+.chat-header p,
+.welcome p {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.new-chat {
+  width: 100%;
+}
+
+.side-section {
+  display: grid;
+  gap: 8px;
+}
+
+.side-title {
+  color: #667085;
+  font-size: 12px;
+}
+
+.prompt-item,
+.history-item,
+.welcome-grid button {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f5f7fb;
+  color: #27364a;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.45;
+  padding: 10px 12px;
   text-align: left;
 }
 
-.topbar-action {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #3b3b3b;
-  cursor: pointer;
-  font-size: 22px;
+.prompt-item:hover,
+.history-item:hover,
+.history-item.active,
+.welcome-grid button:hover {
+  border-color: #cbd8ff;
+  background: #eef3ff;
 }
 
-.topbar-action:hover {
-  background: #f3f4f8;
+.history-item {
+  display: grid;
+  gap: 4px;
+}
+
+.history-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-delete {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+  color: #667085;
+}
+
+.history-delete::before,
+.history-delete::after {
+  position: absolute;
+  left: 10px;
+  top: 5px;
+  width: 1.5px;
+  height: 10px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+}
+
+.history-delete::before {
+  transform: rotate(45deg);
+}
+
+.history-delete::after {
+  transform: rotate(-45deg);
+}
+
+.history-item {
+  position: relative;
+}
+
+.history-item:hover .history-delete,
+.history-item:focus-within .history-delete {
+  display: block;
+}
+
+.history-delete:hover {
+  border-color: #fda29b;
+  color: #b42318;
+}
+
+.history-item small {
+  color: #8a96a8;
 }
 
 .chat-main {
-  max-width: 1280px;
-  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  height: 100vh;
+  height: 100dvh;
 }
 
-.agent-banner {
-  margin-bottom: 34px;
-}
-
-.banner-brand {
+.chat-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 28px;
+  border-bottom: 1px solid #e4e8ef;
+  background: rgba(255, 255, 255, 0.92);
 }
 
-.banner-brand h2 {
+.chat-header h2 {
   margin: 0;
-  color: #111;
-  font-size: 30px;
-  font-weight: 700;
-  text-align: center;
+  font-size: 20px;
 }
 
-.brand-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 8px;
-  object-fit: cover;
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
-.welcome-panel {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
-  margin-bottom: 26px;
-  text-align: center;
-}
-
-.welcome-bubble {
-  width: min(100%, 1100px);
-  padding: 18px 20px;
-  border-radius: 8px;
-  background: #f3f2fb;
-  color: #2f2f2f;
-  font-size: 18px;
-  line-height: 1.65;
-  text-align: left;
-}
-
-.starter-list {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  width: min(100%, 1100px);
-}
-
-.starter-chip {
-  width: min(100%, 520px);
-  padding: 14px 18px;
-  border: 1px solid #dbdce2;
+.header-new-chat {
+  border: 1px solid #c9d7f8;
   border-radius: 8px;
   background: #fff;
-  color: #1f1f1f;
+  color: #1b5cff;
   cursor: pointer;
   font: inherit;
-  font-size: 16px;
-  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
 }
 
-.starter-chip:hover {
-  background: #f8f8fc;
+.header-new-chat:hover {
+  background: #eef3ff;
 }
 
-.conversation-list {
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  border: 1px solid #d9e3f5;
+  border-radius: 999px;
+  background: #fff;
+  color: #3d4f6a;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #17b26a;
+}
+
+.message-list {
+  min-width: 0;
+  overflow: auto;
+  padding: 28px;
+}
+
+.welcome {
+  max-width: 1180px;
+  margin: 3vh auto 0;
+  text-align: center;
+}
+
+.welcome-badge {
+  display: inline-flex;
+  border: 1px solid #dbe5ff;
+  border-radius: 999px;
+  background: #fff;
+  color: #1b5cff;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.welcome h3 {
+  margin: 18px 0 0;
+  font-size: 30px;
+  letter-spacing: 0;
+}
+
+.welcome-grid {
   display: grid;
-  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .message-row {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.message-avatar {
-  flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-}
-
-.assistant-avatar {
-  object-fit: cover;
-}
-
-.user-avatar {
   display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  max-width: 980px;
+  margin: 0 auto 22px;
+}
+
+.message-row.user {
+  grid-template-columns: minmax(0, 1fr) 38px;
+}
+
+.message-row.user .avatar {
+  grid-column: 2;
+  background: #1b5cff;
+}
+
+.message-row.user .message-body {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
   place-items: center;
-  background: linear-gradient(180deg, #d6f4ff 0%, #b9dff9 100%);
-  color: #1f4a63;
-  font-size: 16px;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .message-body {
-  flex: 1 1 auto;
   min-width: 0;
+  width: min(100%, 860px);
 }
 
-.speaker-name {
-  margin-bottom: 8px;
-  color: #555;
-  font-size: 16px;
+.message-meta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 7px;
+  color: #667085;
+  font-size: 12px;
 }
 
-.message-bubble {
+.bubble {
+  border: 1px solid #e4e8ef;
   border-radius: 8px;
-  padding: 18px 20px;
-  color: #1f1f1f;
-  font-size: 17px;
-  line-height: 1.7;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(23, 35, 58, 0.05);
+}
+
+.message-row.user .bubble {
+  background: #1b5cff;
+  color: #fff;
+}
+
+.bubble pre {
+  margin: 0;
+  color: inherit;
+  font-family: Arial, "Microsoft YaHei", sans-serif;
+  line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.assistant-bubble {
-  background: #f3f2fb;
-}
-
-.user-row {
-  justify-content: flex-end;
-}
-
-.user-body {
-  max-width: min(100%, 1040px);
-  text-align: right;
-}
-
-.user-body .speaker-name {
-  text-align: left;
-}
-
-.user-bubble {
-  background: #d7d8ff;
-  text-align: left;
-}
-
-.assistant-stack {
-  display: grid;
-  gap: 12px;
-}
-
-.assistant-response-frame {
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 8px;
-  background: #f3f2fb;
-}
-
-.assistant-reply-bubble {
-  width: min(100%, 1100px);
-}
-
-.assistant-reply-text {
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.assistant-suggestion {
-  margin-top: 10px;
-  color: #5f6675;
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .loading-bubble {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
-  width: fit-content;
-  min-width: 0;
-  padding: 14px 16px;
+  color: #3d4f6a;
+}
+
+.sql-card {
+  margin-top: 14px;
+  border: 1px solid #e4e8ef;
   border-radius: 8px;
-  background: #f3f2fb;
+  background: #f8fafc;
+  padding: 12px;
 }
 
-.loading-icon {
-  color: #7f84ef;
-  font-size: 16px;
+.card-title {
+  margin-bottom: 8px;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.loading-text {
-  color: #5e6172;
-  font-size: 15px;
+.sql-card code {
+  display: block;
+  overflow: auto;
+  color: #344054;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
-.stop-response-button {
-  width: fit-content;
-  min-width: 0;
-  margin: 4px auto 0;
-  padding: 12px 24px;
-  border: 1px solid #d9dbe6;
-  border-radius: 8px;
-  background: #fff;
-  color: #3f4454;
-  font: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(22, 28, 45, 0.08);
+.message-dashboard {
+  margin-top: 14px;
 }
 
-.stop-response-button:hover {
-  background: #f8f9fc;
-}
-
-.turn-error {
-  border-radius: 8px;
-}
-
-.context-divider {
+.followup-panel {
   display: flex;
   align-items: center;
-  gap: 14px;
-  color: #8a8a8a;
-  font-size: 14px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  border: 1px solid #cfe0ff;
+  border-radius: 8px;
+  background: #f7faff;
+  color: #27364a;
+  padding: 12px;
 }
 
-.context-divider::before,
-.context-divider::after {
-  content: '';
-  flex: 1 1 auto;
-  height: 1px;
-  background: #dedee4;
+.followup-panel span {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.composer-wrap {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  padding: 10px 16px 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 38%, #ffffff 100%);
+.followup-panel button {
+  flex: 0 0 auto;
+  border: 1px solid #1b5cff;
+  border-radius: 6px;
+  background: #1b5cff;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 12px;
 }
 
-.composer-shell {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
+.followup-panel button:hover {
+  background: #174ee5;
 }
 
-.footer-copy {
-  margin-top: 8px;
-  color: #9a9a9a;
-  font-size: 12px;
-  text-align: center;
+.composer {
+  padding: 16px 28px 22px;
+  border-top: 1px solid #e4e8ef;
+  background: rgba(246, 247, 251, 0.96);
 }
 
-@media (min-width: 1080px) {
-  .conversation-list {
-    gap: 28px;
+@media (max-width: 860px) {
+  .assistant-shell {
+    grid-template-columns: 1fr;
+    min-height: 100dvh;
   }
 
-  .message-row {
-    gap: 18px;
+  .sidebar {
+    display: none;
   }
 
-  .message-bubble {
-    font-size: 18px;
+  .chat-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .header-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .message-list {
+    padding: 18px 12px;
+  }
+
+  .welcome {
+    margin-top: 4vh;
+  }
+
+  .welcome h3 {
+    font-size: 24px;
+  }
+
+  .welcome-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .composer {
+    padding: 12px;
   }
 }
 
 @media (max-width: 640px) {
-  .chat-page {
-    padding-right: 12px;
-    padding-left: 12px;
-    padding-bottom: 172px;
-  }
-
-  .chat-topbar h1 {
+  .chat-header h2 {
     font-size: 18px;
   }
 
-  .banner-brand h2 {
-    font-size: 24px;
+  .chat-header p {
+    display: none;
   }
 
-  .welcome-bubble,
-  .message-bubble {
-    padding: 16px;
-    font-size: 16px;
+  .status-pill {
+    padding: 6px 10px;
   }
 
-  .message-avatar {
-    width: 40px;
-    height: 40px;
+  .header-new-chat {
+    padding: 6px 10px;
   }
 
-  .speaker-name {
-    font-size: 15px;
+  .message-row,
+  .message-row.user {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    max-width: 100%;
+    margin-bottom: 16px;
   }
 
+  .message-list {
+    padding: 12px;
+  }
+
+  .message-row .avatar {
+    display: none;
+  }
+
+  .message-row.user .avatar {
+    grid-column: 1;
+  }
+
+  .message-row.user .message-body {
+    grid-column: 1;
+    justify-self: stretch;
+  }
+
+  .message-body {
+    width: 100%;
+  }
+
+  .message-row.user .bubble {
+    margin-left: auto;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .bubble {
+    padding: 12px;
+  }
+
+  .message-meta {
+    flex-wrap: wrap;
+  }
+
+  .followup-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .followup-panel button {
+    width: 100%;
+  }
 }
 </style>

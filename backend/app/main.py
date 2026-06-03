@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import router
 
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+GENERATED_ASSETS = Path(__file__).resolve().parents[1] / "generated"
 
 app = FastAPI()
 
@@ -35,6 +36,9 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
+
+GENERATED_ASSETS.mkdir(parents=True, exist_ok=True)
+app.mount("/report-assets", StaticFiles(directory=str(GENERATED_ASSETS), html=False), name="report-assets")
 
 # 如果前端已经执行过 build，则后端同时提供静态页面，便于用同一个端口访问。
 if FRONTEND_DIST.exists():

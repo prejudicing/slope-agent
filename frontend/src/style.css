@@ -1,44 +1,45 @@
 * {
-  /* 统一盒模型，避免卡片、表格在移动端出现横向撑开。 */
   box-sizing: border-box;
 }
 
-html {
+html,
+body {
   width: 100%;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
-  background: #f5f8f7;
-  color: #1a2422;
-  font-family: Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
+  background: #f6f7fb;
+  color: #1f2937;
+  font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+button,
+textarea,
+input {
+  font-family: inherit;
 }
 
 #app {
-  min-height: 100vh;
   width: 100%;
+  min-height: 100vh;
 }
 
 .boot-fallback {
-  /* Vue 还没挂载成功时 index.html 中的兜底提示样式。 */
   padding: 24px;
-  color: #5f6f86;
+  color: #667085;
   font-size: 16px;
 }
 
-.el-card {
-  --el-card-padding: 22px;
+.el-button {
   border-radius: 8px;
 }
 
-.el-card__header {
-  color: #15231f;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.el-button {
+.el-card,
+.el-table,
+.el-input__wrapper,
+.el-textarea__inner {
   border-radius: 8px;
 }

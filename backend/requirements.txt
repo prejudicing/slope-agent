@@ -9,3 +9,7 @@ langchain-openai
 sqlalchemy
 dmPython
 dmSQLAlchemy
+pymssql
+pyodbc
+python-tds
+Pillow

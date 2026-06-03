@@ -10,9 +10,11 @@
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+load_dotenv(BACKEND_DIR / ".env")
 
 # 达梦数据库连接配置：项目主要业务数据都从这里读取。
 DM_USER = os.getenv("DM_USER")
@@ -48,3 +50,11 @@ ASR_COMPUTE_TYPE = os.getenv("ASR_COMPUTE_TYPE", "int8")
 
 # 可选：用逗号分隔覆盖默认高切坡业务表，主要用于临时调试。
 HCS_INCLUDE_TABLES = os.getenv("HCS_INCLUDE_TABLES")
+
+HCS_QMQF_SOURCE = os.getenv("HCS_QMQF_SOURCE", "dm").lower()
+SQLSERVER_HOST = os.getenv("SQLSERVER_HOST")
+SQLSERVER_PORT = os.getenv("SQLSERVER_PORT", "1433")
+SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE", "hcsmonitor")
+SQLSERVER_USER = os.getenv("SQLSERVER_USER")
+SQLSERVER_PASSWORD = os.getenv("SQLSERVER_PASSWORD")
+SQLSERVER_DRIVER = os.getenv("SQLSERVER_DRIVER", "SQL Server")

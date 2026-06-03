@@ -1,29 +1,88 @@
-import { Capacitor, CapacitorHttp } from '@capacitor/core'
+﻿import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import axios from 'axios'
-import type {
-  AsrResponse,
-  ConversationHistoryTurn,
-  QueryResponse,
-  QueryStreamEvent,
-} from '../types/query'
+import type { AsrResponse, QueryResponse, QueryStreamEvent } from '../types/query'
 
+const DEFAULT_NATIVE_API_BASE_URL = 'http://192.168.31.75:8002'
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-function buildApiUrl(path: string): string {
-  if (Capacitor.isNativePlatform() && !API_BASE_URL) {
-    throw new Error('安卓 App 需要配置 VITE_API_BASE_URL，例如 http://10.61.48.10:8000')
-  }
-  return API_BASE_URL ? `${API_BASE_URL}${path}` : path
+function makeQueryString(params: Record<string, unknown> = {}): string {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return
+    }
+    search.set(key, String(value))
+  })
+
+  const text = search.toString()
+  return text ? `?${text}` : ''
 }
 
-// 非流式接口保留给调试；当前页面主要使用 streamQuery。
-export async function postQuery(
-  question: string,
-  history: ConversationHistoryTurn[] = []
-): Promise<QueryResponse> {
-  const res = await axios.post(buildApiUrl('/api/query'), {
+async function nativeGet<T>(path: string, params: Record<string, unknown> = {}): Promise<T> {
+  const nativeResponse = await CapacitorHttp.get({
+    url: `${buildBackendUrl(path)}${makeQueryString(params)}`,
+    responseType: 'json',
+  })
+
+  if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
+    throw new Error(`璇锋眰澶辫触锛?{nativeResponse.status}`)
+  }
+
+  return nativeResponse.data as T
+}
+
+async function nativePost<T>(path: string, data: Record<string, unknown>): Promise<T> {
+  const nativeResponse = await CapacitorHttp.post({
+    url: buildBackendUrl(path),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data,
+    responseType: 'json',
+  })
+
+  if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
+    throw new Error(`璇锋眰澶辫触锛?{nativeResponse.status}`)
+  }
+
+  return nativeResponse.data as T
+}
+
+export function buildBackendUrl(path: string): string {
+  if (API_BASE_URL) {
+    return `${API_BASE_URL}${path}`
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    return `${DEFAULT_NATIVE_API_BASE_URL}${path}`
+  }
+
+  if (typeof window !== 'undefined' && window.location.port === '8000') {
+    return `${window.location.protocol}//${window.location.hostname}:8002${path}`
+  }
+
+  return path
+}
+
+export function buildPhotoCacheUrl(path: string, size = 'thumb'): string {
+  const raw = String(path || '').trim()
+  if (!raw) {
+    return ''
+  }
+  const params = new URLSearchParams({
+    path: raw,
+    size,
+  })
+  return buildBackendUrl(`/api/photo-cache?${params.toString()}`)
+}
+
+export async function postQuery(question: string): Promise<QueryResponse> {
+  if (Capacitor.isNativePlatform()) {
+    return nativePost<QueryResponse>('/api/query', { question })
+  }
+
+  const res = await axios.post(buildBackendUrl('/api/query'), {
     question,
-    history,
   })
   return res.data
 }
@@ -40,76 +99,60 @@ export async function transcribeAudio(
   }
 
   if (Capacitor.isNativePlatform()) {
-    const nativeResponse = await CapacitorHttp.post({
-      url: buildApiUrl('/api/asr'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      data: payload,
-      responseType: 'json',
-    })
-
-    if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
-      throw new Error(`语音转写请求失败：${nativeResponse.status}`)
-    }
-
-    return nativeResponse.data as AsrResponse
+    return nativePost<AsrResponse>('/api/asr', payload)
   }
 
-  const res = await axios.post(buildApiUrl('/api/asr'), payload)
+  const res = await axios.post(buildBackendUrl('/api/asr'), payload)
+  return res.data
+}
+
+export async function fetchRecentLargeDisplacement() {
+  if (Capacitor.isNativePlatform()) {
+    return nativeGet('/api/displacement/recent-large', { _t: Date.now() })
+  }
+
+  const res = await axios.get(buildBackendUrl('/api/displacement/recent-large'), {
+    params: { _t: Date.now() },
+  })
+  return res.data
+}
+
+export async function fetchQmqfAbnormalDashboard() {
+  if (Capacitor.isNativePlatform()) {
+    return nativeGet('/api/qmqf/abnormal-dashboard', { _t: Date.now() })
+  }
+
+  const res = await axios.get(buildBackendUrl('/api/qmqf/abnormal-dashboard'), {
+    params: { _t: Date.now() },
+  })
+  return res.data
+}
+
+export async function fetchReportStabilityAssets(params: Record<string, unknown> = {}) {
+  const requestParams = { limit: 12, only_with_photos: true, _t: Date.now(), ...params }
+
+  if (Capacitor.isNativePlatform()) {
+    return nativeGet('/api/report/stability-assets', requestParams)
+  }
+
+  const res = await axios.get(buildBackendUrl('/api/report/stability-assets'), {
+    params: requestParams,
+  })
   return res.data
 }
 
 export async function streamQuery(
   question: string,
-  onEvent: (event: QueryStreamEvent) => void,
-  history: ConversationHistoryTurn[] = [],
-  options: {
-    signal?: AbortSignal
-    isCancelled?: () => boolean
-  } = {}
+  onEvent: (event: QueryStreamEvent) => void
 ) {
-  const dispatchSseChunk = (chunk: string) => {
-    if (options.isCancelled?.()) {
-      return
-    }
-    const line = chunk
-      .split('\n')
-      .find((item) => item.startsWith('data: '))
-    if (!line) {
-      return
-    }
-    onEvent(JSON.parse(line.slice(6)) as QueryStreamEvent)
-  }
-
   if (Capacitor.isNativePlatform()) {
     onEvent({
       type: 'progress',
-      message: '安卓 App 正在通过原生网络通道请求后端',
-      detail: '原生 HTTP 会绕过 WebView 的跨域限制，结果返回后再展示到页面。',
+      message: '安卓 App 正在连接业务数据服务',
+      detail: '正在通过手机原生网络通道请求后端。',
     })
 
-    const nativeResponse = await CapacitorHttp.post({
-      url: buildApiUrl('/api/query'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      data: {
-        question,
-        history,
-      },
-      responseType: 'json',
-    })
-
-    if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
-      throw new Error(`请求失败：${nativeResponse.status}`)
-    }
-
-    if (options.isCancelled?.()) {
-      return
-    }
-
-    const data = nativeResponse.data as QueryResponse
+    const data = await nativePost<QueryResponse>('/api/query', { question })
 
     if (data.sql) {
       onEvent({ type: 'sql', sql: data.sql })
@@ -119,7 +162,7 @@ export async function streamQuery(
       onEvent({
         type: 'summary',
         summary: data.summary || data.result,
-        message: '已生成查询报告',
+        message: '已生成业务回答',
       })
     }
 
@@ -130,8 +173,7 @@ export async function streamQuery(
     return
   }
 
-  const requestUrl = buildApiUrl('/api/query/stream')
-  // 使用 fetch 读取 text/event-stream，便于边查询边展示 Agent 进度。
+  const requestUrl = buildBackendUrl('/api/query/stream')
   let res: Response
   try {
     res = await fetch(requestUrl, {
@@ -139,16 +181,10 @@ export async function streamQuery(
       headers: {
         'Content-Type': 'application/json',
       },
-      signal: options.signal,
-      body: JSON.stringify({ question, history }),
+      body: JSON.stringify({ question }),
     })
   } catch (error) {
-    if ((error as Error)?.name === 'AbortError') {
-      throw error
-    }
-    throw new Error(
-      `请求失败，无法访问 ${requestUrl}。请检查 App 后端地址、服务器连通性或跨域配置。`
-    )
+    throw new Error(`请求失败，无法访问 ${requestUrl}。请检查后端地址、服务状态或跨域配置。`)
   }
 
   if (!res.ok || !res.body) {
@@ -165,22 +201,18 @@ export async function streamQuery(
       break
     }
 
-    if (options.isCancelled?.()) {
-      return
-    }
-
     buffer += decoder.decode(value, { stream: true })
-    // SSE 事件用空行分隔；最后一个不完整片段留到下一次 read 再解析。
     const chunks = buffer.split('\n\n')
     buffer = chunks.pop() || ''
 
     for (const chunk of chunks) {
-      // 当前后端只发送 data 行，解析后交给页面按事件类型更新不同组件。
-      dispatchSseChunk(chunk)
+      const line = chunk
+        .split('\n')
+        .find((item) => item.startsWith('data: '))
+      if (!line) {
+        continue
+      }
+      onEvent(JSON.parse(line.slice(6)) as QueryStreamEvent)
     }
-  }
-
-  if (buffer.trim()) {
-    dispatchSseChunk(buffer)
   }
 }

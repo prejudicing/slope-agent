@@ -1,12 +1,4 @@
-"""问题路由与越界拒答规则。
-
-当前统一将问题划分为 5 类：
-1. db_query：普通事实查询，直接进入数据库查询主链路；
-2. result_analysis：分析/总结/对比/趋势类问题，先查表再做结果分析；
-3. template_query：命中稳定业务模板的问题，优先使用固定 SQL；
-4. clarify：条件不足，需要用户补充对象、地区、时间或异常类型；
-5. out_of_scope：越界或敏感问题，直接拒答。
-"""
+"""Question routing and business-boundary checks."""
 
 from dataclasses import dataclass
 import re
@@ -18,6 +10,7 @@ BUSINESS_KEYWORDS = {
     "高切坡",
     "切坡",
     "边坡",
+    "坡",
     "监测",
     "专业监测",
     "群测群防",
@@ -37,30 +30,28 @@ BUSINESS_KEYWORDS = {
     "面积",
     "风险",
     "安全等级",
-    "责任单位",
     "区县",
     "街道",
     "监测点",
-    "预警专报",
+    "专报",
     "月报",
     "年报",
     "险情",
     "全景",
-    "倾斜摄影",
+    "照片",
+    "图片",
+    "影像",
     "dom",
+    "人员",
+    "联系人",
+    "通讯录",
+    "监测员",
+    "审核员",
+    "管理员",
+    "业务人员",
 }
 
-GENERIC_QUERY_WORDS = {
-    "查询",
-    "统计",
-    "分析",
-    "总结",
-    "报告",
-    "数据",
-    "记录",
-    "结果",
-    "情况",
-}
+GENERIC_QUERY_WORDS = {"查询", "统计", "分析", "总结", "报告", "数据", "记录", "结果", "情况"}
 
 ANALYSIS_KEYWORDS = {
     "分析",
@@ -73,7 +64,6 @@ ANALYSIS_KEYWORDS = {
     "归纳",
     "评估",
     "重点关注",
-    "原因",
     "特征",
     "分布",
     "排行",
@@ -94,28 +84,15 @@ OUT_OF_SCOPE_KEYWORDS = {
     "java",
     "作文",
     "小说",
-    "周报",
-    "日报",
     "简历",
     "面试",
     "数学",
     "历史",
     "英语",
-    "笑话",
     "新闻",
 }
 
-SENSITIVE_SYSTEM_KEYWORDS = {
-    "密码",
-    "账号",
-    "登录",
-    "token",
-    "权限",
-    "角色",
-    "菜单",
-    "用户表",
-    "系统管理",
-}
+SENSITIVE_SYSTEM_KEYWORDS = {"密码", "账号", "登录", "token", "权限", "角色", "菜单", "用户表", "系统管理"}
 
 VAGUE_PATTERNS = (
     "查一下",
@@ -127,17 +104,6 @@ VAGUE_PATTERNS = (
     "出个报告",
     "生成报告",
     "帮我看看",
-    "帮我查一下",
-)
-
-SMALL_TALK_PATTERNS = (
-    "你是谁",
-    "你叫什么",
-    "你能做什么",
-    "你是做什么的",
-    "介绍一下你自己",
-    "自我介绍",
-    "你是什么",
 )
 
 WHITESPACE_RE = re.compile(r"\s+")
@@ -145,8 +111,6 @@ WHITESPACE_RE = re.compile(r"\s+")
 
 @dataclass
 class QueryRouteDecision:
-    """问题路由结果。"""
-
     status: str
     query_type: str
     summary: str
@@ -160,92 +124,73 @@ def _normalize_question(question: str) -> str:
 
 
 def route_question(question: str) -> QueryRouteDecision:
-    """对用户问题做轻量路由。"""
     normalized = _normalize_question(question)
 
     if not normalized:
         return QueryRouteDecision(
             status="clarify",
             query_type="clarify",
-            summary="当前问题为空，暂时无法发起高切坡业务查询。",
-            suggestion="请直接描述要查询的高切坡信息，例如“统计各区县高切坡数量”或“查询最近异常巡查记录”。",
+            summary="您好，请输入需要了解的高切坡业务问题。我可以协助查询高切坡基础台账、专业监测、群测群防、现场异常和近期风险研判等内容。",
+            suggestion="例如可以提问：“近期哪个区县高切坡风险较高”“巴东高切坡情况”“近期群测群防情况”。",
             reason="empty_question",
             route_name="clarify",
         )
 
-    if any(pattern in normalized for pattern in SMALL_TALK_PATTERNS):
+    if normalized in {"你是谁", "你能做什么", "可以做什么", "你会什么"}:
         return QueryRouteDecision(
-            status="rejected",
-            query_type="out_of_scope",
-            summary="当前问题属于闲聊或身份介绍，不属于高切坡业务智能查询范围。",
-            suggestion="请改为查询高切坡基本信息、监测、巡查、预警或复核相关业务数据。",
-            reason="small_talk",
-            route_name="out_of_scope",
+            status="clarify",
+            query_type="clarify",
+            summary="您好，我是高切坡业务智能助手，主要协助查询和研判高切坡基础台账、专业监测、群测群防、现场异常、照片记录和近期风险情况。",
+            suggestion="可以直接提问：“巴东高切坡情况”“近期专业监测情况”“最近哪个区县高切坡风险较高”。",
+            reason="assistant_intro",
+            route_name="clarify",
         )
 
     if len(normalized) <= 3 or normalized in {"查一下", "看一下", "查查", "看看"}:
         return QueryRouteDecision(
             status="clarify",
             query_type="clarify",
-            summary="当前问题过于简短，暂时无法确定具体查询口径。",
-            suggestion="请补充查询对象、地区、时间或异常类型，例如“查询渝北区最近30天的异常巡查记录”。",
+            summary="这个问题信息稍少，暂时无法判断要查询的高切坡业务内容。请补充区县、编号、监测类型、异常类型或时间范围。",
+            suggestion="例如可以补充为：“巴东县近期高切坡情况”或“近期专业监测位移变化较大的高切坡”。",
             reason="too_short",
             route_name="clarify",
         )
 
     sensitive_hits = [keyword for keyword in SENSITIVE_SYSTEM_KEYWORDS if keyword in normalized]
-    if sensitive_hits:
+    business_hits = [keyword for keyword in BUSINESS_KEYWORDS if keyword.lower() in normalized.lower()]
+    credential_sensitive_hits = [
+        keyword
+        for keyword in ("密码", "口令", "token", "密钥", "reset_key", "reset_pwd", "重置密钥", "登录密码")
+        if keyword.lower() in normalized.lower()
+    ]
+    if credential_sensitive_hits:
         return QueryRouteDecision(
             status="rejected",
             query_type="out_of_scope",
-            summary="当前问题涉及账号、权限或系统管理信息，不属于高切坡业务智能查询范围。",
-            suggestion="请改为查询高切坡基础信息、监测、预警、巡查或复核相关业务数据。",
+            summary="抱歉，人员信息查询不支持查看密码、密钥、令牌、重置凭据等敏感内容。可以查询人员姓名、角色、部门、职务和业务联系方式。",
+            suggestion="例如可以提问：“查询监测员名单”“查看管理员联系方式”“列出人员通讯录”。",
+            reason="credential_sensitive",
+            route_name="out_of_scope",
+        )
+    if sensitive_hits and not business_hits:
+        return QueryRouteDecision(
+            status="rejected",
+            query_type="out_of_scope",
+            summary="抱歉，我主要用于高切坡业务数据查询与研判，暂不处理账号、权限或系统管理类问题。",
+            suggestion="可以改为查询高切坡基础信息、监测预警、巡查异常或现场复核情况。",
             reason="system_sensitive",
             route_name="out_of_scope",
         )
 
-    business_hits = [keyword for keyword in BUSINESS_KEYWORDS if keyword.lower() in normalized.lower()]
-    generic_hits = [keyword for keyword in GENERIC_QUERY_WORDS if keyword in normalized]
     out_of_scope_hits = [keyword for keyword in OUT_OF_SCOPE_KEYWORDS if keyword.lower() in normalized.lower()]
-
     if out_of_scope_hits and not business_hits:
         return QueryRouteDecision(
             status="rejected",
             query_type="out_of_scope",
-            summary="当前问题与高切坡业务查询无关，系统不提供该类回答。",
-            suggestion="请改为查询高切坡台账、监测记录、巡查异常、预警专报或复核处理等业务数据。",
+            summary="抱歉，这个问题不属于高切坡业务查询范围。我可以协助分析高切坡台账、专业监测、群测群防、现场照片、异常记录和近期风险情况。",
+            suggestion="例如可以提问：“近期哪个区县高切坡风险较高”“近期群测群防情况”“某区县高切坡概况”。",
             reason="non_business_topic",
             route_name="out_of_scope",
-        )
-
-    if not business_hits:
-        if any(pattern in normalized for pattern in VAGUE_PATTERNS) or generic_hits:
-            return QueryRouteDecision(
-                status="clarify",
-                query_type="clarify",
-                summary="当前问题缺少明确的高切坡业务对象或查询范围。",
-                suggestion="请补充高切坡相关对象，例如编号、区县、监测、巡查、预警或异常类型。",
-                reason="missing_business_context",
-                route_name="clarify",
-            )
-
-        return QueryRouteDecision(
-            status="rejected",
-            query_type="out_of_scope",
-            summary="当前问题不属于高切坡业务智能查询范围。",
-            suggestion="请改为查询高切坡基本信息、地质背景、监测、巡查、预警或复核数据。",
-            reason="no_business_signal",
-            route_name="out_of_scope",
-        )
-
-    if any(pattern in normalized for pattern in VAGUE_PATTERNS) and len(business_hits) <= 1:
-        return QueryRouteDecision(
-            status="clarify",
-            query_type="clarify",
-            summary="当前问题仍然偏模糊，建议补充更具体的查询条件。",
-            suggestion="可以补充地区、时间、编号或异常类型，例如“分析江北区最近一个月的裂缝异常记录”。",
-            reason="vague_business_question",
-            route_name="clarify",
         )
 
     deterministic_query = get_deterministic_query(question)
@@ -253,9 +198,30 @@ def route_question(question: str) -> QueryRouteDecision:
         return QueryRouteDecision(
             status="query",
             query_type="template_query",
-            summary="问题命中稳定业务模板，优先使用固定查询口径。",
+            summary="问题命中稳定业务模板，优先使用固定查询路径。",
             reason="matched_template_query",
             route_name=deterministic_query["name"],
+        )
+
+    generic_hits = [keyword for keyword in GENERIC_QUERY_WORDS if keyword in normalized]
+    if not business_hits:
+        if any(pattern in normalized for pattern in VAGUE_PATTERNS) or generic_hits:
+            return QueryRouteDecision(
+                status="clarify",
+                query_type="clarify",
+                summary="这个问题还缺少明确的高切坡业务对象或查询范围。请补充区县、编号、监测类别、异常类型或希望了解的时间范围。",
+                suggestion="例如可以提问：“巴东县高切坡情况”“近期专业监测情况”“近期现场异常主要在哪些区县”。",
+                reason="missing_business_context",
+                route_name="clarify",
+            )
+
+        return QueryRouteDecision(
+            status="rejected",
+            query_type="out_of_scope",
+            summary="抱歉，我暂时只能回答高切坡业务相关问题。你可以询问高切坡基本信息、区县概况、专业监测、群测群防、巡查异常、现场照片或近期风险研判。",
+            suggestion="例如：“巴东高切坡情况”“近期哪个区县高切坡风险较高”“近期群测群防情况”。",
+            reason="no_business_signal",
+            route_name="out_of_scope",
         )
 
     analysis_hits = [keyword for keyword in ANALYSIS_KEYWORDS if keyword in normalized]
