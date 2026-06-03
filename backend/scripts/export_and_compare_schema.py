@@ -3,10 +3,10 @@
 import argparse
 import json
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote_plus
 
 from docx import Document
 from docx.oxml.ns import qn
@@ -15,8 +15,14 @@ from docx.text.paragraph import Paragraph
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, inspect
 
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.db import build_db_uri, get_default_schema
+
+
 DEFAULT_DOCX = ROOT_DIR / "高切坡数据库设计文档.docx"
 DEFAULT_OUTPUT_DIR = ROOT_DIR / "backend" / "schema_exports"
 TABLE_NAME_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]+)\s*$")
@@ -34,27 +40,9 @@ def clean_text(value: str | None) -> str:
     return " ".join(str(value).replace("\n", " ").split())
 
 
-def load_dm_config() -> dict[str, str]:
-    """从 backend/.env 加载达梦数据库连接配置。"""
+def load_db_env() -> None:
+    """从 backend/.env 加载数据库连接配置。"""
     load_dotenv(ROOT_DIR / "backend" / ".env")
-    import os
-
-    config = {
-        "user": os.getenv("DM_USER", ""),
-        "password": os.getenv("DM_PASSWORD", ""),
-        "host": os.getenv("DM_HOST", ""),
-        "port": os.getenv("DM_PORT", ""),
-    }
-    missing = [key for key, value in config.items() if not value]
-    if missing:
-        raise RuntimeError(f"缺少达梦数据库配置: {', '.join(missing)}")
-    return config
-
-
-def build_dm_uri(config: dict[str, str]) -> str:
-    """构造 SQLAlchemy 可识别的达梦连接串。"""
-    password = quote_plus(config["password"])
-    return f"dm+dmPython://{config['user']}:{password}@{config['host']}:{config['port']}/"
 
 
 def serialize_default(value: Any) -> str:
@@ -66,11 +54,14 @@ def serialize_default(value: Any) -> str:
 
 def export_database_schema() -> dict[str, Any]:
     """从真实数据库 inspector 中导出所有可见表和字段。"""
-    config = load_dm_config()
-    engine = create_engine(build_dm_uri(config))
+    load_db_env()
+    engine = create_engine(build_db_uri())
     try:
         inspector = inspect(engine)
-        table_names = sorted(inspector.get_table_names(), key=str.lower)
+        table_names = sorted(
+            inspector.get_table_names(schema=get_default_schema()),
+            key=str.lower,
+        )
         tables = []
         for table_name in table_names:
             columns = inspector.get_columns(table_name)

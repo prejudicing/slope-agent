@@ -103,6 +103,11 @@
                 :rows="message.rows || []"
                 :total-rows="message.totalRows || 0"
               />
+              <AttachmentPanel
+                v-if="message.attachments?.length"
+                :attachments="message.attachments || []"
+                embedded
+              />
               <DisplacementDashboard
                 v-if="message.dashboard"
                 class="message-dashboard"
@@ -152,11 +157,13 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
 import DisplacementDashboard from './components/DisplacementDashboard.vue'
+import AttachmentPanel from './components/AttachmentPanel.vue'
 import QueryInput from './components/QueryInput.vue'
 import QmqfAbnormalDashboard from './components/QmqfAbnormalDashboard.vue'
 import RecentSlopeBrief from './components/RecentSlopeBrief.vue'
 import ResultPanel from './components/ResultPanel.vue'
 import { streamQuery } from './api/query'
+import type { QueryAttachment } from './types/query'
 
 type ChatMessage = {
   id: number
@@ -167,6 +174,7 @@ type ChatMessage = {
   columns?: string[]
   rows?: Record<string, string>[]
   totalRows?: number
+  attachments?: QueryAttachment[]
   dashboard?: boolean
   qmqfDashboard?: boolean
   recentBrief?: boolean
@@ -227,6 +235,7 @@ const normalizeConversation = (conversation: Conversation): Conversation => ({
     columns: (message.columns || []).slice(0, MAX_STORED_COLUMNS),
     rows: (message.rows || []).slice(0, MAX_STORED_ROWS),
     totalRows: Number(message.totalRows || 0),
+    attachments: message.attachments || [],
     dashboard: Boolean(message.dashboard),
     qmqfDashboard: Boolean(message.qmqfDashboard),
     recentBrief: Boolean(message.recentBrief),
@@ -468,6 +477,7 @@ const handleSubmit = async () => {
     columns: [],
     rows: [],
     totalRows: 0,
+    attachments: [],
   }
 
   try {
@@ -492,6 +502,7 @@ const handleSubmit = async () => {
         assistantMessage.columns = res.columns || []
         assistantMessage.rows = res.rows || []
         assistantMessage.totalRows = res.total_rows || res.rows?.length || 0
+        assistantMessage.attachments = res.attachments || []
         assistantMessage.dashboard = Boolean(
           res.columns?.includes('displacement_chart_url') || res.columns?.includes('displacement_dashboard_marker')
         )

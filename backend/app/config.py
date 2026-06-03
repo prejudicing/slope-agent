@@ -1,7 +1,7 @@
 """应用配置。
 
 配置来自 backend/.env 或运行环境变量，包括：
-1. 达梦数据库；
+1. 数据库连接（支持 dm 与 sqlserver）；
 2. 查询阶段模型；
 3. 报告生成阶段模型；
 4. 本地语音转写模型。
@@ -16,11 +16,26 @@ from dotenv import load_dotenv
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BACKEND_DIR / ".env")
 
-# 达梦数据库连接配置：项目主要业务数据都从这里读取。
-DM_USER = os.getenv("DM_USER")
-DM_PASSWORD = os.getenv("DM_PASSWORD")
-DM_HOST = os.getenv("DM_HOST")
-DM_PORT = os.getenv("DM_PORT")
+# 通用数据库连接配置。默认仍兼容旧的达梦环境变量，便于平滑迁移到 SQL Server。
+DB_PROVIDER = os.getenv("DB_PROVIDER", "dm").strip().lower()
+DB_HOST = os.getenv("DB_HOST") or os.getenv("DM_HOST")
+DB_PORT = os.getenv("DB_PORT") or os.getenv("DM_PORT")
+DB_NAME = os.getenv("DB_NAME", "").strip()
+DB_USER = os.getenv("DB_USER") or os.getenv("DM_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD") or os.getenv("DM_PASSWORD")
+# SQL Server 连接优先走非 ODBC 的 pytds 方案；若需要兼容旧环境，可切回 pyodbc。
+DB_SQLSERVER_TRANSPORT = os.getenv("DB_SQLSERVER_TRANSPORT", "pytds").strip().lower()
+DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server").strip()
+DB_SCHEMA = os.getenv("DB_SCHEMA", "").strip()
+DB_TRUST_CERT = os.getenv("DB_TRUST_CERT", "true").lower() == "true"
+DB_ENCRYPT = os.getenv("DB_ENCRYPT", "false").lower() == "true"
+DB_EXTRA_PARAMS = os.getenv("DB_EXTRA_PARAMS", "").strip()
+
+# 保留旧达梦字段，避免已有脚本和环境一次性全部切换时断掉。
+DM_USER = DB_USER if DB_PROVIDER == "dm" else os.getenv("DM_USER")
+DM_PASSWORD = DB_PASSWORD if DB_PROVIDER == "dm" else os.getenv("DM_PASSWORD")
+DM_HOST = DB_HOST if DB_PROVIDER == "dm" else os.getenv("DM_HOST")
+DM_PORT = DB_PORT if DB_PROVIDER == "dm" else os.getenv("DM_PORT")
 
 # 通用聊天模型配置：作为查询阶段和报告阶段的默认回退。
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -58,3 +73,21 @@ SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE", "hcsmonitor")
 SQLSERVER_USER = os.getenv("SQLSERVER_USER")
 SQLSERVER_PASSWORD = os.getenv("SQLSERVER_PASSWORD")
 SQLSERVER_DRIVER = os.getenv("SQLSERVER_DRIVER", "SQL Server")
+
+# 照片库配置：主业务查询仍走 DB_*，现场照片路径单独从 SQL Server 补充。
+PHOTO_DB_PROVIDER = os.getenv("PHOTO_DB_PROVIDER", "sqlserver").strip().lower()
+PHOTO_DB_HOST = os.getenv("PHOTO_DB_HOST")
+PHOTO_DB_PORT = os.getenv("PHOTO_DB_PORT", "1433").strip()
+PHOTO_DB_NAME = os.getenv("PHOTO_DB_NAME", "").strip()
+PHOTO_DB_USER = os.getenv("PHOTO_DB_USER")
+PHOTO_DB_PASSWORD = os.getenv("PHOTO_DB_PASSWORD")
+PHOTO_DB_SQLSERVER_TRANSPORT = os.getenv(
+    "PHOTO_DB_SQLSERVER_TRANSPORT",
+    "pytds",
+).strip().lower()
+PHOTO_DB_DRIVER = os.getenv("PHOTO_DB_DRIVER", DB_DRIVER).strip()
+PHOTO_DB_TRUST_CERT = os.getenv("PHOTO_DB_TRUST_CERT", "true").lower() == "true"
+PHOTO_DB_ENCRYPT = os.getenv("PHOTO_DB_ENCRYPT", "false").lower() == "true"
+PHOTO_DB_EXTRA_PARAMS = os.getenv("PHOTO_DB_EXTRA_PARAMS", "").strip()
+PHOTO_FILE_BASE_URL = os.getenv("PHOTO_FILE_BASE_URL", "").strip().rstrip("/")
+PHOTO_DOWNLOAD_TIMEOUT = float(os.getenv("PHOTO_DOWNLOAD_TIMEOUT", "12"))

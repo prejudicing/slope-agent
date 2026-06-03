@@ -45,8 +45,14 @@ from app.config import (
     DM_PORT,
     DM_USER,
 )
+from app.conversation_context import (
+    normalize_history,
+    resolve_effective_question,
+)
 from app.domain import GQP_AGENT_PREFIX
 from app.query_cache import get_cached_sql, save_cached_sql
+from app.photo_service import find_photo_attachments
+from app.photo_service import build_photo_summary, has_photo_intent, search_photo_records
 from app.question_normalizer import normalize_query_question
 from app.query_router import QueryRouteDecision, route_question
 from app.schema_knowledge import build_schema_guide, select_include_tables
@@ -118,7 +124,8 @@ def build_non_query_result(question: str, decision: QueryRouteDecision) -> dict:
         "columns": [],
         "rows": [],
         "total_rows": 0,
-        "logs": "",
+        "attachments": [],
+        "logs": f"问题路由结果：{decision.reason}",
         "error": None,
     }
 
@@ -227,6 +234,15 @@ def classify_answer_layer(question: str, query_name: str = "") -> str:
     if query_name in {"recent_risk_county", "county_overview"}:
         return "single_judgement"
     return "business_brief"
+
+
+def enrich_photo_attachments(question: str, rows: list[dict]) -> list[dict]:
+    """按需从 SQL Server 照片库补充现场照片附件，不影响主查询成功返回。"""
+    try:
+        return find_photo_attachments(question, rows)
+    except Exception as exc:
+        print(f">>> [photo_attachments] skipped: {exc}")
+        return []
 
 
 def extract_sql_from_logs(log_text: str) -> str:
@@ -893,7 +909,7 @@ class AgentProgressHandler(BaseCallbackHandler):
             })
 
 
-def run_agent(question: str, progress=None) -> dict:
+def run_agent(question: str, progress=None, history: list[dict] | None = None) -> dict:
     """执行一次完整查询，并返回 SQL、表格数据、总结和日志。"""
     # progress 是给 SSE 用的回调；run_agent 本身仍然保持同步返回，方便网页和 App 共用。
     def emit(payload: dict):
@@ -911,13 +927,34 @@ def run_agent(question: str, progress=None) -> dict:
     normalized_question = normalize_query_question(question)
     if normalized_question != question:
         print(f">>> [normalized_question] {question} -> {normalized_question}")
-    route_decision = route_question(normalized_question)
+    conversation_history = normalize_history(history)
+    route_llm_holder: dict[str, ChatOpenAI] = {}
+
+    def get_route_llm() -> ChatOpenAI:
+        route_llm = build_query_llm()
+        route_llm_holder["llm"] = route_llm
+        return route_llm
+
+    route_decision = route_question(
+        normalized_question,
+        history=conversation_history,
+        llm_factory=get_route_llm,
+    )
+    effective_question = resolve_effective_question(
+        normalized_question,
+        conversation_history,
+        routed_question=route_decision.effective_question,
+        use_history=route_decision.use_history,
+    )
+    if route_decision.use_history:
+        print(">>> [conversation_context] router resolved current question with recent turns")
     print(
         ">>> [route] "
         f"status={route_decision.status} "
         f"query_type={route_decision.query_type} "
         f"route_name={route_decision.route_name or ''} "
-        f"reason={route_decision.reason or ''}"
+        f"reason={route_decision.reason or ''} "
+        f"use_history={route_decision.use_history}"
     )
     emit({"type": "progress", "message": "分析问题意图与业务范围"})
 
@@ -929,11 +966,38 @@ def run_agent(question: str, progress=None) -> dict:
         })
         return build_non_query_result(question, route_decision)
 
-    emit({"type": "progress", "message": "连接达梦数据库"})
+    if has_photo_intent(effective_question):
+        print(">>> [query_path] photo_sqlserver")
+        emit({"type": "progress", "message": "连接现场照片库"})
+        photo_payload = search_photo_records(effective_question)
+        summary = build_photo_summary(question, photo_payload)
+        emit({
+            "type": "summary",
+            "summary": summary,
+            "message": "整理现场照片",
+        })
+        return {
+            "status": "success",
+            "query_type": route_decision.query_type,
+            "question": question,
+            "sql": photo_payload["sql"],
+            "result": summary,
+            "summary": summary,
+            "report": None,
+            "suggestion": None,
+            "columns": photo_payload["columns"],
+            "rows": photo_payload["rows"],
+            "total_rows": photo_payload["total_rows"],
+            "attachments": photo_payload["attachments"],
+            "logs": "命中现场照片查询路径，直接从 SQL Server 照片库查询 tb_hcs_monitoring。",
+            "error": None,
+        }
+
+    emit({"type": "progress", "message": "连接业务数据库"})
 
     if route_decision.query_type == "template_query":
         print(">>> [query_path] template_query")
-        deterministic_query = get_deterministic_query(normalized_question)
+        deterministic_query = get_deterministic_query(effective_question)
         if not deterministic_query:
             return {
                 "status": "error",
@@ -1001,6 +1065,7 @@ def run_agent(question: str, progress=None) -> dict:
             db = get_db(include_tables=deterministic_query["tables"])
             columns, rows, total_rows = query_table_for_display(db, sql)
         columns, rows = enrich_rows(deterministic_query["name"], columns, rows)
+        attachments = enrich_photo_attachments(question, rows)
         emit({
             "type": "progress",
             "message": "基于查询结果生成业务分析",
@@ -1064,12 +1129,13 @@ def run_agent(question: str, progress=None) -> dict:
             "columns": response_columns,
             "rows": response_rows,
             "total_rows": response_total_rows,
+            "attachments": attachments,
             "logs": "命中稳定业务查询模板，未重新调用 Agent 生成 SQL。",
             "error": None,
         }
 
-    include_tables = select_include_tables(normalized_question)
-    table_guide = build_schema_guide(normalized_question)
+    include_tables = select_include_tables(effective_question)
+    table_guide = build_schema_guide(effective_question)
     emit({
         "type": "progress",
         "message": "检索真实数据库 schema 知识",
@@ -1099,7 +1165,11 @@ def run_agent(question: str, progress=None) -> dict:
 
     # 结果分析型问题更依赖“这次问题的聚合口径”，缓存很容易把历史错误 SQL 放大。
     # 因此当前只对普通事实查询复用 SQL 缓存，分析类问题每次重新确定查询口径。
-    cached_sql = get_cached_sql(normalized_question) if route_decision.query_type == "db_query" else ""
+    cached_sql = (
+        get_cached_sql(normalized_question)
+        if route_decision.query_type == "db_query" and not route_decision.use_history
+        else ""
+    )
     if cached_sql:
         print(">>> [query_path] cached_sql")
         # 这里缓存的是“查询口径”而不是结果本身：同一句问题复用已验证 SQL，
@@ -1111,6 +1181,7 @@ def run_agent(question: str, progress=None) -> dict:
         })
         # Do not expose SQL to the user interface.
         columns, rows, total_rows = query_table_for_display(db, cached_sql)
+        attachments = enrich_photo_attachments(question, rows)
         emit({
             "type": "progress",
             "message": "基于缓存 SQL 的查询结果生成业务分析",
@@ -1147,11 +1218,12 @@ def run_agent(question: str, progress=None) -> dict:
             "columns": columns,
             "rows": rows,
             "total_rows": total_rows,
+            "attachments": attachments,
             "logs": "命中已验证 SQL 缓存，未重新调用 Agent 生成 SQL。",
             "error": None,
         }
 
-    query_llm = build_query_llm()
+    query_llm = route_llm_holder.get("llm") or build_query_llm()
     print(">>> [query_path] agent_sql")
     state: dict[str, str] = {}
     callbacks = [AgentProgressHandler(emit, state)]
@@ -1178,7 +1250,7 @@ def run_agent(question: str, progress=None) -> dict:
 
     try:
         with redirect_stdout(log_buffer):
-            result = agent.invoke({"input": normalized_question}, config={"callbacks": callbacks})
+            result = agent.invoke({"input": effective_question}, config={"callbacks": callbacks})
 
         logs = log_buffer.getvalue()
         # 表格数据必须追溯到最后一次真正成功执行的 sql_db_query。
@@ -1207,11 +1279,12 @@ def run_agent(question: str, progress=None) -> dict:
             })
             # 最终再次回查数据库，把 SQL 结果转成 columns/rows，作为前端表格唯一数据源。
             columns, rows, total_rows = query_table_for_display(db, sql)
+            attachments = enrich_photo_attachments(question, rows)
             emit({
                 "type": "progress",
                 "message": f"业务明细已整理完成：共 {total_rows} 条，本页 {len(rows)} 条",
             })
-            if sql:
+            if sql and not route_decision.use_history:
                 save_cached_sql(normalized_question, sql)
             emit({
                 "type": "progress",
@@ -1251,6 +1324,7 @@ def run_agent(question: str, progress=None) -> dict:
             "columns": columns,
             "rows": rows,
             "total_rows": total_rows,
+            "attachments": attachments if "attachments" in locals() else [],
             "logs": clean_logs(logs),
             "error": error,
         }
@@ -1267,6 +1341,7 @@ def run_agent(question: str, progress=None) -> dict:
         # LangChain 偶尔会在“已经查到数据并生成答案”后，因为输出格式不标准而抛解析异常。
         # 这里尽量从日志和异常里恢复 SQL 与中文答案，避免用户白等一轮却什么都拿不到。
         columns, rows, total_rows = query_table_for_display(db, sql)
+        attachments = enrich_photo_attachments(question, rows)
         summary = analyze_query_result(
             build_report_llm(),
             question,
@@ -1294,6 +1369,7 @@ def run_agent(question: str, progress=None) -> dict:
             "columns": columns,
             "rows": rows,
             "total_rows": total_rows,
+            "attachments": attachments,
             "logs": clean_logs(logs),
             "error": None if summary else error,
         }

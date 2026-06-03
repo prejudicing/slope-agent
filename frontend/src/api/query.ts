@@ -64,6 +64,10 @@ export function buildBackendUrl(path: string): string {
   return path
 }
 
+export function buildApiUrl(path: string): string {
+  return buildBackendUrl(path)
+}
+
 export function buildPhotoCacheUrl(path: string, size = 'thumb'): string {
   const raw = String(path || '').trim()
   if (!raw) {

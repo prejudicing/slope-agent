@@ -3,14 +3,15 @@
 提供普通查询接口、流式查询接口，以及移动端录音转文字接口。
 """
 
-from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from app.agent import run_agent, sanitize_query_result, stream_agent_events, user_friendly_error_message
 from app.asr import AsrError, transcribe_base64_audio
 from app.displacement_dashboard import get_recent_displacement_dashboard
 from app.photo_cache import get_cached_photo_response
+from app.photo_service import download_photo_file
 from app.qmqf_dashboard import get_qmqf_abnormal_dashboard
 from app.report_assets import get_recent_report_stability_assets
 from app.report_inventory import get_report_asset_inventory
@@ -60,6 +61,7 @@ def query(req: QueryRequest):
             "columns": [],
             "rows": [],
             "total_rows": 0,
+            "attachments": [],
             "logs": "",
             "error": None,
         }
@@ -166,3 +168,13 @@ def report_stability_assets(limit: int = 12, county: str = "", gqpbh: str = "", 
             "items": [],
             "error": "月报稳定性评价资产读取失败",
         }
+
+
+@router.get("/photo/file")
+def photo_file(path: str = Query(..., min_length=1)):
+    """代理下载现场照片/视频，避免前端直接依赖文件服务器地址。"""
+    try:
+        content, content_type = download_photo_file(path)
+        return Response(content=content, media_type=content_type)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
