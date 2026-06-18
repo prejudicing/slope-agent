@@ -10,6 +10,7 @@ backend/runtime/
 backend/.venv/
 backend/.pip-cache/
 backend/generated/
+backend/app/generated/
 backend/report_extract/
 backend/report_extract_sample/
 backend/backend/

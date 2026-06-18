@@ -121,9 +121,12 @@
                 class="message-dashboard"
               />
               <div v-if="message.followupText" class="followup-panel">
-                <span>{{ message.followupText }}</span>
-                <button type="button" @click="submitPreset(message.followupPrompt || message.followupText)">
-                  继续生成
+                <button
+                  type="button"
+                  class="followup-link"
+                  @click="submitPreset(message.followupPrompt || message.followupText)"
+                >
+                  {{ message.followupText }}
                 </button>
               </div>
             </div>
@@ -162,7 +165,7 @@ import QueryInput from './components/QueryInput.vue'
 import QmqfAbnormalDashboard from './components/QmqfAbnormalDashboard.vue'
 import RecentSlopeBrief from './components/RecentSlopeBrief.vue'
 import ResultPanel from './components/ResultPanel.vue'
-import { streamQuery } from './api/query'
+import { streamQuery, type QueryHistoryItem } from './api/query'
 import type { QueryAttachment } from './types/query'
 
 type ChatMessage = {
@@ -356,6 +359,24 @@ const submitPreset = (value: string) => {
   void handleSubmit()
 }
 
+const buildQueryHistory = (): QueryHistoryItem[] => {
+  const messages = activeConversation.value.messages
+  const history: QueryHistoryItem[] = []
+  for (let index = 0; index < messages.length; index += 1) {
+    const message = messages[index]
+    if (message.role !== 'user') {
+      continue
+    }
+    const nextAssistant = messages.slice(index + 1).find((item) => item.role === 'assistant')
+    history.push({
+      question: message.content,
+      summary: nextAssistant?.content || '',
+      total_rows: nextAssistant?.totalRows || 0,
+    })
+  }
+  return history.slice(-4)
+}
+
 const setConversationTitle = (text: string) => {
   const title = text.length > 18 ? `${text.slice(0, 18)}...` : text
   activeConversation.value.title = title
@@ -518,7 +539,7 @@ const handleSubmit = async () => {
       if (event.type === 'error') {
         assistantMessage.content = `查询失败：${event.message}`
       }
-    })
+    }, buildQueryHistory())
   } catch (err: any) {
     assistantMessage.content = err?.message || '请求失败，请检查后端服务是否启动。'
   } finally {
@@ -903,38 +924,30 @@ watch(activeConversationId, () => {
 }
 
 .followup-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
   margin-top: 14px;
-  border: 1px solid #cfe0ff;
+  border: 1px solid #d8e5ff;
   border-radius: 8px;
   background: #f7faff;
-  color: #27364a;
-  padding: 12px;
+  padding: 10px 12px;
 }
 
-.followup-panel span {
-  min-width: 0;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.followup-panel button {
-  flex: 0 0 auto;
-  border: 1px solid #1b5cff;
-  border-radius: 6px;
-  background: #1b5cff;
-  color: #fff;
+.followup-link {
+  border: 0;
+  background: transparent;
+  color: #1b5cff;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
-  padding: 7px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  padding: 0;
+  text-align: left;
 }
 
-.followup-panel button:hover {
-  background: #174ee5;
+.followup-link:hover {
+  color: #174ee5;
+  text-decoration: underline;
 }
 
 .composer {
@@ -1050,13 +1063,8 @@ watch(activeConversationId, () => {
     flex-wrap: wrap;
   }
 
-  .followup-panel {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .followup-panel button {
-    width: 100%;
+  .followup-link {
+    max-width: 100%;
   }
 }
 </style>

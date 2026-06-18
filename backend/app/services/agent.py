@@ -24,7 +24,9 @@ except Exception:
 
 from app.core.db import get_db
 from app.nlq.business_queries import enrich_rows, get_deterministic_query
+from app.dashboards.hydro_meteor_status import get_hydro_meteor_status
 from app.dashboards.monitoring_scale import get_county_monitoring_scale
+from app.dashboards.single_slope_field import get_single_slope_field_status, get_single_slope_visual_assets
 from app.reports.report_inventory import get_report_asset_inventory
 from app.core.sqlserver_db import query_sqlserver_for_display
 from app.core.config import (
@@ -78,6 +80,19 @@ USER_FACING_SQL_RE = re.compile(
 )
 STREAM_DONE = object()
 DISPLAY_ROW_LIMIT = 50
+SLOPE_CODE_RE = re.compile(r"(?<![A-Z0-9])[A-Z]{1,4}\d{3,5}[A-Z]?\*?(?![A-Z0-9])", re.IGNORECASE)
+CURRENT_SLOPE_TERMS = (
+    "这处高切坡",
+    "这个高切坡",
+    "该高切坡",
+    "这处坡",
+    "这个坡",
+    "该坡",
+    "当前所在高切坡",
+    "我当前所在高切坡",
+    "我现在所在高切坡",
+    "面前这个坡",
+)
 
 
 def _mask_base_url(base_url: str | None) -> str:
@@ -185,6 +200,8 @@ def append_followup_guidance(summary: str, query_name: str = "", question: str =
     summary = (summary or "").strip()
     if not summary:
         return summary
+    if query_name == "single_slope_visual_assets":
+        return summary
     if "需要我继续" in summary or "需要我给出" in summary or "是否需要我" in summary:
         return summary
 
@@ -199,6 +216,9 @@ def append_followup_guidance(summary: str, query_name: str = "", question: str =
         "county_monitoring_scale": "需要我继续按区县展开专业监测坡清单、监测点清单或群测群防记录明细吗？",
         "report_asset_inventory": "需要我继续按区县展开月报照片清单、专业监测点关系表或稳定性评价明细吗？",
         "personnel_info": "需要我继续按角色、区县或联系方式完整性筛选人员名单吗？",
+        "single_slope_field_status": "需要我继续给出现场照片及监测点位移变化图吗？",
+        "single_slope_visual_assets": "",
+        "hydro_meteor_status": "需要我继续结合降雨、水位、专业监测和群测群防记录生成现场风险研判吗？",
         "abnormal_type": "需要我继续按异常类型、区县或高切坡名称展开明细吗？",
         "county_abnormal_compare": "需要我继续给出各区县异常对象清单或近期变化较突出的高切坡吗？",
         "report_displacement_charts": "需要我继续给出具体监测点曲线、月报评价摘录或高切坡稳定性分析吗？",
@@ -406,6 +426,48 @@ def build_template_summary(query_name: str, summary: str, rows: list[dict], tota
             f"从角色看，主要包括{ '、'.join(f'{role}{count}人' for role, count in roles.most_common(4)) }{county_sentence}。"
             "明细表按人员姓名、登录账号、角色、所属区县、部门职务和联系方式展示，已屏蔽密码、证件号、登录 IP 等敏感信息。"
         )
+    if query_name == "hydro_meteor_status":
+        if not rows:
+            return "暂未查询到降雨和水位缓存数据。建议先确认外网采集服务是否已写入中间库。"
+        by_item = {str(row.get("项目") or ""): str(row.get("内容") or "") for row in rows}
+        parts = []
+        if by_item.get("对象"):
+            parts.append(f"一、对象范围\n{by_item['对象']}")
+        if by_item.get("降雨"):
+            parts.append(f"二、降雨情况\n{by_item['降雨']}")
+        if by_item.get("水位"):
+            parts.append(f"三、水位情况\n{by_item['水位']}")
+        if by_item.get("综合研判"):
+            parts.append(f"四、综合研判\n{by_item['综合研判']}")
+        return "\n\n".join(parts)
+    if query_name == "single_slope_field_status":
+        if not rows:
+            return "暂未检索到该高切坡的现场情况资料。建议核对高切坡编号后重新查询。"
+        by_type = {str(row.get("项目") or ""): str(row.get("简要内容") or "") for row in rows}
+        basic = by_type.get("基础信息", "")
+        report = by_type.get("历史评价", "")
+        qmqf = by_type.get("群测群防", "")
+        professional = by_type.get("专业监测", "")
+        report = _shorten_field_report_text(report)
+        pieces = []
+        if basic:
+            pieces.append(f"一、基本情况\n{basic}")
+        if report:
+            pieces.append(f"二、现场破坏现象\n{report}")
+        if qmqf:
+            pieces.append(f"三、群测群防记录\n{qmqf}")
+        if professional:
+            pieces.append(f"四、专业监测情况\n{professional}")
+        pieces.append("五、现场核查建议\n1. 核查挡墙与边坡喷锚交接处位移部位。\n2. 核查喷锚高切坡中部混凝土脱落、破碎部位。\n3. 核查住户房屋墙体裂纹及坡脚受影响区域。\n4. 核查道路或挡墙开裂、排水设施堵塞和坡面破损部位。")
+        return "\n\n".join(pieces)
+    if query_name == "single_slope_visual_assets":
+        code = ""
+        for row in rows:
+            code = str(row.get("gqpbh") or code)
+        return (
+            f"已整理{code or '该高切坡'}的现场核查资料。下方展示近期现场照片和变化量相对较大的监测点位移变化曲线图，"
+            "用于现场核查坡面、挡墙、道路、房屋受影响部位及X/Y/H三向位移变化。"
+        )
     if query_name == "county_overview":
         row = rows[0] if rows else {}
         county = row.get("区县") or "该区县"
@@ -561,6 +623,48 @@ def _build_qmqf_risk_context() -> dict:
     if other_text:
         sentence += f"其余异常记录分布于{other_text}。"
     return {"top_county": top_county, "sentence": sentence, "top_sentence": top_sentence}
+
+
+def _shorten_field_report_text(text_value: str) -> str:
+    text_value = re.sub(r"\s+", "", text_value or "")
+    text_value = text_value.replace("（3）调查情况", "").replace("（4）整改建议", "整改建议：")
+    if not text_value:
+        return ""
+    if "主要问题包括：" in text_value:
+        return text_value
+    level = ""
+    level_match = re.search(r"稳定性评价为([^；。]+)", text_value)
+    if level_match:
+        level = f"稳定性评价为{level_match.group(1)}。"
+
+    key_points = []
+    patterns = [
+        r"挡墙与边坡喷锚交接处发生位移，位移宽度为15cm",
+        r"喷锚高切坡中部出现混凝土脱落、破碎现象",
+        r"正屋后墙壁有4条裂纹",
+        r"约有10m长的挡墙发生位移",
+        r"格构悬空，格构破损开裂很严重",
+        r"屋内墙壁裂纹宽度约为0\.7cm",
+        r"一处横向裂口长8\.5m，宽2cm",
+        r"一处竖向裂口长3m，宽2cm",
+        r"挡墙护坡部分有1道横向裂纹长3m、宽4cm",
+        r"护脚墙约有长达70m的破损情况",
+        r"顶端位置出现喷锚混凝土脱落现象",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text_value)
+        if match:
+            key_points.append(match.group(0))
+        if len(key_points) >= 5:
+            break
+    if not key_points:
+        key_points = [text_value[:180]]
+
+    advice = ""
+    advice_match = re.search(r"整改建议：(.{1,80})", text_value)
+    if advice_match:
+        advice = f"建议{advice_match.group(1).rstrip('。')}。"
+    return f"{level}主要表现为：{'；'.join(key_points)}。{advice}".strip()
 
 
 def _build_professional_monitor_context() -> str:
@@ -946,6 +1050,36 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
         routed_question=route_decision.effective_question,
         use_history=route_decision.use_history,
     )
+    completed_template_query = get_deterministic_query(effective_question)
+    if completed_template_query:
+        route_decision.status = "query"
+        route_decision.query_type = "template_query"
+        route_decision.route_name = completed_template_query["name"]
+        route_decision.summary = "问题命中稳定业务模板，优先使用固定查询口径。"
+        route_decision.reason = f"{route_decision.reason or 'route'};matched_completed_template"
+    if (
+        route_decision.status == "query"
+        and effective_question == normalized_question
+        and not SLOPE_CODE_RE.search(normalized_question)
+        and any(term in "".join(normalized_question.split()) for term in CURRENT_SLOPE_TERMS)
+    ):
+        summary = "当前还未识别到现场高切坡对象。请先输入高切坡编号，或通过扫码、定位绑定当前点位后再提问，例如“ZG0098 这处高切坡当前是否稳定？”。"
+        return {
+            "status": "clarify",
+            "query_type": "clarify",
+            "question": question,
+            "sql": "",
+            "result": summary,
+            "summary": summary,
+            "report": None,
+            "suggestion": "绑定现场高切坡后，我可以继续查询基本信息、稳定性判断、监测曲线、现场照片和巡查建议。",
+            "columns": [],
+            "rows": [],
+            "total_rows": 0,
+            "attachments": [],
+            "logs": "",
+            "error": None,
+        }
     if route_decision.use_history:
         print(">>> [conversation_context] router resolved current question with recent turns")
     print(
@@ -966,7 +1100,10 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
         })
         return build_non_query_result(question, route_decision)
 
-    if has_photo_intent(effective_question):
+    pre_photo_template = get_deterministic_query(effective_question)
+    if has_photo_intent(effective_question) and not (
+        pre_photo_template and pre_photo_template.get("name") == "single_slope_visual_assets"
+    ):
         print(">>> [query_path] photo_sqlserver")
         emit({"type": "progress", "message": "连接现场照片库"})
         photo_payload = search_photo_records(effective_question)
@@ -1046,6 +1183,13 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
             ]
             columns = ["区县", "月报份数", "专业监测坡数量", "监测点数量", "XYH月度记录", "现场照片", "稳定性评价", "需现场复核"]
             total_rows = len(rows)
+        elif query_source == "internal_single_slope":
+            columns, rows, total_rows = get_single_slope_field_status(effective_question)
+            _, _, _, field_visual_attachments = get_single_slope_visual_assets(effective_question)
+        elif query_source == "internal_single_slope_visual":
+            columns, rows, total_rows, visual_attachments = get_single_slope_visual_assets(effective_question)
+        elif query_source == "internal_hydro_meteor":
+            columns, rows, total_rows = get_hydro_meteor_status(effective_question)
         elif query_source == "sqlserver":
             try:
                 emit({
@@ -1065,7 +1209,19 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
             db = get_db(include_tables=deterministic_query["tables"])
             columns, rows, total_rows = query_table_for_display(db, sql)
         columns, rows = enrich_rows(deterministic_query["name"], columns, rows)
-        attachments = enrich_photo_attachments(question, rows)
+        photo_question = question
+        if deterministic_query["name"] in {"single_slope_field_status", "single_slope_visual_assets"}:
+            photo_question = f"{question} 现场照片"
+        attachments = enrich_photo_attachments(photo_question, rows)
+        if deterministic_query["name"] == "single_slope_field_status":
+            attachments = [
+                item for item in (field_visual_attachments if "field_visual_attachments" in locals() else [])
+                if "曲线" in str(item.get("label") or "") or "位移变化" in str(item.get("label") or "")
+            ]
+        if deterministic_query["name"] == "single_slope_visual_assets":
+            photos = [item for item in attachments if item.get("type") == "image"][:3]
+            charts = visual_attachments if "visual_attachments" in locals() else []
+            attachments = photos + charts
         emit({
             "type": "progress",
             "message": "基于查询结果生成业务分析",
@@ -1090,6 +1246,9 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
             "personnel_info",
             "abnormal_type",
             "county_abnormal_compare",
+            "single_slope_field_status",
+            "single_slope_visual_assets",
+            "hydro_meteor_status",
         }:
             summary = template_summary
         else:
@@ -1113,7 +1272,7 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
             "summary": summary,
             "message": "生成查询报告",
         })
-        text_only_templates = {"county_overview", "recent_risk_county"}
+        text_only_templates = {"county_overview", "recent_risk_county", "single_slope_field_status", "single_slope_visual_assets", "hydro_meteor_status"}
         response_columns = [] if deterministic_query["name"] in text_only_templates else columns
         response_rows = [] if deterministic_query["name"] in text_only_templates else rows
         response_total_rows = 0 if deterministic_query["name"] in text_only_templates else total_rows
@@ -1375,7 +1534,7 @@ def run_agent(question: str, progress=None, history: list[dict] | None = None) -
         }
 
 
-def stream_agent_events(question: str):
+def stream_agent_events(question: str, history: list[dict] | None = None):
     """把同步 Agent 调用包装成 SSE 事件流，供前端实时展示思考过程。"""
     event_queue = queue.Queue()
 
@@ -1384,7 +1543,7 @@ def stream_agent_events(question: str):
 
     def worker():
         try:
-            result = run_agent(question, progress=emit)
+            result = run_agent(question, progress=emit, history=history)
             event_queue.put({"type": "final", "data": sanitize_query_result(result)})
         except Exception as exc:
             event_queue.put({"type": "error", "message": user_friendly_error_message(exc)})

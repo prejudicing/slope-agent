@@ -24,6 +24,7 @@ class QueryRequest(BaseModel):
     """前端提交的自然语言查询问题。"""
 
     question: str
+    history: list[dict] | None = None
 
 
 class AsrRequest(BaseModel):
@@ -44,7 +45,7 @@ def health():
 def query(req: QueryRequest):
     """非流式查询接口，保留给调试或简单调用场景。"""
     try:
-        result = run_agent(normalize_query_text(req.question))
+        result = run_agent(normalize_query_text(req.question), history=req.history)
         return sanitize_query_result(result)
     except Exception as e:
         message = user_friendly_error_message(e)
@@ -87,7 +88,7 @@ def report_asset_inventory():
 def query_stream(req: QueryRequest):
     """流式查询接口，使用 SSE 持续返回 Agent 进度、SQL、总结和最终表格数据。"""
     return StreamingResponse(
-        stream_agent_events(normalize_query_text(req.question)),
+        stream_agent_events(normalize_query_text(req.question), history=req.history),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

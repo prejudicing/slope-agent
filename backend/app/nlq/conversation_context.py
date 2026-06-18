@@ -8,8 +8,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
+
 MAX_HISTORY_TURNS = 4
 MAX_HISTORY_SUMMARY_LEN = 240
+SLOPE_CODE_RE = re.compile(r"(?<![A-Z0-9])[A-Z]{1,4}\d{3,5}[A-Z]?\*?(?![A-Z0-9])", re.IGNORECASE)
+CURRENT_SLOPE_TERMS = (
+    "这处高切坡",
+    "这个高切坡",
+    "该高切坡",
+    "这处坡",
+    "这个坡",
+    "该坡",
+    "当前所在高切坡",
+    "我当前所在高切坡",
+    "我现在所在高切坡",
+    "面前这个坡",
+)
 
 
 @dataclass
@@ -70,7 +85,33 @@ def resolve_effective_question(
     """根据路由器判定得到最终交给查询链路的问题。"""
     if use_history and routed_question:
         return routed_question
+    completed = complete_current_slope_reference(question, history)
+    if completed:
+        return completed
     return question
+
+
+def complete_current_slope_reference(question: str, history: list[ConversationTurn]) -> str:
+    """将“这处高切坡”等现场指代补成最近一次高切坡编号。"""
+    compact = "".join((question or "").split())
+    if not compact or SLOPE_CODE_RE.search(compact):
+        return ""
+    if not any(term in compact for term in CURRENT_SLOPE_TERMS) and not _is_visual_followup(compact):
+        return ""
+    for turn in reversed(history or []):
+        question_matches = SLOPE_CODE_RE.findall((turn.question or "").upper())
+        if question_matches:
+            return f"{question_matches[-1]} {question}"
+        summary_matches = SLOPE_CODE_RE.findall((turn.summary or "").upper())
+        if summary_matches:
+            return f"{summary_matches[0]} {question}"
+    return ""
+
+
+def _is_visual_followup(compact: str) -> bool:
+    has_photo = any(keyword in compact for keyword in ("现场照片", "照片", "图片", "现场图"))
+    has_chart = any(keyword in compact for keyword in ("位移变化图", "位移曲线", "变化曲线", "监测点曲线", "曲线图", "变化图"))
+    return has_photo and has_chart
 
 
 def build_routing_context(history: list[ConversationTurn]) -> str:

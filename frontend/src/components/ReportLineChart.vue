@@ -7,12 +7,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as echarts from 'echarts/core'
-import { GraphicComponent, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent } from 'echarts/components'
+import { GraphicComponent, GridComponent, LegendComponent, MarkLineComponent, MarkPointComponent, TooltipComponent } from 'echarts/components'
 import { LineChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsType } from 'echarts/core'
 
-echarts.use([GraphicComponent, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent, LineChart, CanvasRenderer])
+echarts.use([GraphicComponent, GridComponent, LegendComponent, MarkLineComponent, MarkPointComponent, TooltipComponent, LineChart, CanvasRenderer])
 
 type SeriesRow = {
   date: string
@@ -36,6 +36,33 @@ const allValues = computed(() =>
   props.rows.flatMap((row) => ['x', 'y', 'h'].map((key) => Number(row[key as 'x' | 'y' | 'h'] || 0))),
 )
 const maxAbsValue = computed(() => Math.max(1, ...allValues.value.map((value) => Math.abs(value))))
+const maxChangePoint = computed(() => {
+  const directions: Array<{ key: 'x' | 'y' | 'h'; name: string }> = [
+    { key: 'x', name: 'X向位移变化量' },
+    { key: 'y', name: 'Y向位移变化量' },
+    { key: 'h', name: 'H向位移变化量' },
+  ]
+  let result = {
+    key: 'x' as 'x' | 'y' | 'h',
+    seriesName: 'X向位移变化量',
+    date: labels.value[0] || '',
+    value: 0,
+  }
+  props.rows.forEach((row) => {
+    directions.forEach((direction) => {
+      const value = Number(row[direction.key])
+      if (Number.isFinite(value) && Math.abs(value) > Math.abs(result.value)) {
+        result = {
+          key: direction.key,
+          seriesName: direction.name,
+          date: String(row.date || '').slice(0, 7),
+          value,
+        }
+      }
+    })
+  })
+  return result
+})
 
 function values(key: 'x' | 'y' | 'h') {
   return props.rows.map((row) => {
@@ -161,7 +188,7 @@ function buildOption() {
       },
     ],
     series: [
-      {
+      withMaxMarker({
         name: 'X向位移变化量',
         type: 'line',
         data: values('x'),
@@ -184,8 +211,8 @@ function buildOption() {
           },
           data: thresholdLines,
         },
-      },
-      {
+      }, 'x'),
+      withMaxMarker({
         name: 'Y向位移变化量',
         type: 'line',
         data: values('y'),
@@ -193,8 +220,8 @@ function buildOption() {
         symbol: 'circle',
         symbolSize: 7,
         lineStyle: { width: 2.8 },
-      },
-      {
+      }, 'y'),
+      withMaxMarker({
         name: 'H向位移变化量',
         type: 'line',
         data: values('h'),
@@ -202,8 +229,36 @@ function buildOption() {
         symbol: 'circle',
         symbolSize: 7,
         lineStyle: { width: 2.8 },
-      },
+      }, 'h'),
     ],
+  }
+}
+
+function withMaxMarker(series: Record<string, unknown>, key: 'x' | 'y' | 'h') {
+  if (maxChangePoint.value.key !== key || !maxChangePoint.value.date) {
+    return series
+  }
+  return {
+    ...series,
+    markPoint: {
+      symbol: 'pin',
+      symbolSize: 72,
+      label: {
+        formatter: () => `${maxChangePoint.value.value.toFixed(1)}mm`,
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 700,
+      },
+      itemStyle: {
+        color: '#b91c1c',
+      },
+      data: [
+        {
+          name: '最大变化点',
+          coord: [maxChangePoint.value.date, Number(maxChangePoint.value.value.toFixed(2))],
+        },
+      ],
+    },
   }
 }
 

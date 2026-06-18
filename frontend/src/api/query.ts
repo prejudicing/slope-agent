@@ -80,13 +80,20 @@ export function buildPhotoCacheUrl(path: string, size = 'thumb'): string {
   return buildBackendUrl(`/api/photo-cache?${params.toString()}`)
 }
 
-export async function postQuery(question: string): Promise<QueryResponse> {
+export type QueryHistoryItem = {
+  question: string
+  summary?: string
+  total_rows?: number
+}
+
+export async function postQuery(question: string, history: QueryHistoryItem[] = []): Promise<QueryResponse> {
   if (Capacitor.isNativePlatform()) {
-    return nativePost<QueryResponse>('/api/query', { question })
+    return nativePost<QueryResponse>('/api/query', { question, history })
   }
 
   const res = await axios.post(buildBackendUrl('/api/query'), {
     question,
+    history,
   })
   return res.data
 }
@@ -147,7 +154,8 @@ export async function fetchReportStabilityAssets(params: Record<string, unknown>
 
 export async function streamQuery(
   question: string,
-  onEvent: (event: QueryStreamEvent) => void
+  onEvent: (event: QueryStreamEvent) => void,
+  history: QueryHistoryItem[] = []
 ) {
   if (Capacitor.isNativePlatform()) {
     onEvent({
@@ -156,7 +164,7 @@ export async function streamQuery(
       detail: '正在通过手机原生网络通道请求后端。',
     })
 
-    const data = await nativePost<QueryResponse>('/api/query', { question })
+    const data = await nativePost<QueryResponse>('/api/query', { question, history })
 
     if (data.sql) {
       onEvent({ type: 'sql', sql: data.sql })
@@ -185,7 +193,7 @@ export async function streamQuery(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, history }),
     })
   } catch (error) {
     throw new Error(`请求失败，无法访问 ${requestUrl}。请检查后端地址、服务状态或跨域配置。`)

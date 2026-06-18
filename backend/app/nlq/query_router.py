@@ -1,4 +1,4 @@
-"""问题路由与越界拒答规则。"""
+﻿"""问题路由与越界拒答规则。"""
 
 from dataclasses import dataclass
 import json
@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from app.nlq.business_queries import get_deterministic_query
-from app.nlq.conversation_context import ConversationTurn, build_routing_context
+from app.nlq.conversation_context import ConversationTurn, SLOPE_CODE_RE, build_routing_context
 
 
 BUSINESS_KEYWORDS = {
@@ -22,6 +22,17 @@ BUSINESS_KEYWORDS = {
     "预警",
     "复核",
     "雨量",
+    "降雨",
+    "降水",
+    "强降雨",
+    "雨后",
+    "水位",
+    "库水位",
+    "三峡库水位",
+    "水文",
+    "水文站",
+    "雨量站",
+    "库水位变化",
     "异常",
     "裂缝",
     "落石",
@@ -69,6 +80,7 @@ ANALYSIS_KEYWORDS = {
     "比较",
     "归纳",
     "评估",
+    "综合研判",
     "重点关注",
     "原因",
     "特征",
@@ -143,6 +155,13 @@ ASSISTANT_IDENTITY_SUGGESTION = (
 )
 
 WHITESPACE_RE = re.compile(r"\s+")
+
+
+def _business_hits(normalized: str) -> list[str]:
+    hits = [keyword for keyword in BUSINESS_KEYWORDS if keyword.lower() in normalized.lower()]
+    if SLOPE_CODE_RE.search(normalized.upper()):
+        hits.append("高切坡编号")
+    return hits
 
 
 @dataclass
@@ -249,7 +268,7 @@ def _safety_route_question(question: str) -> QueryRouteDecision | None:
             route_name="chat",
         )
 
-    business_hits = [keyword for keyword in BUSINESS_KEYWORDS if keyword.lower() in normalized.lower()]
+    business_hits = _business_hits(normalized)
     credential_hits = [keyword for keyword in CREDENTIAL_SENSITIVE_KEYWORDS if keyword.lower() in normalized.lower()]
     if credential_hits:
         return _build_decision(
@@ -283,7 +302,7 @@ def _fallback_route_question(question: str) -> QueryRouteDecision:
     if safety_decision:
         return safety_decision
 
-    business_hits = [keyword for keyword in BUSINESS_KEYWORDS if keyword.lower() in normalized.lower()]
+    business_hits = _business_hits(normalized)
     generic_hits = [keyword for keyword in GENERIC_QUERY_WORDS if keyword in normalized]
     out_of_scope_hits = [keyword for keyword in OUT_OF_SCOPE_KEYWORDS if keyword.lower() in normalized.lower()]
 

@@ -106,7 +106,11 @@ def _build_file_url(path: str) -> str:
 def _build_source_url(path: str) -> str:
     if not PHOTO_FILE_BASE_URL:
         return ""
-    return urljoin(f"{PHOTO_FILE_BASE_URL}/", path.lstrip("/"))
+    normalized_path = path.lstrip("/")
+    normalized_base = PHOTO_FILE_BASE_URL.rstrip("/")
+    if normalized_base.lower().endswith("/u/mon") and normalized_path.lower().startswith("u/mon/"):
+        normalized_path = normalized_path[len("u/mon/"):]
+    return urljoin(f"{normalized_base}/", normalized_path)
 
 
 @lru_cache(maxsize=1024)

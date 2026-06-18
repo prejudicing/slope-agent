@@ -89,5 +89,5 @@ PHOTO_DB_DRIVER = os.getenv("PHOTO_DB_DRIVER", DB_DRIVER).strip()
 PHOTO_DB_TRUST_CERT = os.getenv("PHOTO_DB_TRUST_CERT", "true").lower() == "true"
 PHOTO_DB_ENCRYPT = os.getenv("PHOTO_DB_ENCRYPT", "false").lower() == "true"
 PHOTO_DB_EXTRA_PARAMS = os.getenv("PHOTO_DB_EXTRA_PARAMS", "").strip()
-PHOTO_FILE_BASE_URL = os.getenv("PHOTO_FILE_BASE_URL", "").strip().rstrip("/")
+PHOTO_FILE_BASE_URL = os.getenv("PHOTO_FILE_BASE_URL", os.getenv("PHOTO_BASE_URL", "")).strip().rstrip("/")
 PHOTO_DOWNLOAD_TIMEOUT = float(os.getenv("PHOTO_DOWNLOAD_TIMEOUT", "12"))

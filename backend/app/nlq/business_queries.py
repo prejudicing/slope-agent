@@ -7,6 +7,9 @@ from typing import Any
 from app.reports.report_charts import generate_displacement_chart
 
 
+SLOPE_CODE_RE = re.compile(r"(?<![A-Z0-9])[A-Z]{1,4}\d{3,5}[A-Z]?\*?(?![A-Z0-9])", re.IGNORECASE)
+
+
 ABNORMAL_TYPE_FIELDS = [
     ("isCrack", "裂缝"),
     ("surfaceRockfall", "落石"),
@@ -21,6 +24,47 @@ ABNORMAL_TYPE_FIELDS = [
 
 
 def get_deterministic_query(question: str) -> dict[str, Any] | None:
+    if _is_hydro_meteor_question(question):
+        return {
+            "name": "hydro_meteor_status",
+            "source": "internal_hydro_meteor",
+            "tables": [
+                "ai_weather_rainfall_cache",
+                "ai_hydro_water_level_cache",
+                "ai_slope_hydro_station_map",
+                "geo_gqp_jbxx",
+            ],
+            "sql": "",
+            "summary": "查询降雨量、水位变化和外部环境因子缓存数据，用于现场风险辅助研判。",
+        }
+    if _is_single_slope_visual_question(question):
+        return {
+            "name": "single_slope_visual_assets",
+            "source": "internal_single_slope_visual",
+            "tables": [
+                "geo_gqp_jbxx",
+                "ai_professional_monitor_monthly_value",
+                "tb_hcslope",
+                "tb_hcs_monitoring",
+            ],
+            "sql": "",
+            "summary": "返回单个高切坡现场照片和变化量最大的监测点位移曲线图。",
+        }
+    if _is_single_slope_field_status_question(question):
+        return {
+            "name": "single_slope_field_status",
+            "source": "internal_single_slope",
+            "tables": [
+                "geo_gqp_jbxx",
+                "ai_professional_monitor_monthly_value",
+                "ai_report_stability_asset",
+                "ai_monthly_report_chunk",
+                "tb_hcslope",
+                "tb_hcs_monitoring",
+            ],
+            "sql": "",
+            "summary": "生成单个高切坡现场情况说明，综合基础资料、历史评价、群测群防记录和专业监测变化。",
+        }
     if _is_report_asset_inventory_question(question):
         return {
             "name": "report_asset_inventory",
@@ -163,6 +207,94 @@ def _extract_county(question: str) -> str:
         if any(value in compact for value in values):
             return county
     return ""
+
+
+def _extract_slope_code(question: str) -> str:
+    match = SLOPE_CODE_RE.search((question or "").upper())
+    return match.group(0).upper() if match else ""
+
+
+def _is_single_slope_field_status_question(question: str) -> bool:
+    compact = "".join((question or "").split())
+    slope_code = _extract_slope_code(compact)
+    if not slope_code:
+        return False
+    has_business = bool(slope_code) or "高切坡" in compact or "边坡" in compact or "坡" in compact
+    has_status_intent = any(keyword in compact for keyword in (
+        "破坏现象",
+        "现状",
+        "现场情况",
+        "现场",
+        "巡查",
+        "介绍",
+        "基本信息",
+        "历史情况",
+        "变形",
+        "裂缝",
+        "挡墙",
+        "落石",
+        "风险",
+        "预警",
+        "稳定",
+        "稳不稳",
+        "安全状态",
+        "安全",
+        "判断依据",
+        "依据",
+        "监测结论",
+        "新增异常",
+        "重点关注",
+        "巡查记录",
+        "汇报口径",
+        "情况",
+        "怎么样",
+    ))
+    return has_business and has_status_intent
+
+
+def _is_single_slope_visual_question(question: str) -> bool:
+    compact = "".join((question or "").split())
+    has_target = bool(_extract_slope_code(compact)) or any(
+        term in compact for term in ("这处高切坡", "这个高切坡", "该高切坡", "这处坡", "当前所在高切坡")
+    )
+    has_photo = any(keyword in compact for keyword in ("现场照片", "照片", "图片", "现场图"))
+    has_chart = any(keyword in compact for keyword in ("位移变化图", "位移曲线", "变化曲线", "监测点曲线", "曲线图", "变化图"))
+    return has_target and has_photo and has_chart
+
+
+def _is_hydro_meteor_question(question: str) -> bool:
+    compact = "".join((question or "").split())
+    has_target = bool(_extract_slope_code(compact) or _extract_county(compact)) or any(
+        term in compact for term in ("这处高切坡", "这个高切坡", "该高切坡", "这处坡", "当前所在高切坡")
+    )
+    has_hydro = any(keyword in compact for keyword in (
+        "降雨",
+        "雨量",
+        "降水",
+        "强降雨",
+        "雨后",
+        "水位",
+        "库水位",
+        "三峡库水位",
+        "水文",
+        "库水位变化",
+    ))
+    has_intent = any(keyword in compact for keyword in (
+        "多少",
+        "变化",
+        "影响",
+        "异常",
+        "风险",
+        "判断",
+        "研判",
+        "有没有",
+        "最近",
+        "近期",
+        "24小时",
+        "72小时",
+        "综合",
+    ))
+    return has_target and has_hydro and has_intent
 
 
 def _is_recent_slope_brief_question(question: str) -> bool:
